@@ -1,0 +1,14 @@
+{
+    "packages": {
+        "mongo": {
+            "options": {
+                "tlsAllowInvalidCertificates": true
+            }
+        }
+    },
+    "galaxy.meteor.com": {
+        "env": {
+            "MONGO_URL": "mongodb://senkovicovasona:BANTgiQGZSdW63YG8@SG-galaxycluster-38726.servers.mongodirector.com:27017,SG-galaxycluster-38727.servers.mongodirector.com:27017/lan-pass-meteorapp-com?replicaSet=RS-galaxycluster-0&ssl=true"
+        }
+    }
+}
