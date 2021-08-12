@@ -16,7 +16,7 @@ import {
 } from '../../other/styles/selectStyles';
 
 import {
-  listFolders,
+  listAllPasswords,
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
@@ -83,7 +83,6 @@ export default function PasswordView( props ) {
           }
       }
       });
-      console.log("HI");
       history.push(`${listPasswordsInFolderStart}${folderID}`);
     }
   };

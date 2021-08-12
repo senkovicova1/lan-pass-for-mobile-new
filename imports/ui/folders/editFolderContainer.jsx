@@ -16,7 +16,7 @@ import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
 import {
-  listFolders,
+  listPasswordsInFolderStart,
 } from "/imports/other/navigationLinks";
 
 export default function EditFolderContainer( props ) {
@@ -39,7 +39,7 @@ export default function EditFolderContainer( props ) {
         const userIsAdmin = folder.users.find(user => user._id === userId).level === 0;
 
         if ( !userIsAdmin ) {
-          history.push(listFolders);
+          history.push(`${listPasswordsInFolderStart}all`);
         }
       }
 
@@ -67,7 +67,7 @@ export default function EditFolderContainer( props ) {
           ...data
         }
       } );
-      props.history.push(listFolders);
+      props.history.push(`${listPasswordsInFolderStart}all`);
     }
   }
 

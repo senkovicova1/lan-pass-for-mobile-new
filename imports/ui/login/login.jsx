@@ -18,6 +18,9 @@ import {
 } from "../../other/styles/styledComponents";
 
 import Loader from "../other/loadingScreen";
+import {
+  listPasswordsInFolderStart
+} from "/imports/other/navigationLinks";
 
 export default function LoginForm( props ) {
 
@@ -43,7 +46,7 @@ export default function LoginForm( props ) {
           setShowLoading(false);
         }
       });
-    history.push("/folders");
+    history.push(`${listPasswordsInFolderStart}all`);
   };
 
   const handleForgotPassword = () => {

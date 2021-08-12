@@ -17,9 +17,6 @@ import {
 } from '../../other/helperFunctions';
 
 import { useSelector } from 'react-redux';
-import {
-  translations
-} from '../../other/translations.jsx';
 
 import {
   Form,

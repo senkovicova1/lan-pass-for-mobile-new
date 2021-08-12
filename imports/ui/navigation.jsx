@@ -44,7 +44,7 @@ import {
 } from '../other/styles/styledComponents';
 import {
   login,
-  listFolders,
+  listAllPasswords,
   addFolder,
   editFolder,
   listPasswordsInFolder,
@@ -65,27 +65,29 @@ export default function MainPage( props ) {
 
   const currentUser = useTracker( () => Meteor.user() );
 
+  console.log(currentUser);
+
   const userId = useMemo(() => {
     if (currentUser){
-    return currentUser._id;
-  }
-  return null;
+      return currentUser._id;
+    }
+    return null;
   }, [currentUser]);
 
   const folders = useTracker( () => FoldersCollection.find( { users:  { $elemMatch: { _id: userId } } } ).fetch() );
   useEffect(() => {
     if (folders.length > 0){
-    dispatch(setFolders(folders));
-  }
-}, [folders]);
+      dispatch(setFolders(folders));
+    }
+  }, [folders]);
 
-const savedFolderIds = folders.map(folder => folder._id);
-const passwords = useTracker( () => PasswordsCollection.find( { folder:  { $in: savedFolderIds} } ).fetch() );
-useEffect(() => {
-  if (passwords.length > 0){
-    dispatch(setPasswords(passwords));
-  }
-}, [ passwords ]);
+  const savedFolderIds = folders.map(folder => folder._id);
+  const passwords = useTracker( () => PasswordsCollection.find( { folder:  { $in: savedFolderIds} } ).fetch() );
+  useEffect(() => {
+    if (passwords.length > 0){
+      dispatch(setPasswords(passwords));
+    }
+  }, [ passwords ]);
 
   const users = useTracker( () => Meteor.users.find( {} ).fetch() );
   useEffect(() => {
@@ -102,26 +104,25 @@ useEffect(() => {
     );
   }, [users]);
 
-  console.log(users);
-
-const [ search, setSearch ] = useState( "" );
-const [ revealPassword, setRevealPassword ] = useState( false );
+  const [ search, setSearch ] = useState( "" );
+  const [ revealPassword, setRevealPassword ] = useState( false );
+  const [ openSidebar, setOpenSidebar ] = useState( false );
 
   return (
     <div style={{height: "100vh"}}>
       <BrowserRouter>
         <Route
-          exact
-          path={["/", login, listFolders, deletedFolders, addFolder, editFolder, listPasswordsInFolder, editCurrentUser, addPassword, viewPassword, editPassword, passwordHistory, viewPreviousPassword, listDeletedPasswordsInFolder]}
+          path={"/"}
           render={(props) => (
-          <Header
-            {...props}
-            setSearch={setSearch}
-            search={search}
-            toggleRevealPassword={() => setRevealPassword(!revealPassword)}
-            />
-        )}
-        />
+            <Header
+              {...props}
+              setSearch={setSearch}
+              search={search}
+              setParentOpenSidebar={setOpenSidebar}
+              toggleRevealPassword={() => setRevealPassword(!revealPassword)}
+              />
+          )}
+          />
         {!currentUser &&
           <Content>
             <Route path={["/", login]} component={Login} />
@@ -131,18 +132,10 @@ const [ revealPassword, setRevealPassword ] = useState( false );
           <Content>
             <div style={{height: "100%", position: "relative"}}>
 
-                  <Route
-                    exact
-                    path={["/", listFolders]}
-                    render={(props) => (
-                    <FolderList {...props} active={true} search={search} />
-                  )}
-                  />
-
-                <Route
-                  exact
-                  path={deletedFolders}
-                  render={(props) => (
+              <Route
+                exact
+                path={deletedFolders}
+                render={(props) => (
                   <FolderList {...props} active={false} search={search} />
                 )}
                 />
@@ -151,27 +144,27 @@ const [ revealPassword, setRevealPassword ] = useState( false );
 
               <Route exact path={editFolder} component={FolderEdit} />
 
-                <Route
-                  exact
-                  path={listPasswordsInFolder}
-                  render={(props) => (
+              <Route
+                exact
+                path={[listAllPasswords, listPasswordsInFolder]}
+                render={(props) => (
                   <PasswordList
-                     {...props}
-                     search={search}
-                     active={true}
-                     />
+                    {...props}
+                    search={search}
+                    active={true}
+                    />
                 )}
                 />
 
-                <Route
-                  exact
-                  path={listDeletedPasswordsInFolder}
-                  render={(props) => (
+              <Route
+                exact
+                path={listDeletedPasswordsInFolder}
+                render={(props) => (
                   <PasswordList
-                     {...props}
-                     search={search}
-                     active={false}
-                     />
+                    {...props}
+                    search={search}
+                    active={false}
+                    />
                 )}
                 />
 
@@ -190,7 +183,7 @@ const [ revealPassword, setRevealPassword ] = useState( false );
                   <PasswordAdd
                     {...props}
                     revealPassword={revealPassword}
-                     />
+                    />
                 )}
                 />
 
@@ -201,7 +194,7 @@ const [ revealPassword, setRevealPassword ] = useState( false );
                   <PasswordEdit
                     {...props}
                     revealPassword={revealPassword}
-                     />
+                    />
                 )}
                 />
 
@@ -212,18 +205,18 @@ const [ revealPassword, setRevealPassword ] = useState( false );
                   <PasswordView
                     {...props}
                     revealPassword={revealPassword}
-                     />
+                    />
                 )}
                 />
 
-                <Route
-                  exact
-                  path={passwordHistory}
-                  render={(props) => (
+              <Route
+                exact
+                path={passwordHistory}
+                render={(props) => (
                   <PasswordHistoryList
-                     {...props}
-                     search={search}
-                     />
+                    {...props}
+                    search={search}
+                    />
                 )}
                 />
 
@@ -234,12 +227,3 @@ const [ revealPassword, setRevealPassword ] = useState( false );
     </div>
   );
 };
-
-
-/*
-
-
-
-
-<Route exact path={"/deleted-folders/:folderID"} component={ArchviedPasswordList} />
-*/

@@ -15,10 +15,6 @@ import {
 
 import PasswordForm from './passwordForm';
 
-import {
-  listFolders,
-} from "/imports/other/navigationLinks";
-
 export default function AddPasswordContainer( props ) {
 
   const {

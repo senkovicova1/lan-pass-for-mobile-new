@@ -9,9 +9,6 @@ import { useSelector } from 'react-redux';
 import {
   selectStyle
 } from '../../other/styles/selectStyles';
-import {
-  translations
-} from '../../other/translations.jsx';
 
 import { DeleteIcon, PlusIcon, LockIcon, RestoreIcon, FolderIcon } from  "/imports/other/styles/icons";
 
@@ -33,8 +30,9 @@ import {
 } from "/imports/other/styles/styledComponents";
 import {
   deletedFolders,
-  listFolders,
+  listAllPasswords,
   addPassword,
+  addFolder,
   viewPasswordStart
 } from "/imports/other/navigationLinks";
 
@@ -54,13 +52,15 @@ export default function PasswordList( props ) {
     const folders = useSelector((state) => state.folders.value);
     const folder = useMemo(() => {
       if (folders.length > 0){
-      return folders.find(folder => folder._id === folderID);
-    }
-    return {};
+        return folders.find(folder => folder._id === folderID);
+      }
+      return {};
     }, [folders, folderID]);
 
+  const listNotInFolder = folderID === "all" || match.path === "/";
+
   const allPasswords =  useSelector((state) => state.passwords.value);
-  const passwords = allPasswords.filter(password => ((search && match.path === '/folders') || (search && match.path === '/') ||  password.folder === folderID) && password.version === 0 && ((active && !password.deletedDate) || (!active && password.deletedDate) ));
+  const passwords = allPasswords.filter(password => (listNotInFolder ||  password.folder === folderID) && password.version === 0 && ((active && !password.deletedDate) || (!active && password.deletedDate) ));
 
   const restoreFolder = ( ) => {
     if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
@@ -72,7 +72,7 @@ export default function PasswordList( props ) {
           ...data
         }
       } );
-      history.push(listFolders);
+      history.push(`${listPasswordsInFolderStart}all`);
     }
   };
 
@@ -87,11 +87,10 @@ export default function PasswordList( props ) {
          _id: pass._id
          } );
         });
-        history.push(listFolders);
+        history.push(`${listPasswordsInFolderStart}all`);
     }
   };
 
-  const listNotInFolder = match.path === "/folders" || match.path === "/";
 
     const searchedPasswords = useMemo(() => {
       return passwords.filter(password => password.title.toLowerCase().includes(search.toLowerCase()) || password.username.toLowerCase().includes(search.toLowerCase()));
@@ -127,7 +126,7 @@ export default function PasswordList( props ) {
 
       {
         searchedPasswords.map((password) => (
-          <PasswordContainer style={listNotInFolder ? { height: '5.5em'} : {}} key={password._id} onClick={() => history.push(`${viewPasswordStart}${folderID}/${password._id}`)}>
+          <PasswordContainer style={listNotInFolder ? { height: '5.5em'} : {}} key={password._id} onClick={() => history.push(`${viewPasswordStart}${listNotInFolder ? password.folder : folderID}/${password._id}`)}>
             <img
               src={LockIcon}
               alt=""
@@ -170,6 +169,28 @@ export default function PasswordList( props ) {
             src={PlusIcon}
             alt="Plus icon not found"
             />
+
+          <span>
+          Password
+          </span>
+        </FloatingButton>
+      }
+
+      {
+        listNotInFolder &&
+        active &&
+        <FloatingButton
+          onClick={() => history.push(`${addFolder}`)}
+          >
+          <img
+            className="icon"
+            src={PlusIcon}
+            alt="Plus icon not found"
+            />
+
+          <span>
+          Folder
+          </span>
         </FloatingButton>
       }
 
@@ -223,6 +244,9 @@ export default function PasswordList( props ) {
             src={RestoreIcon}
             alt="Restore icon not found"
             />
+          <span>
+          Folder
+        </span>
         </FloatingButton>
       }
 

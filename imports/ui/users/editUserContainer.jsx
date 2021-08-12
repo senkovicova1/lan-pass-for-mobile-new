@@ -7,7 +7,7 @@ import {
 import UserForm from './userForm';
 
 import {
-  listFolders,
+  listAllPasswords,
 } from "/imports/other/navigationLinks";
 
 export default function EditUserContainer( props ) {
@@ -26,11 +26,11 @@ export default function EditUserContainer( props ) {
         profile: data
       }
     });
-    history.push(listFolders);
+    history.push(`${listPasswordsInFolderStart}all`);
   };
 
 
   return (
-        <UserForm {...user} onSubmit={editUser} onCancel={() => props.history.push(listFolders)}/>
+        <UserForm {...user} onSubmit={editUser} onCancel={() => props.history.push(`${listPasswordsInFolderStart}all`)}/>
   );
 };

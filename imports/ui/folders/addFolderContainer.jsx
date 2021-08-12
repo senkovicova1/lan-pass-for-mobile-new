@@ -7,7 +7,7 @@ import {
 import FolderForm from './folderForm';
 
 import {
-  listFolders
+  listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
 export default function AddFolderContainer( props ) {
@@ -20,7 +20,7 @@ export default function AddFolderContainer( props ) {
   }
 
   const cancel = () => {
-    props.history.push(listFolders);
+    props.history.push(`${listPasswordsInFolderStart}all`);
   }
 
   return (

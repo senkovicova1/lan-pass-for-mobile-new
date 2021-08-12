@@ -8,7 +8,9 @@ const lightBlueColour = "#deeaf3";
 
 //numeric values
 const contentOffset = "calc((100vw - 800px)/2)";
-const inputOffset = "7px";
+const sidebarWidthWeb = "250px";
+const sidebarWidthMobile = "300px";
+const inputOffset = "15px";
 
 export const MainPage = styled.div `
   font-size: 1em;
@@ -49,6 +51,59 @@ export const MainPage = styled.div `
   }
 `;
 
+export const MobilePageHeader = styled.header `
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  height: 50px;
+  background-color: ${basicBlueColour};
+    padding: 0px ${inputOffset};
+    i {
+      font-size: 1.5em;
+    }
+    img.icon {
+      filter: invert(1);
+      height: 1.5em;
+      width: 1.5em;
+      margin-right: 0px;
+    }
+    img.search-icon{
+      height: 1.3em;
+      width: 1.3em;
+    }
+    button{
+      i{
+        margin: 0px !important;
+      }
+      margin-right: 1em;
+    }
+    button:last-of-type{
+        margin: 0px !important;
+    }
+
+    h1 {
+      height: 32px;
+      padding-left: 0em;
+      display: inline;
+      font-size: 1.5em;
+      color: white;
+      margin-bottom: 0em;
+    }
+
+    div.search-section{
+      width: -webkit-fill-available;
+      input{
+        width: -webkit-fill-available;
+        border: none !important;
+        outline: none !important;
+      }
+      input:focus{
+        border: none !important;
+      }
+    }
+`;
+
 export const PageHeader = styled.header `
   display: flex;
   justify-content: space-between;
@@ -56,65 +111,164 @@ export const PageHeader = styled.header `
   position: relative;
   height: 50px;
   background-color: ${basicBlueColour};
+  padding: 0px ${inputOffset};
 
-  @media all and (max-width: 799px), @media handheld  {
-    padding: 0px ${inputOffset};
+  section.header-section{
+    width: 300px;
+    align-items: center;
+    display: flex;
+
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
+
+  button{
+    margin-right: 1em;
   }
-  @media all and (min-width: 800px){
-      padding: 0px calc(${contentOffset} + ${inputOffset});
+  button:last-of-type{
+    margin: 0px !important;
   }
-
-    i {
-      font-size: 1.5em;
-    }
-
-    img.icon {
-      filter: invert(1);
-        height: 1.5em;
-        width: 1.5em;
-    }
-
-    img.search-icon{
-      height: 1.3em;
-      width: 1.3em;
-    }
-
-    button{
-      i{
-        margin: 0px !important;
-      }
-      margin-right: 1em;
-    }
-
-    button:last-of-type{
-        margin: 0px !important;
-    }
 
   h1 {
-    overflow: hidden;
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
     height: 32px;
     padding-left: 0em;
     display: inline;
     font-size: 1.5em;
     color: white;
     margin-bottom: 0em;
-    margin-right: auto;
-    cursor: pointer;
+    margin-left: 1em;
+  }
+
+  img.icon {
+    filter: invert(1);
+    height: 1.5em;
+    width: 1.5em;
+    margin-right: 0px;
+  }
+  }
+
+  div.search-section{
+    width: -webkit-fill-available;
+    input{
+      width: -webkit-fill-available;
+      border: none !important;
+      outline: none !important;
+    }
+    input:focus{
+      border: none !important;
+    }
+`;
+
+
+export const SearchSection = styled.section `
+  display: flex;
+  width: 800px !important;
+  input{
+    width: -webkit-fill-available;
+    border: none !important;
+    outline: none !important;
+  }
+  input:focus{
+    border: none !important;
+  }
+
+    img.search-icon{
+      height: 1.3em;
+      width: 1.3em;
+    }
+
+  button:last-of-type {
+    margin-left: 0em !important;
+    margin-right: 1em;
+    padding-left: ${inputOffset};
+  }
+
+  button:first-of-type {
+    margin-right: 0em;
+    padding-left: ${inputOffset};
+    margin-left: ${inputOffset};
   }
 `;
+
 
 export const Content = styled.main `
   display: block;
+  height: calc(100vh - 50px);
   @media all and (max-width: 799px), @media handheld {
     width: 100%;
   }
-  @media all and (min-width: 800px){
-      margin-left: ${contentOffset};
-      margin-right: ${contentOffset};
+  @media all and (min-width: 800px) and (max-width: 1299px){
+    ${(props) =>
+      props.withSidebar &&
+      `
+        max-width: 800px;
+        margin-left: ${sidebarWidthWeb};
+        margin-right: auto;
+      `
+    }
+    ${(props) =>
+      !props.withSidebar &&
+      `
+        width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      `
+    }
   }
-  height: calc(100vh - 50px);
+  @media all and (min-width: 1300px) {
+    width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 `;
 
+export const Sidebar = styled.section `
+  background-color: ${backgroundColour};
+  position: absolute;
+  left: 0;
+  @media all and (max-width: 799px), @media handheld  {
+    box-shadow: 5px 0px 13px 0px slategrey;
+    width: ${sidebarWidthMobile};
+  }
+  @media all and (min-width: 800px){
+    box-shadow: none;
+    border-right: 0px solid #d6d6d6;
+    width: ${sidebarWidthWeb};
+    background-color: white;
+  }
+  top: 50px;
+  height: calc(100vh - 50px);
+  z-index: 3;
+  padding: 0px;
+
+  a {
+    color: ${basicBlueColour} !important;
+    display: flex;
+    align-items: center;
+    height: 3em;
+    padding: 10px ${inputOffset};
+    text-decoration: none !important;
+    i, img.icon{
+      margin-right: 10px;
+    }
+    img.icon{
+      filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(80%) contrast(101%);
+    }
+  }
+
+  a.active {
+    background-color: ${basicBlueColour}22;
+  }
+
+  .rights{
+    margin-left: auto;
+    width: 30%;
+    text-align: end;
+  }
+`;
 
 export const ButtonRow = styled.section `
 display: flex;
@@ -192,7 +346,7 @@ export const FloatingButton = styled.button `
   border-radius: 1.5em;
   align-items: center;
   position: absolute;
-  bottom: 1em;
+  bottom: 40px;
   right: ${inputOffset};
   display: flex;
 
@@ -264,18 +418,6 @@ verticalAlign: top;
 span.message{
   margin: 0em ${inputOffset};
   line-height: 2em;
-}
-`;
-
-export const SearchSection = styled.section `
-width: -webkit-fill-available;
-input{
-  width: -webkit-fill-available;
-  border: none !important;
-  outline: none !important;
-}
-input:focus{
-  border: none !important;
 }
 `;
 
@@ -380,7 +522,7 @@ input[type=checkbox]{
 export const Input = styled.input `
 background-color: white !important;
 outline: none !important;
-border: 1px solid #d6d6d6;
+border: ${(props) => props.error ? "1px solid red" : "1px solid #d6d6d6"};
 width: ${(props) => props.width ? props.width : "auto"};
 padding-left: 0.4em;
 height: 2.5em !important;
@@ -545,20 +687,13 @@ export const LoadingScreen = styled.div`
 `;
 
 export const Popover = styled.div`
-position: absolute;
-border: 1px solid #DDD;
-top: 50px;
-width: auto;
-height: auto;
-background-color: white;
-padding: 0.6em;
-z-index: 99;
-
-@media all and (max-width: 799px), @media handheld  {
+  position: absolute;
+  border: 1px solid #DDD;
+  top: 50px;
+  width: auto;
+  height: auto;
+  background-color: white;
+  padding: 0.6em;
+  z-index: 99;
   right: calc(${inputOffset} + 45px);
-}
-@media all and (min-width: 800px){
-  right: calc(${contentOffset} + ${inputOffset} + 45px);
-}
-
 `;

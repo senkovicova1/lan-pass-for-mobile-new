@@ -9,9 +9,6 @@ import { useSelector } from 'react-redux';
 import {
   selectStyle
 } from '../../other/styles/selectStyles';
-import {
-  translations
-} from '../../other/translations.jsx';
 
 import {  HourglassIcon, RestoreIcon } from  "/imports/other/styles/icons";
 
