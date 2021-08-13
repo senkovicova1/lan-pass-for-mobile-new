@@ -8,6 +8,7 @@ import UserForm from './userForm';
 
 import {
   listAllPasswords,
+  listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
 export default function EditUserContainer( props ) {
@@ -19,7 +20,7 @@ export default function EditUserContainer( props ) {
   const user = useTracker( () => Meteor.user() );
 
   const editUser = ( name, surname, avatar ) => {
-    let data = {name, surname, avatar};
+    let data = {...user.profile, name, surname, avatar};
 
     Meteor.users.update(user._id, {
       $set: {

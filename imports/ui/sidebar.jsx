@@ -60,7 +60,6 @@ export default function Menu( props ) {
 }, [match.params.folderID, location.pathname,  myFolders]);
 
   const getRights = (folder) => {
-    console.log(folder);
     const userLevel = folder.users.find(u => u._id === userId).level;
     switch (userLevel) {
       case 0:
@@ -76,8 +75,6 @@ export default function Menu( props ) {
         return "R";
     }
   }
-
-  console.log(myActiveFolders);
 
   return (
     <Sidebar>

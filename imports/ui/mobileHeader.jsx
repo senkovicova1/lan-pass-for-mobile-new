@@ -9,6 +9,9 @@ import {
 } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
+import { useDispatch } from 'react-redux';
+import { setFolders } from '../redux/foldersSlice';
+
 import { SettingsIcon, BackIcon, MenuIcon, LogoutIcon, DeleteIcon, CloseIcon, SearchIcon, LeftArrowIcon, EyeIcon, MenuIcon2, UserIcon } from  "/imports/other/styles/icons";
 
 import Menu from './sidebar';
@@ -51,6 +54,8 @@ import {
 
 export default function MobileHeader( props ) {
 
+  const dispatch = useDispatch();
+
   const {
     match,
     location,
@@ -62,7 +67,10 @@ export default function MobileHeader( props ) {
   } = props;
 
   const currentUser = useTracker( () => Meteor.user() );
-  const logout = () => Meteor.logout();
+  const logout = () => {
+    dispatch(setFolders([]));
+    Meteor.logout();
+  }
 
   const folderID = match.params.folderID;
   const folders = useSelector((state) => state.folders.value);
@@ -296,6 +304,7 @@ export default function MobileHeader( props ) {
       {
         match.params.passwordID &&
         !location.pathname.includes("history") &&
+        !location.pathname.includes("edit") &&
         <LinkButton
           onClick={(e) => {
             e.preventDefault();

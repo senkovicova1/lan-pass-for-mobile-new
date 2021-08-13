@@ -93,7 +93,6 @@ export default function UserForm( props ) {
           onChange={(e) =>  {
             setSurname(e.target.value);
             if (e.target.value.length > 0){
-              console.log("a");
               setErrors(errors.filter(e => e !== "surname"));
             }
           }}

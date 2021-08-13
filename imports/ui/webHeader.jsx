@@ -9,6 +9,9 @@ import {
 } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
+import { useDispatch } from 'react-redux';
+import { setFolders } from '../redux/foldersSlice';
+
 import { SettingsIcon, MenuIcon, LogoutIcon, DeleteIcon, CloseIcon, SearchIcon, LeftArrowIcon, UserIcon, EyeIcon, MenuIcon2 } from  "/imports/other/styles/icons";
 
 import Menu from './sidebar';
@@ -51,6 +54,8 @@ import {
 
 export default function WebHeader( props ) {
 
+  const dispatch = useDispatch();
+
   const {
     match,
     location,
@@ -62,11 +67,14 @@ export default function WebHeader( props ) {
   } = props;
 
   const currentUser = useTracker( () => Meteor.user() );
-  const logout = () => Meteor.logout();
+
+  const logout = () => {
+    dispatch(setFolders([]));
+    Meteor.logout();
+  }
 
   const folderID = match.params.folderID;
   const folders = useSelector((state) => state.folders.value);
-
   const passwordID = match.params.passwordID;
   const passwords = useSelector((state) => state.passwords.value);
 
@@ -189,7 +197,6 @@ export default function WebHeader( props ) {
 
   const avatar = useMemo(() => {
     if (!currentUser || !currentUser.profile.avatar){
-      console.log("ab");
       return null;
     }
     return uint8ArrayToImg(currentUser.profile.avatar);
@@ -197,8 +204,6 @@ export default function WebHeader( props ) {
 
   const folderCanBeEdited = folders.find(folder => folder._id === folderID)?.users.find(user => user._id === currentUser._id).level === 0;
   const passwordCanBeEdited = passwordID ? folders.find(folder => folder._id === folderID)?.users.find(user => user._id === currentUser._id).level <= 0 : false;
-
-
 
   return (
     <PageHeader>
@@ -262,6 +267,7 @@ export default function WebHeader( props ) {
       {
         match.params.passwordID &&
         !location.pathname.includes("history") &&
+        !location.pathname.includes("edit") &&
         <LinkButton
           onClick={(e) => {
             e.preventDefault();

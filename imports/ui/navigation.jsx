@@ -23,6 +23,7 @@ import {
   useTracker
 } from 'meteor/react-meteor-data';
 
+import Reroute from './reroute';
 import Header from './header';
 import Login from './login';
 import FolderList from './folders/folderList';
@@ -65,8 +66,6 @@ export default function MainPage( props ) {
 
   const currentUser = useTracker( () => Meteor.user() );
 
-  console.log(currentUser);
-
   const userId = useMemo(() => {
     if (currentUser){
       return currentUser._id;
@@ -75,6 +74,7 @@ export default function MainPage( props ) {
   }, [currentUser]);
 
   const folders = useTracker( () => FoldersCollection.find( { users:  { $elemMatch: { _id: userId } } } ).fetch() );
+
   useEffect(() => {
     if (folders.length > 0){
       dispatch(setFolders(folders));
@@ -111,8 +111,25 @@ export default function MainPage( props ) {
   return (
     <div style={{height: "100vh"}}>
       <BrowserRouter>
+        <Route exact path={"/"} component={Reroute} />
+
         <Route
-          path={"/"}
+          path={[
+            "/",
+            login,
+            listAllPasswords,
+            addFolder,
+            editFolder,
+            listPasswordsInFolder,
+            deletedFolders,
+            editCurrentUser,
+            addPassword,
+            editPassword,
+            viewPassword,
+            passwordHistory,
+            viewPreviousPassword,
+            listDeletedPasswordsInFolder
+          ]}
           render={(props) => (
             <Header
               {...props}
@@ -146,7 +163,7 @@ export default function MainPage( props ) {
 
               <Route
                 exact
-                path={[listAllPasswords, listPasswordsInFolder]}
+                path={["/", listAllPasswords, listPasswordsInFolder]}
                 render={(props) => (
                   <PasswordList
                     {...props}

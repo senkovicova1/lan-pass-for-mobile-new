@@ -2,6 +2,7 @@ import React, {
   useState,
   useMemo,
   useEffect,
+  useCallback
 } from 'react';
 import Select from 'react-select';
 import moment from 'moment';
@@ -29,7 +30,8 @@ import {
   ButtonCol,
   LinkButton,
   GroupButton,
-  FloatingButton
+  FloatingButton,
+  DifficultyInput
 } from "../../other/styles/styledComponents";
 
 export default function PasswordView( props ) {
@@ -101,9 +103,59 @@ export default function PasswordView( props ) {
       }
   }
 
+
+  const passwordScore = useMemo(() => {
+    let score = 0;
+    if (!password || !password.password || password.password.length === 0)
+        return score;
+
+    let letters = {};
+    for (let i = 0; i < password.password.length; i++) {
+        letters[password.password[i]] = (letters[password.password[i]] || 0) + 1;
+        score += 5.0 / letters[password.password[i]];
+    }
+
+    let variations = {
+        digits: /\d/.test(password.password),
+        lower: /[a-z]/.test(password.password),
+        upper: /[A-Z]/.test(password.password),
+        nonWords: /\W/.test(password.password),
+    }
+
+    let variationCount = 0;
+    for (let check in variations) {
+        variationCount += (variations[check] == true) ? 1 : 0;
+    }
+    score += (variationCount - 1) * 10;
+
+    return parseInt(score);
+  }, [password]);
+
+
+  const scoreTranslation = useCallback(() => {
+    let result = {mark: "Very weak", colour: "#ff0053"};
+    if (passwordScore > 30){
+      result.mark = "Weak";
+      result.colour = "#ee6e8f";
+    }
+    if (passwordScore > 60){
+      result.mark = "Good";
+      result.colour = "#f4e531";
+    }
+    if (passwordScore > 80){
+      result.mark = "Strong";
+      result.colour = "#bbe147";
+    }
+      if (passwordScore > 100){
+          result.mark = "Very strong";
+          result.colour = "#0bb829";
+        }
+        return <span style={{color: result.colour}}>{result.mark}</span>
+  }, [passwordScore]);
+
   if (!password){
     return <div></div>;
-  }
+    }
 
   const usedPassword = passwords.find(pass =>{
     if (password.passwordId) {
@@ -180,14 +232,18 @@ export default function PasswordView( props ) {
       </section>
 
       <section>
-        <label htmlFor="password-quality">Password quality</label>
-          <ViewInput
-            type="number"
-            id="password-quality"
-            name="password-quality"
-              disabled={true}
-            value={password.quality ? password.quality : "Default"}
-           />
+        <label htmlFor="repeat-password">Password strength {scoreTranslation()}</label>
+
+        <DifficultyInput
+          block
+          type="range"
+          name="quality"
+          id="quality"
+          min={0}
+          max={110}
+          step={1}
+          value={passwordScore}
+          />
       </section>
 
       <section>

@@ -288,7 +288,10 @@ margin-top: 0em !important;
 button:not(last-of-type) {
   margin-bottom: 1.5em;
 }
+button:last-of-type {
+  margin-bottom: 0em;
 }
+
 `;
 
 export const LinkButton = styled.button `
@@ -417,7 +420,7 @@ verticalAlign: top;
 
 span.message{
   margin: 0em ${inputOffset};
-  line-height: 2em;
+  line-height: 3em;
 }
 `;
 
@@ -427,7 +430,7 @@ export const ItemContainer = styled.section `
   cursor: pointer;
 }
 
-padding: 0em ${inputOffset};
+margin: 0em ${inputOffset};
 height: 3em;
 display: flex;
 align-items: center;
@@ -516,9 +519,24 @@ input[type=checkbox]{
   section:last-of-type {
     margin: 0em !important;
   }
+
+}
+section.password>div.input-section{
+  display: flex;
+  input#password{
+    border-right: none !important;
+  }
+  button.icon{
+    border: 1px solid #d6d6d6 !important;
+    border-left: none !important;
+    background-color: white !important;
+  }
+  input#password:focus + button.icon {
+    border: 1px solid ${basicBlueColour} !important;
+    border-left: none !important;
+  }
 }
 `;
-
 export const Input = styled.input `
 background-color: white !important;
 outline: none !important;
@@ -630,7 +648,7 @@ export const PasswordContainer = styled.div`
   cursor: pointer;
 }
 
-padding: 0em ${inputOffset};
+margin: 0em ${inputOffset};
 height: 4em;
 display: flex;
 align-items: center;
@@ -638,7 +656,7 @@ align-items: center;
 div {
   display: inline-block;
     margin-right: auto;
-    padding: 10px 0.3em;
+    padding: 10px 0.6em;
     width: calc(100% - 6em);
     overflow-wrap: anywhere;
 }
@@ -696,4 +714,43 @@ export const Popover = styled.div`
   padding: 0.6em;
   z-index: 99;
   right: calc(${inputOffset} + 45px);
+`;
+
+export const DifficultyInput = styled.input`
+    background: linear-gradient(to left, #0bb829,#bbe147,#f4e531,#ee6e8f,#ff0053);
+    width: 100%;
+    border: none;
+    height: 1em;
+    outline: none;
+    transition: background 450ms ease-in;
+    -webkit-appearance: none;
+
+    ::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        -webkit-border-radius: 5px;
+        /*16x16px adjusted to be same as 14x14px on moz*/
+        height: 1em;
+        width: 1em;
+        border-radius: 5px;
+        background: white;
+        border: none;
+    }
+
+    ::-moz-range-thumb {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        -moz-border-radius: 5px;
+        height: 1em;
+        width: 1em;
+        background: white;
+        border: none;
+    }
+
+    ::-ms-thumb {
+        height: 1em;
+        width: 1em;
+        background: white;
+        border: none;
+    }
 `;

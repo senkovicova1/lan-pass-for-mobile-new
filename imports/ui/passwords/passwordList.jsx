@@ -91,6 +91,19 @@ export default function PasswordList( props ) {
     }
   };
 
+  const leaveFolder = ( ) => {
+    if ( folder && window.confirm( "Are you sure you want to remove yourself from this folder?" ) ) {
+        let data = {
+          users: folder.users.filter(u => u._id !== userId),
+        };
+        FoldersCollection.update( folderID, {
+          $set: {
+            ...data
+          }
+        } );
+        history.push(`${listPasswordsInFolderStart}all`);
+    }
+  };
 
     const searchedPasswords = useMemo(() => {
       return passwords.filter(password => password.title.toLowerCase().includes(search.toLowerCase()) || password.username.toLowerCase().includes(search.toLowerCase()));
@@ -98,6 +111,10 @@ export default function PasswordList( props ) {
 
     const folderCanBeDeleted = useMemo(() => {
       return folder?.users?.find((user) => user._id === userId).level === 0;
+    }, [folder]);
+
+    const userIsNotAdmin = useMemo(() => {
+      return folder?.users?.find((user) => user._id === userId).level !== 0;
     }, [folder]);
 
     const canAddPasswords = useMemo(() => {
@@ -117,6 +134,7 @@ export default function PasswordList( props ) {
       return <span> {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
     }
 
+
   return (
     <List>
       {
@@ -126,7 +144,7 @@ export default function PasswordList( props ) {
 
       {
         searchedPasswords.map((password) => (
-          <PasswordContainer style={listNotInFolder ? { height: '5.5em'} : {}} key={password._id} onClick={() => history.push(`${viewPasswordStart}${listNotInFolder ? password.folder : folderID}/${password._id}`)}>
+          <PasswordContainer style={listNotInFolder ? { height: '5.5em', borderBottom: "1px solid #DDD"} : {}} key={password._id} onClick={() => history.push(`${viewPasswordStart}${listNotInFolder ? password.folder : folderID}/${password._id}`)}>
             <img
               src={LockIcon}
               alt=""
@@ -147,7 +165,7 @@ export default function PasswordList( props ) {
                     alt=""
                     className="icon"
                     />
-                  {folders.find(f => f._id === password.folder).name}
+                  {folders.length > 0 ? folders.find(f => f._id === password.folder).name : ""}
                 </label>
               }
             </div>
@@ -208,6 +226,20 @@ export default function PasswordList( props ) {
               alt="Delete icon not found"
               />
             Deleted passwords
+          </span>
+        </ItemContainer>
+      }
+
+      {
+        !listNotInFolder &&
+        active &&
+        userIsNotAdmin &&
+        <ItemContainer key={"leave"}>
+          <span
+            style={{paddingLeft: "0px", color: "red"}}
+            onClick={() => leaveFolder()}
+            >
+            LEAVE THIS FOLDER
           </span>
         </ItemContainer>
       }
