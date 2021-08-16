@@ -5,7 +5,7 @@ import React, {
 export default function Reroute( props ) {
 
   useEffect(() => {
-    if (props.match.path === "/"){
+    if (props.match.path === "/" || props.match.path === "/folders"){
       props.history.push("/folders/list/all");
     }
   }, [props.match.path]);
