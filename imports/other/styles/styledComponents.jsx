@@ -347,7 +347,14 @@ export const FloatingButton = styled.button `
   align-items: center;
   position: absolute;
   bottom: 40px;
+  ${(props) => props.left &&
+  `
+  left: ${inputOffset};
+  `};
+  ${(props) => !props.left &&
+  `
   right: ${inputOffset};
+  `};
   display: flex;
 
   span{

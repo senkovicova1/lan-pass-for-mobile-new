@@ -20,7 +20,7 @@ import {
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
-import {  RestoreIcon, CopyIcon, PencilIcon } from  "/imports/other/styles/icons";
+import {  RestoreIcon, CopyIcon, PencilIcon, BackIcon } from  "/imports/other/styles/icons";
 
 import {
   Form,
@@ -180,6 +180,7 @@ export default function PasswordView( props ) {
       </section>
 
       <section>
+<<<<<<< Updated upstream
         <label htmlFor="password-quality">Password quality</label>
           <ViewInput
             type="number"
@@ -188,6 +189,23 @@ export default function PasswordView( props ) {
               disabled={true}
             value={password.quality ? password.quality : "Default"}
            />
+=======
+        <div style={{display: "flex", justifyContent: "space-between"}}>
+        <label htmlFor="repeat-password">Password strength </label>
+          {scoreTranslation()}
+        </div>
+        <DifficultyInput
+          block
+          type="range"
+          name="quality"
+          id="quality"
+          readOnly
+          min={0}
+          max={110}
+          step={1}
+          value={passwordScore}
+          />
+>>>>>>> Stashed changes
       </section>
 
       <section>
@@ -212,8 +230,8 @@ export default function PasswordView( props ) {
 
       <section>
         <label htmlFor="expires">Expires</label>
+        <div style={{alignItems: "center"}}>
           <ViewInput
-            style={{marginBottom: "0.3em"}}
               disabled={true}
             type="checkbox"
             id="expires"
@@ -228,6 +246,14 @@ export default function PasswordView( props ) {
            value={password.expireDate ? moment.unix(password.expireDate).add((new Date).getTimezoneOffset(), 'minutes').format("yyyy-MM-DD hh:mm").replace(" ", "T") : ""}
            />
        }
+       {!password.expires &&
+       <ViewInput
+         disabled={true}
+         type="text"
+         value={"No expiration date"}
+         />
+     }
+   </div>
       </section>
 
       <section>
@@ -289,6 +315,18 @@ export default function PasswordView( props ) {
             />
         </FloatingButton>
       }
+
+        <FloatingButton
+          left
+          onClick={(e) => {e.preventDefault(); history.push(`/folders/list/${folderID}`);}}
+          >
+            <img
+              style={{marginRight: "2px"}}
+            src={BackIcon}
+            alt=""
+            className="icon"
+            />
+        </FloatingButton>
 
       {
         password.deletedDate &&

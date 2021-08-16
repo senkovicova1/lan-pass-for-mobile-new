@@ -148,8 +148,8 @@ export default function PasswordForm( props ) {
 
       <section>
         <label htmlFor="expires">Expires</label>
+        <div style={{alignItems: "center"}}>
           <Input
-            style={{marginBottom: "0.3em"}}
             type="checkbox"
             id="expires"
             name="expires"
@@ -164,6 +164,7 @@ export default function PasswordForm( props ) {
            min={moment.unix().add((new Date).getTimezoneOffset(), 'minutes').format("yyyy-MM-DD hh:mm").replace(" ", "T")}
            onChange={(e) => setExpireDate(e.target.valueAsNumber/1000)}
            />
+       </div>
       </section>
 
       <ButtonCol>
