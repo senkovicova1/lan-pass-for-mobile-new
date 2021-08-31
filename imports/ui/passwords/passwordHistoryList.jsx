@@ -10,7 +10,7 @@ import {
   selectStyle
 } from '../../other/styles/selectStyles';
 
-import {  HourglassIcon, RestoreIcon } from  "/imports/other/styles/icons";
+import {  HourglassIcon, RestoreIcon, BackIcon } from  "/imports/other/styles/icons";
 
 import {
   useTracker
@@ -21,7 +21,8 @@ import {
 import {
   List,
   PasswordContainer,
-  LinkButton
+  LinkButton,
+  FloatingButton
 } from "/imports/other/styles/styledComponents";
 import {
   viewPasswordStart,
@@ -116,7 +117,7 @@ export default function PasswordHistoryList( props ) {
                 {`Version from ${moment.unix(password.updatedDate).format("D.M.YYYY HH:mm:ss")}`}
               </label>
               <label className="username">
-                {`Changed password ${password.editedBy?.label}`}
+                {`Changed password ${password.editedBy ? password.editedBy.label : ""}`}
               </label>
             </div>
             {
@@ -133,6 +134,21 @@ export default function PasswordHistoryList( props ) {
           </PasswordContainer>
             ))
       }
+
+      <FloatingButton
+        left
+        onClick={(e) => {
+          e.preventDefault();
+          history.goBack();
+        }}
+        >
+          <img
+            style={{marginRight: "2px"}}
+          src={BackIcon}
+          alt=""
+          className="icon"
+          />
+      </FloatingButton>
 
     </List>
   );

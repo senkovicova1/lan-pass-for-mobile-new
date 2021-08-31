@@ -144,7 +144,7 @@ export default function PasswordList( props ) {
 
       {
         searchedPasswords.map((password) => (
-          <PasswordContainer style={listNotInFolder ? { height: '5.5em', borderBottom: "1px solid #DDD"} : {}} key={password._id} onClick={() => history.push(`${viewPasswordStart}${listNotInFolder ? password.folder : folderID}/${password._id}`)}>
+          <PasswordContainer style={listNotInFolder ? {height: "6em"} : {}} key={password._id} onClick={() => history.push(`${viewPasswordStart}${listNotInFolder ? password.folder : folderID}/${password._id}`)}>
             <img
               src={LockIcon}
               alt=""
@@ -155,7 +155,7 @@ export default function PasswordList( props ) {
                 {yellowMatch(password.title)}
               </label>
               <label className="username">
-                {yellowMatch(password.username)}
+                {password.username ? yellowMatch(password.username) : "No username"}
               </label>
               {
                 listNotInFolder &&

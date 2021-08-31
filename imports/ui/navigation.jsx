@@ -122,12 +122,12 @@ export default function MainPage( props ) {
             editFolder,
             listPasswordsInFolder,
             deletedFolders,
+            viewPreviousPassword,
             editCurrentUser,
             addPassword,
             editPassword,
             viewPassword,
             passwordHistory,
-            viewPreviousPassword,
             listDeletedPasswordsInFolder
           ]}
           render={(props) => (

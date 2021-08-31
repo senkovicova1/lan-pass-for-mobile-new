@@ -21,9 +21,10 @@ import {
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
-import {  RestoreIcon, CopyIcon, PencilIcon, BackIcon } from  "/imports/other/styles/icons";
+import {  RestoreIcon, CopyIcon, PencilIcon, BackIcon, HourglassIcon } from  "/imports/other/styles/icons";
 
 import {
+  PasswordContainer,
   Form,
   ViewInput,
   ViewTextarea,
@@ -45,6 +46,8 @@ export default function PasswordView( props ) {
 
   const userId = Meteor.userId();
   const passwordID = match.params.passwordID;
+
+  const dbUsers = useSelector((state) => state.users.value);
 
   const passwords = useSelector((state) => state.passwords.value);
   const password = passwords.find(p => p._id === passwordID);
@@ -167,8 +170,42 @@ export default function PasswordView( props ) {
   const passwordCanBeEdited = folder.users.find(user => user._id === userId).level <= 1 && password.version === 0;
   const passwordVersionCanBeRestored = folder.users.find(user => user._id === userId).level <= 1 && password.version > 0;
 
+  const editedBy = password.editedBy ? dbUsers.find(user => user._id === password.editedBy) : {};
+
   return (
     <Form>
+
+      {
+        password.version > 0 &&
+        <PasswordContainer style={{margin: "0px", marginBottom: "2em"}}>
+          <img
+            src={HourglassIcon}
+            alt=""
+            className="icon"
+            />
+          <div>
+            <label className="title">
+              {`Version from ${moment.unix(password.updatedDate).format("D.M.YYYY HH:mm:ss")}`}
+            </label>
+            <label className="username">
+              {`Changed password ${editedBy ? editedBy.label : ""}`}
+            </label>
+          </div>
+
+
+          {
+            !usedPassword.deletedDate &&
+            passwordVersionCanBeRestored &&
+            <LinkButton onClick={(e) => {e.preventDefault(); restorePasswordVersion();}}>
+              <img
+              src={RestoreIcon}
+              alt=""
+              className="icon"
+              />
+          </LinkButton>
+        }
+        </PasswordContainer>
+      }
 
       <section>
         <label htmlFor="title">Title</label>
@@ -342,24 +379,16 @@ export default function PasswordView( props ) {
         </FloatingButton>
       }
 
-      {
-        password.version > 0 &&
-        !usedPassword.deletedDate &&
-        passwordVersionCanBeRestored &&
-        <FloatingButton
-          onClick={(e) => {e.preventDefault(); restorePasswordVersion();}}
-          >
-            <img
-            src={RestoreIcon}
-            alt=""
-            className="icon"
-            />
-        </FloatingButton>
-      }
-
         <FloatingButton
           left
-          onClick={(e) => {e.preventDefault(); history.push(`/folders/list/${folderID}`);}}
+          onClick={(e) => {
+            e.preventDefault();
+            if (location.pathname.includes("version")){
+              history.goBack();
+            } else {
+              history.push(`/folders/list/${folderID}`);
+            }
+          }}
           >
             <img
               style={{marginRight: "2px"}}

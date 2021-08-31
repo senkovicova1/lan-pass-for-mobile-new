@@ -7,6 +7,7 @@ import React, {
 import {
   Link
 } from 'react-router-dom';
+import moment from 'moment';
 import { useSelector } from 'react-redux';
 
 import { useDispatch } from 'react-redux';
@@ -77,6 +78,7 @@ export default function WebHeader( props ) {
   const folders = useSelector((state) => state.folders.value);
   const passwordID = match.params.passwordID;
   const passwords = useSelector((state) => state.passwords.value);
+  const password = passwords.find(p => p._id === passwordID);
 
   const [ openSidebar, setOpenSidebar ] = useState(true);
   const [ openSearch, setOpenSearch ] = useState(true);
@@ -94,13 +96,6 @@ export default function WebHeader( props ) {
         setTitle("LanPass");
       } else if (location.pathname.includes("history")) {
         setTitle("Password history");
-      } else if (location.pathname.includes("version")) {
-        let password = passwords.find(password => password._id === passwordID);
-        if (password) {
-          setTitle(`Version from ${moment.unix(password.updatedDate).format("D.M.YYYY HH:mm:ss")}`);
-        } else {
-          setTitle("LanPass");
-        }
       } else {
         let folder = folders.find(folder => folder._id === folderID);
         if (folder) {
@@ -203,7 +198,7 @@ export default function WebHeader( props ) {
   }, [currentUser]);
 
   const folderCanBeEdited = folders.find(folder => folder._id === folderID)?.users.find(user => user._id === currentUser._id).level === 0;
-  const passwordCanBeEdited = passwordID ? folders.find(folder => folder._id === folderID)?.users.find(user => user._id === currentUser._id).level <= 0 : false;
+  const passwordCanBeEdited = passwordID ?  folders.find(folder => folder._id === folderID)?.users.find(user => user._id === currentUser._id).level <= 0 : false;
 
   return (
     <PageHeader>
@@ -280,6 +275,7 @@ export default function WebHeader( props ) {
       {
         match.params.passwordID &&
         !location.pathname.includes("history") &&
+        password.version === 0 &&
         passwordCanBeEdited &&
         <LinkButton
           onClick={(e) => {
@@ -294,6 +290,7 @@ export default function WebHeader( props ) {
         match.params.passwordID &&
         !location.pathname.includes("history") &&
         passwordCanBeEdited &&
+        password.version === 0 &&
         popoverOpen &&
         <Popover>
           <LinkButton

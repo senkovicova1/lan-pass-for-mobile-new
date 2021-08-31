@@ -53,7 +53,11 @@ export default function Menu( props ) {
       setSelectedFolder({label: "Deleted folders", value: "deleted"});
     } else if (myFolders && myFolders.length > 0){
       const newFolder = myFolders.find(folder => folder._id === match.params.folderID);
-      setSelectedFolder(newFolder);
+      if (!newFolder){
+        setSelectedFolder({label: "Deleted folders", value: "deleted"});
+      } else {
+        setSelectedFolder(newFolder);
+      }
   } else {
     setSelectedFolder({label: "All passwords", value: "all"});
   }
@@ -84,6 +88,7 @@ export default function Menu( props ) {
             return (
               <NavLink
                 key={folder.value}
+                className={selectedFolder.value === folder.value ? "active" : ""}
                 to={deletedFolders}
                 onClick={() => {
                   if (/Mobi|Android/i.test(navigator.userAgent)) {
@@ -103,6 +108,7 @@ export default function Menu( props ) {
           return (
             <NavLink
               key={folder.value}
+              className={selectedFolder.value === folder.value ? "active" : ""}
               to={`${listPasswordsInFolderStart}${folder.value}`}
               onClick={() => {
                 if (/Mobi|Android/i.test(navigator.userAgent)) {

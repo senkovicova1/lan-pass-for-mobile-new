@@ -647,13 +647,12 @@ h1 {
 `;
 
 export const PasswordContainer = styled.div`
-&:first-of-type{
-  margin-top: 0.5em;
-}
-
 &:hover, *:hover{
   cursor: pointer;
 }
+
+ height: 5.5em;
+ border-bottom: 1px solid #DDD;
 
 margin: 0em ${inputOffset};
 height: 4em;
