@@ -49,12 +49,16 @@ export default function PasswordForm( props ) {
   const user = useTracker( () => Meteor.user() );
 
   const folderID = match.params.folderID;
-  const folder = useSelector((state) => state.folders.value).find(f => f._id === folderID);
+  const allFolders =  useSelector((state) => state.folders.value);
+  const folders = useMemo(() => {
+    return allFolders.filter(folder => !folder.deletedDate);
+  }, [allFolders]);
 
   const passwordID = match.params.passwordID;
   const password = useSelector((state) => state.passwords.value).find(p => p._id === passwordID);
 
   const [ title, setTitle ] = useState( "" );
+  const [ folder, setFolder ] = useState( null );
   const [ username, setUsername ] = useState( "" );
   const [ password1, setPassword1 ] = useState( "" );
   const [ password2, setPassword2 ] = useState( "" );
@@ -68,14 +72,9 @@ export default function PasswordForm( props ) {
   const toggleRevealPassword = () => { setRevealPassword(!revealPassword) };
 
   useEffect( () => {
-    if ( !(folder?.users.find(user => user._id === userId)?.level <= 1) ){
-      history.goBack();
-    }
-  }, [ userId, folder ] );
-
-  useEffect( () => {
-    if ( password ) {
+    if ( password) {
       setTitle( password.title );
+      setFolder({...folders.find(f => f._id === password.folder)});
       setUsername( password.username );
       setPassword1( password.password );
       setPassword2( password.password );
@@ -85,6 +84,7 @@ export default function PasswordForm( props ) {
       setExpireDate( password.expireDate );
     } else {
       setTitle( "" );
+      setFolder({...folders.find(f => f._id === folderID)});
       setUsername( "" );
       setPassword1( "" );
       setPassword2( "" );
@@ -93,7 +93,7 @@ export default function PasswordForm( props ) {
       setExpires( false );
       setExpireDate( "" );
     }
-  }, [ password ] );
+  }, [ password, folders, folderID ] );
 
   const generatePassword = useCallback(() => {
     let defaultSettings = {
@@ -185,6 +185,18 @@ export default function PasswordForm( props ) {
           name="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          />
+      </section>
+
+      <section>
+        <label htmlFor="folder">Folder</label>
+        <Select
+          id="folder"
+          name="folder"
+          styles={selectStyle}
+          value={folder}
+          onChange={(e) => setFolder(e)}
+          options={folders}
           />
       </section>
 
@@ -295,11 +307,17 @@ export default function PasswordForm( props ) {
 
       <ButtonCol>
         <FullButton colour="grey" onClick={(e) => {e.preventDefault(); history.goBack()}}>Cancel</FullButton>
+        {
+          folder &&
+          folder.users &&
+          folder.users.find(user => user._id === userId) &&
+          folder.users.find(user => user._id === userId).level<= 1 &&
         <FullButton
           colour=""
           disabled={title.length === 0 || password1 !== password2}
           onClick={(e) => {e.preventDefault(); onSubmit(
             title,
+            folder.value,
             username,
             password1,
             quality,
@@ -313,6 +331,7 @@ export default function PasswordForm( props ) {
           >
           Save
         </FullButton>
+      }
       </ButtonCol>
 
     </Form>

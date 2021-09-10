@@ -662,7 +662,7 @@ align-items: center;
 div {
   display: inline-block;
     margin-right: auto;
-    padding: 10px 0.6em;
+    padding: 10px 0em;
     width: calc(100% - 6em);
     overflow-wrap: anywhere;
 }

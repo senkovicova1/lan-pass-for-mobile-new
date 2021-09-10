@@ -46,7 +46,7 @@ export default function LoginForm( props ) {
           setShowLoading(false);
         }
       });
-    history.push(`${listPasswordsInFolderStart}all`);
+    history.push("");
   };
 
   const handleForgotPassword = () => {

@@ -39,7 +39,7 @@ export default function EditFolderContainer( props ) {
         const userIsAdmin = folder.users.find(user => user._id === userId).level === 0;
 
         if ( !userIsAdmin ) {
-          history.push(`${listPasswordsInFolderStart}all`);
+          history.goBack();
         }
       }
 
@@ -67,7 +67,7 @@ export default function EditFolderContainer( props ) {
           ...data
         }
       } );
-      props.history.push(`${listPasswordsInFolderStart}all`);
+      props.history.goBack();
     }
   }
 

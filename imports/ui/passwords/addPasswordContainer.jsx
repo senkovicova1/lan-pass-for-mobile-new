@@ -38,7 +38,7 @@ export default function AddPasswordContainer( props ) {
 
   }, [ userId, folder ] );
 
-  const addNewPassword = ( title, username, password, quality, note, expires, expireDate, createdDate ) => {
+  const addNewPassword = ( title, folder, username, password, quality, note, expires, expireDate, createdDate ) => {
     PasswordsCollection.insert( {
       title,
       username,
@@ -47,7 +47,7 @@ export default function AddPasswordContainer( props ) {
       note,
       expires,
       expireDate,
-      folder: match.params.folderID,
+      folder,
       createdDate,
       version: 0,
       updatedDate: createdDate,

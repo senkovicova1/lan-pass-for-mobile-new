@@ -45,7 +45,6 @@ import {
 } from '../other/styles/styledComponents';
 import {
   login,
-  listAllPasswords,
   addFolder,
   editFolder,
   listPasswordsInFolder,
@@ -77,7 +76,7 @@ export default function MainPage( props ) {
 
   useEffect(() => {
     if (folders.length > 0){
-      dispatch(setFolders(folders));
+      dispatch(setFolders(folders.map(folder => ({...folder, label: folder.name, value: folder._id})).sort((f1, f2) => f1.name > f2.name ? 1 : -1)));
     }
   }, [folders]);
 
@@ -111,13 +110,13 @@ export default function MainPage( props ) {
   return (
     <div style={{height: "100vh"}}>
       <BrowserRouter>
-        <Route exact path={"/"} component={Reroute} />
+        <Route path={"/"} component={Reroute} />
 
         <Route
+          exact
           path={[
             "/",
             login,
-            listAllPasswords,
             addFolder,
             editFolder,
             listPasswordsInFolder,
@@ -163,7 +162,7 @@ export default function MainPage( props ) {
 
               <Route
                 exact
-                path={["/", listAllPasswords, listPasswordsInFolder]}
+                path={["/", listPasswordsInFolder]}
                 render={(props) => (
                   <PasswordList
                     {...props}

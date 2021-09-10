@@ -229,6 +229,18 @@ export default function PasswordView( props ) {
       </section>
 
       <section>
+        <label htmlFor="folder">Folder</label>
+          <ViewInput
+            type="text"
+            id="folder"
+            name="folder"
+            placeholder="folder"
+            disabled={true}
+            value={folder.name ? folder.name : "Untitled"}
+            />
+      </section>
+
+      <section>
         <label htmlFor="username">Username</label>
         <div>
          <ViewInput

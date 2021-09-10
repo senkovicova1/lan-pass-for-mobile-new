@@ -225,7 +225,7 @@ export default function MobileHeader( props ) {
         }
         {
           !openSearch &&
-          <h1 onClick={(e) => history.push(`${listPasswordsInFolderStart}all`)}>{title}</h1>
+          <h1>{title}</h1>
         }
 
       {

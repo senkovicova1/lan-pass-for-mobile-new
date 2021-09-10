@@ -27,11 +27,11 @@ export default function EditUserContainer( props ) {
         profile: data
       }
     });
-    history.push(`${listPasswordsInFolderStart}all`);
+    history.push("");
   };
 
 
   return (
-        <UserForm {...user} onSubmit={editUser} onCancel={() => props.history.push(`${listPasswordsInFolderStart}all`)}/>
+        <UserForm {...user} onSubmit={editUser} onCancel={() => props.history.push(``)}/>
   );
 };

@@ -10,7 +10,7 @@ import moment from 'moment';
 
 import { useSelector } from 'react-redux';
 
-import { ListIcon, FolderIcon, DeleteIcon } from  "/imports/other/styles/icons";
+import { FolderIcon, DeleteIcon, PlusIcon } from  "/imports/other/styles/icons";
 
 import {
   useTracker
@@ -36,31 +36,29 @@ export default function Menu( props ) {
   const user = useTracker( () => Meteor.user() );
   const folders = useSelector((state) => state.folders.value);
 
-  const [ selectedFolder, setSelectedFolder ] = useState({label: "All passwords", value: "all"});
+  const [ selectedFolder, setSelectedFolder ] = useState({});
 
   const myFolders = useMemo(() => {
     return folders.filter(folder => !folder.deletedDate).map(folder => ({...folder, label: folder.name, value: folder._id}));
   }, [userId, folders]);
 
   const myActiveFolders = useMemo(() => {
-    return [{label: "All passwords", value: "all"}, ...myFolders.filter(folder => !folder.deleted), {label: "Deleted folders", value: "deleted"}];
+    return [...myFolders.filter(folder => !folder.deleted), {label: "Deleted folders", value: "deleted"}];
   }, [myFolders]);
 
   useEffect(() => {
-    if (!match.params.folderID || match.params.folderID === "all"){
-      setSelectedFolder({label: "All passwords", value: "all"});
-    } else if (location.pathname == deletedFolders){
+    if (location.pathname == deletedFolders){
       setSelectedFolder({label: "Deleted folders", value: "deleted"});
-    } else if (myFolders && myFolders.length > 0){
+    } else if (match.params.folderID && myFolders && myFolders.length > 0){
       const newFolder = myFolders.find(folder => folder._id === match.params.folderID);
       if (!newFolder){
         setSelectedFolder({label: "Deleted folders", value: "deleted"});
       } else {
         setSelectedFolder(newFolder);
       }
-  } else {
-    setSelectedFolder({label: "All passwords", value: "all"});
-  }
+    } else {
+      setSelectedFolder({});
+    }
 }, [match.params.folderID, location.pathname,  myFolders]);
 
   const getRights = (folder) => {
@@ -84,27 +82,7 @@ export default function Menu( props ) {
     <Sidebar>
       {
         myActiveFolders.map(folder => {
-          if (folder.value === "deleted"){
-            return (
-              <NavLink
-                key={folder.value}
-                className={selectedFolder.value === folder.value ? "active" : ""}
-                to={deletedFolders}
-                onClick={() => {
-                  if (/Mobi|Android/i.test(navigator.userAgent)) {
-                    closeSelf();
-                  }
-                }}
-                >
-                <img
-                  className="icon"
-                  src={DeleteIcon}
-                  alt=""
-                  />
-                {folder.label}
-              </NavLink>
-            );
-          }
+          if (folder.value !== "deleted"){
           return (
             <NavLink
               key={folder.value}
@@ -116,32 +94,57 @@ export default function Menu( props ) {
                 }
               }}
               >
-              {
-                folder.value === "all" &&
-                <img
-                  className="icon"
-                  src={ListIcon}
-                  alt="List icon not found"
-                  />
-              }
-              {
-                folder.value !== "all" &&
                 <img
                   className="icon"
                   src={FolderIcon}
                   alt="Folder icon not found"
                   />
-              }
               <span>{folder.label}</span>
 
-                {
-                  folder.value !== "all" &&
+
               <span className="rights">{getRights(folder)}</span>
-              }
+              
             </NavLink>
           );
+        }
         })
       }
+
+      <NavLink
+        key={"add-folder"}
+        to="/folders/add"
+        onClick={() => {
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            closeSelf();
+          }
+        }}
+        >
+        <img
+          className="icon"
+          src={PlusIcon}
+          alt="Plus icon not found"
+          />
+        Folder
+      </NavLink>
+
+      <NavLink
+        key={"del"}
+        className={selectedFolder.value === "deleted" ? "active" : ""}
+        to={deletedFolders}
+        onClick={() => {
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            closeSelf();
+          }
+        }}
+        >
+        <img
+          className="icon"
+          src={DeleteIcon}
+          alt=""
+          />
+        Deleted
+      </NavLink>
+
     </Sidebar>
   );
 };

@@ -34,17 +34,18 @@ export default function EditPasswordContainer( props ) {
 
   }, [ userId, folder ] );
 
-  const editPassword = ( title, username, password, quality, note, expires, expireDate, createdDate, updatedDate, passwordId ) => {
+  const editPassword = ( title, folder, username, password, quality, note, expires, expireDate, createdDate, updatedDate, passwordId ) => {
 
       PasswordsCollection.insert( {
         title,
+        folder,
         username,
         password,
         quality,
         note,
         expires,
         expireDate,
-        folder: match.params.folderID,
+        folder,
         createdDate,
         version: 0,
         updatedDate,
@@ -53,7 +54,7 @@ export default function EditPasswordContainer( props ) {
         if (error){
           console.log(console.error());
         } else {
-          history.push(`/folders/${folderID}/${_id}`);
+          history.push(`/folders/${folder}/${_id}`);
         }
       });
 

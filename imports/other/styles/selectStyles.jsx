@@ -69,7 +69,16 @@ export const selectStyle = {
   menu: base => ( {
     ...base,
     zIndex: 50,
+    display: "block !important",
+    flexDirection: "column",
   } ),
+  menuList: base => ( {
+    ...base,
+    display: "block !important",
+  } ),
+  option: (provided, state) => ({
+    ...provided,
+  }),
 };
 
 export const invisibleSelectStyle = {

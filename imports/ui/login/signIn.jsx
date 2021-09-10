@@ -27,7 +27,7 @@ export default function SignInForm( props ) {
     setShowLoading(true);
     setErrorMessage("");
     createUser( name, surname, avatar, email, password );
-    history.push(`${listPasswordsInFolderStart}all`);
+    history.push("");
   };
 
   const createUser = ( name, surname, avatar, email, password ) => {

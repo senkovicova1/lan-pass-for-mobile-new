@@ -20,7 +20,7 @@ export default function AddFolderContainer( props ) {
   }
 
   const cancel = () => {
-    props.history.push(`${listPasswordsInFolderStart}all`);
+    props.history.push(``);
   }
 
   return (

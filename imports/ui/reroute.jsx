@@ -1,14 +1,38 @@
 import React, {
-  useEffect
+  useEffect,
+  useMemo
 } from 'react';
+
+import { useSelector } from 'react-redux';
+
+import {
+  listPasswordsInFolderStart
+} from "/imports/other/navigationLinks";
 
 export default function Reroute( props ) {
 
+  const {match, history} = props;
+  const {folderID} = match.params;
+
+  const folders = useSelector((state) => state.folders.value);
+
+  const myFolders = useMemo(() => {
+    return folders.filter(folder => !folder.deletedDate).map(folder => ({...folder, label: folder.name, value: folder._id}));
+  }, [folders]);
+
   useEffect(() => {
-    if (props.match.path === "/" || props.match.path === "/folders"){
-      props.history.push("/folders/list/all");
+    if (match.path === "/" || match.path === "/folders"){
+      if (match.params.folderID && myFolders && myFolders.length > 0){
+        const newFolder = myFolders.find(folder => folder._id === match.params.folderID);
+          history.push(`/folders/list/${newFolder._id}`);
+      } else if (myFolders.length > 0){
+        const newFolder = myFolders[0];
+          history.push(`/folders/list/${newFolder._id}`);
+      }  else {
+        history.push(`/folders/add`);
+      }
     }
-  }, [props.match.path]);
+  }, [match.path, match.params.folderID, myFolders ]);
 
   return (<div style={{display: "none"}}></div>);
 };

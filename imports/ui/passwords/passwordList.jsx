@@ -10,7 +10,7 @@ import {
   selectStyle
 } from '../../other/styles/selectStyles';
 
-import { DeleteIcon, PlusIcon, LockIcon, RestoreIcon, FolderIcon } from  "/imports/other/styles/icons";
+import { DeleteIcon, PlusIcon, RestoreIcon, FolderIcon } from  "/imports/other/styles/icons";
 
 import {
   useTracker
@@ -57,10 +57,8 @@ export default function PasswordList( props ) {
       return {};
     }, [folders, folderID]);
 
-  const listNotInFolder = folderID === "all" || match.path === "/";
-
   const allPasswords =  useSelector((state) => state.passwords.value);
-  const passwords = allPasswords.filter(password => (listNotInFolder ||  password.folder === folderID) && password.version === 0 && ((active && !password.deletedDate) || (!active && password.deletedDate) ));
+  const passwords = allPasswords.filter(password => password.folder === folderID && password.version === 0 && ((active && !password.deletedDate) || (!active && password.deletedDate) ));
 
   const restoreFolder = ( ) => {
     if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
@@ -72,7 +70,7 @@ export default function PasswordList( props ) {
           ...data
         }
       } );
-      history.push(`${listPasswordsInFolderStart}all`);
+      history.push(`${listPasswordsInFolderStart}folderID`);
     }
   };
 
@@ -87,7 +85,7 @@ export default function PasswordList( props ) {
          _id: pass._id
          } );
         });
-        history.push(`${listPasswordsInFolderStart}all`);
+        history.goBack();
     }
   };
 
@@ -101,7 +99,7 @@ export default function PasswordList( props ) {
             ...data
           }
         } );
-        history.push(`${listPasswordsInFolderStart}all`);
+        history.push(``);
     }
   };
 
@@ -121,7 +119,7 @@ export default function PasswordList( props ) {
       return folder?.users?.find((user) => user._id === userId).level <= 1;
     }, [folder]);
 
-    if (!listNotInFolder && !folder){
+    if (!folder){
       return (<div></div>)
     }
 
@@ -144,12 +142,7 @@ export default function PasswordList( props ) {
 
       {
         searchedPasswords.map((password) => (
-          <PasswordContainer style={listNotInFolder ? {height: "6em"} : {}} key={password._id} onClick={() => history.push(`${viewPasswordStart}${listNotInFolder ? password.folder : folderID}/${password._id}`)}>
-            <img
-              src={LockIcon}
-              alt=""
-              className="icon"
-              />
+          <PasswordContainer key={password._id} onClick={() => history.push(`${viewPasswordStart}${folderID}/${password._id}`)}>
             <div>
               <label className="title">
                 {yellowMatch(password.title)}
@@ -157,24 +150,12 @@ export default function PasswordList( props ) {
               <label className="username">
                 {password.username ? yellowMatch(password.username) : "No username"}
               </label>
-              {
-                listNotInFolder &&
-                <label className="username">
-                  <img
-                    src={FolderIcon}
-                    alt=""
-                    className="icon"
-                    />
-                  {folders.length > 0 ? folders.find(f => f._id === password.folder).name : ""}
-                </label>
-              }
             </div>
           </PasswordContainer>
             ))
       }
 
       {
-        !listNotInFolder &&
         active &&
         match.params.folderID &&
         !folder.deletedDate &&
@@ -188,32 +169,15 @@ export default function PasswordList( props ) {
             alt="Plus icon not found"
             />
 
+          {!/Mobi|Android/i.test(navigator.userAgent) &&
           <span>
           Password
           </span>
+        }
         </FloatingButton>
       }
 
       {
-        listNotInFolder &&
-        active &&
-        <FloatingButton
-          onClick={() => history.push(`${addFolder}`)}
-          >
-          <img
-            className="icon"
-            src={PlusIcon}
-            alt="Plus icon not found"
-            />
-
-          <span>
-          Folder
-          </span>
-        </FloatingButton>
-      }
-
-      {
-        !listNotInFolder &&
         active &&
         <ItemContainer key={"del"}>
           <span
@@ -231,7 +195,6 @@ export default function PasswordList( props ) {
       }
 
       {
-        !listNotInFolder &&
         active &&
         userIsNotAdmin &&
         <ItemContainer key={"leave"}>
@@ -245,7 +208,6 @@ export default function PasswordList( props ) {
       }
 
       {
-        !listNotInFolder &&
         folder.deletedDate &&
         folderCanBeDeleted &&
         <FloatingDangerButton
@@ -262,24 +224,6 @@ export default function PasswordList( props ) {
             />
           DELETE FOLDER FOREVER
         </FloatingDangerButton>
-      }
-
-      {
-        !listNotInFolder &&
-        folder.deletedDate &&
-        folderCanBeDeleted &&
-        <FloatingButton
-          onClick={() => restoreFolder()}
-          >
-          <img
-            className="icon"
-            src={RestoreIcon}
-            alt="Restore icon not found"
-            />
-          <span>
-          Folder
-        </span>
-        </FloatingButton>
       }
 
     </List>
