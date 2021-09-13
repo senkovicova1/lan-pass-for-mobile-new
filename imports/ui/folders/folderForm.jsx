@@ -71,6 +71,13 @@ const userId = Meteor.userId();
   const usersToSelect = useMemo(() => {
     return dbUsers.filter(user => !users.find(u => u._id === user._id));
   }, [dbUsers, users]);
+  document.onkeydown = function (e) {
+    e = e || window.event;
+    switch (e.which || e.keyCode) {
+      case 13 :
+      break;
+    }
+  }
 
   return (
     <Form>
@@ -109,7 +116,7 @@ const userId = Meteor.userId();
           </thead>
           <tbody>
             {usersWithRights.map((user) => (
-              <tr>
+              <tr key={user._id}>
                 <td>{user.label}</td>
                 <td>
                   <Input

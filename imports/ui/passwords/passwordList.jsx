@@ -43,7 +43,9 @@ export default function PasswordList( props ) {
       history,
       location,
       search,
-      active
+      active,
+      sortBy,
+      sortDirection,
     } = props;
 
     const userId = Meteor.userId();
@@ -105,7 +107,18 @@ export default function PasswordList( props ) {
 
     const searchedPasswords = useMemo(() => {
       return passwords.filter(password => password.title.toLowerCase().includes(search.toLowerCase()) || password.username.toLowerCase().includes(search.toLowerCase()));
-    }, [passwords, search])
+    }, [passwords, search]);
+
+    const sortedPasswords = useMemo(() => {
+      const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
+      return searchedPasswords
+      .sort((p1, p2) => {
+        if (sortBy === "date"){
+          return p1.createdDate < p2.createdDate ? 1*multiplier : (-1)*multiplier;
+        }
+          return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1*multiplier : (-1)*multiplier;
+      });
+    }, [searchedPasswords, sortBy, sortDirection]);
 
     const folderCanBeDeleted = useMemo(() => {
       return folder?.users?.find((user) => user._id === userId).level === 0;
@@ -132,16 +145,15 @@ export default function PasswordList( props ) {
       return <span> {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
     }
 
-
   return (
     <List>
       {
-        searchedPasswords.length === 0 &&
+        sortedPasswords.length === 0 &&
         <span className="message">You have no {active ? "" : "deleted"} passwords.</span>
       }
 
       {
-        searchedPasswords.map((password) => (
+        sortedPasswords.map((password) => (
           <PasswordContainer key={password._id} onClick={() => history.push(`${viewPasswordStart}${folderID}/${password._id}`)}>
             <div>
               <label className="title">

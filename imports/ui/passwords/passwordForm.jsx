@@ -9,6 +9,10 @@ import moment from 'moment';
 import { useSelector } from 'react-redux';
 import { EyeIcon } from  "/imports/other/styles/icons";
 
+import {
+  PasswordsCollection
+} from '/imports/api/passwordsCollection';
+
 import PasswordGenerator from './passwordGenerator';
 
 import {
@@ -55,6 +59,7 @@ export default function PasswordForm( props ) {
   }, [allFolders]);
 
   const passwordID = match.params.passwordID;
+  const passwords = useSelector((state) => state.passwords.value);
   const password = useSelector((state) => state.passwords.value).find(p => p._id === passwordID);
 
   const [ title, setTitle ] = useState( "" );
@@ -94,6 +99,45 @@ export default function PasswordForm( props ) {
       setExpireDate( "" );
     }
   }, [ password, folders, folderID ] );
+
+  const removePassword = () => {
+    const passwordToRemove = password;
+    let message = "Are you sure you want to remove this password? Note: Password will be moved to the \"Deleted passwords\" section.";
+    if (passwordToRemove.version > 0){
+      message =  "Are you sure you want to remove this version? ";
+    }
+    if ( window.confirm( message ) ) {
+      if (passwordToRemove.version === 0 && !passwordToRemove.deletedDate){
+        let data = {
+          deletedDate: moment().unix(),
+        };
+        PasswordsCollection.update( passwordToRemove._id, {
+          $set: {
+            ...data
+          }
+        } );
+      } else if (passwordToRemove.version === 0) {
+        PasswordsCollection.remove( {
+       _id: passwordToRemove._id
+       } );
+       const passwordsToUpdate = passwords.filter(pass => [pass.passwordId, pass._id].includes(passwordToRemove.passwordId));
+       passwordsToUpdate.forEach((pass, index) => {
+         PasswordsCollection.remove( {
+        _id: pass._id
+        } );
+       });
+      } else {
+          PasswordsCollection.remove( {
+         _id: passwordToRemove._id
+         } );
+         const passwordsToUpdate = passwords.filter(pass => [pass.passwordId, pass._id].includes(passwordToRemove.passwordId) && pass.version > passwordToRemove.version);
+         passwordsToUpdate.forEach((pass, index) => {
+             PasswordsCollection.update( pass._id, { $inc: { version: -1 } } );
+         });
+      }
+      history.push(`${listPasswordsInFolderStart}${folderID}`);
+    }
+  };
 
   const generatePassword = useCallback(() => {
     let defaultSettings = {
@@ -307,6 +351,7 @@ export default function PasswordForm( props ) {
 
       <ButtonCol>
         <FullButton colour="grey" onClick={(e) => {e.preventDefault(); history.goBack()}}>Cancel</FullButton>
+          <FullButton colour="red" onClick={(e) => {e.preventDefault(); removePassword();}}>Delete</FullButton>
         {
           folder &&
           folder.users &&

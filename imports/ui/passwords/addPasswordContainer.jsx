@@ -51,11 +51,11 @@ export default function AddPasswordContainer( props ) {
       createdDate,
       version: 0,
       updatedDate: createdDate,
-    }, (error) => {
+    }, (error, _id) => {
       if (error) {
         console.log(error);
       } else {
-        history.goBack();
+        history.push(`/folders/${folderID}/${_id}`);
       }
     } );
   }

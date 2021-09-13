@@ -53,8 +53,13 @@ export default function EditFolderContainer( props ) {
       $set: {
         ...data
       }
+    }, (error) => {
+      if (error) {
+        console.log(error);
+      } else {
+        history.push(`/folders/list/${folderID}`);
+      }
     } );
-    cancel();
   };
 
   const removeFolder = ( folderId ) => {

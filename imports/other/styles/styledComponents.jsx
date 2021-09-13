@@ -285,11 +285,11 @@ button:last-of-type{
 
 export const ButtonCol = styled.section `
 margin-top: 0em !important;
-button:not(last-of-type) {
-  margin-bottom: 1.5em;
+button {
+  margin-bottom: 1em;
 }
-button:last-of-type {
-  margin-bottom: 0em;
+.icon{
+  margin: 0px;
 }
 
 `;
@@ -599,6 +599,26 @@ padding-left: 0.4em;
 }
 `;
 
+export const Sort = styled.div`
+  position: absolute;
+  z-index: 999;
+  background-color: white;
+  box-shadow: 0px 0px 7px 0px slategrey;
+  width: 350px;
+  top: 50px;
+  right: 20px;
+  padding: ${inputOffset};
+  span{
+    display: flex;
+    align-items: center;
+    line-height: 2em;
+  }
+  input{
+    height: 1.3em;
+    width: 1.3em;
+    margin-right: 0.6em;
+  }
+`;
 
 export const GroupButton = styled.button `
   width: -webkit-fill-available;
@@ -669,11 +689,11 @@ div {
 
 label.title {
 display: block;
-font-weight: 600;
 color: ${basicBlueColour};
 }
 
 label.username {
+color: ${basicBlueColour};
 display: flex;
 align-items: center;
 font-weight: 400;

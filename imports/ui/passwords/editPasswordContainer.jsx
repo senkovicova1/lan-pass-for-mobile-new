@@ -54,7 +54,7 @@ export default function EditPasswordContainer( props ) {
         if (error){
           console.log(console.error());
         } else {
-          history.push(`/folders/${folder}/${_id}`);
+          history.push(`/folders/${folderID}/${_id}`);
         }
       });
 

@@ -12,15 +12,22 @@ import {
 
 export default function AddFolderContainer( props ) {
 
+  const {history} = props;
+
   const addNewFolder = ( name, users ) => {
     FoldersCollection.insert( {
        name, users,
+    }, (error, _id) => {
+      if (error) {
+        console.log(error);
+      } else {
+        history.push(`/folders/list/${_id}`);
+      }
     } );
-    cancel( );
   }
 
   const cancel = () => {
-    props.history.push(``);
+    history.push(``);
   }
 
   return (

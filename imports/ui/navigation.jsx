@@ -104,8 +104,9 @@ export default function MainPage( props ) {
   }, [users]);
 
   const [ search, setSearch ] = useState( "" );
-  const [ revealPassword, setRevealPassword ] = useState( false );
   const [ openSidebar, setOpenSidebar ] = useState( false );
+  const [ sortBy, setSortBy ] = useState("name");
+  const [ sortDirection, setSortDirection ] = useState("asc");
 
   return (
     <div style={{height: "100vh"}}>
@@ -135,7 +136,10 @@ export default function MainPage( props ) {
               setSearch={setSearch}
               search={search}
               setParentOpenSidebar={setOpenSidebar}
-              toggleRevealPassword={() => setRevealPassword(!revealPassword)}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
               />
           )}
           />
@@ -168,6 +172,8 @@ export default function MainPage( props ) {
                     {...props}
                     search={search}
                     active={true}
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
                     />
                 )}
                 />
@@ -180,6 +186,8 @@ export default function MainPage( props ) {
                     {...props}
                     search={search}
                     active={false}
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
                     />
                 )}
                 />
@@ -198,7 +206,6 @@ export default function MainPage( props ) {
                 render={(props) => (
                   <PasswordAdd
                     {...props}
-                    revealPassword={revealPassword}
                     />
                 )}
                 />
@@ -209,7 +216,6 @@ export default function MainPage( props ) {
                 render={(props) => (
                   <PasswordEdit
                     {...props}
-                    revealPassword={revealPassword}
                     />
                 )}
                 />
@@ -220,7 +226,6 @@ export default function MainPage( props ) {
                 render={(props) => (
                   <PasswordView
                     {...props}
-                    revealPassword={revealPassword}
                     />
                 )}
                 />

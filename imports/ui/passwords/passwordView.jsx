@@ -21,7 +21,7 @@ import {
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
-import {  RestoreIcon, CopyIcon, PencilIcon, BackIcon, HourglassIcon } from  "/imports/other/styles/icons";
+import {  RestoreIcon, EyeIcon, CopyIcon, PencilIcon, BackIcon, HourglassIcon, DeleteIcon } from  "/imports/other/styles/icons";
 
 import {
   PasswordContainer,
@@ -40,8 +40,7 @@ export default function PasswordView( props ) {
   const {
     match,
     history,
-    location,
-    revealPassword
+    location
   } = props;
 
   const userId = Meteor.userId();
@@ -53,6 +52,11 @@ export default function PasswordView( props ) {
   const password = passwords.find(p => p._id === passwordID);
   const folderID = match.params.folderID;
   const folder = useSelector((state) => state.folders.value).find(f => f._id === folderID);
+
+  const [ revealPassword, setRevealPassword ] = useState( false );
+  const toggleRevealPassword = () => {
+    setRevealPassword(!revealPassword);
+  }
 
   const restorePasswordVersion = () => {
     if ( window.confirm( "Are you sure you want to restore this version?" ) ) {
@@ -106,6 +110,44 @@ export default function PasswordView( props ) {
       }
   }
 
+      const removePassword = () => {
+        const passwordToRemove = password;
+        let message = "Are you sure you want to remove this password? Note: Password will be moved to the \"Deleted passwords\" section.";
+        if (passwordToRemove.version > 0){
+          message =  "Are you sure you want to remove this version? ";
+        }
+        if ( window.confirm( message ) ) {
+          if (passwordToRemove.version === 0 && !passwordToRemove.deletedDate){
+            let data = {
+              deletedDate: moment().unix(),
+            };
+            PasswordsCollection.update( passwordToRemove._id, {
+              $set: {
+                ...data
+              }
+            } );
+          } else if (passwordToRemove.version === 0) {
+            PasswordsCollection.remove( {
+           _id: passwordToRemove._id
+           } );
+           const passwordsToUpdate = passwords.filter(pass => [pass.passwordId, pass._id].includes(passwordToRemove.passwordId));
+           passwordsToUpdate.forEach((pass, index) => {
+             PasswordsCollection.remove( {
+            _id: pass._id
+            } );
+           });
+          } else {
+              PasswordsCollection.remove( {
+             _id: passwordToRemove._id
+             } );
+             const passwordsToUpdate = passwords.filter(pass => [pass.passwordId, pass._id].includes(passwordToRemove.passwordId) && pass.version > passwordToRemove.version);
+             passwordsToUpdate.forEach((pass, index) => {
+                 PasswordsCollection.update( pass._id, { $inc: { version: -1 } } );
+             });
+          }
+          history.push(`${listPasswordsInFolderStart}${folderID}`);
+        }
+      };
 
   const passwordScore = useMemo(() => {
     let score = 0;
@@ -215,7 +257,7 @@ export default function PasswordView( props ) {
           id="title"
           name="title"
           placeholder="title"
-            disabled={true}
+          disabled={true}
           value={password.title ? password.title : "Untitled"}
           />
           <LinkButton onClick={(e) => {e.preventDefault(); navigator.clipboard.writeText(password.title ? password.title : "Untitled")}}>
@@ -270,6 +312,15 @@ export default function PasswordView( props ) {
             disabled={true}
            value={password.password ? password.password : "No password"}
           />
+          <LinkButton
+            className="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              toggleRevealPassword();
+            }}
+            >
+            <img className="icon" src={EyeIcon} alt="reveal pass" />
+          </LinkButton>
         <LinkButton onClick={(e) => {e.preventDefault();  navigator.clipboard.writeText(password.password ? password.password : "No password")}}>
             <img
             src={CopyIcon}
@@ -374,6 +425,16 @@ export default function PasswordView( props ) {
           onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId}/history`)}
           >
           Password History
+        </LinkButton>
+
+        <LinkButton
+          onClick={(e) => {
+            e.preventDefault();
+            removePassword();
+          }}
+          >
+          <img className="icon" src={DeleteIcon} alt="delete" />
+          Delete
         </LinkButton>
       </ButtonCol>
     }
