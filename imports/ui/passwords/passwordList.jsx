@@ -10,7 +10,7 @@ import {
   selectStyle
 } from '../../other/styles/selectStyles';
 
-import { DeleteIcon, PlusIcon, RestoreIcon, FolderIcon } from  "/imports/other/styles/icons";
+import { DeleteIcon, PlusIcon, RestoreIcon, FolderIcon, EyeIcon, CopyIcon } from  "/imports/other/styles/icons";
 
 import {
   useTracker
@@ -26,7 +26,8 @@ import {
   PasswordContainer,
   FloatingButton,
   FloatingDangerButton,
-  ItemContainer
+  ItemContainer,
+  LinkButton
 } from "/imports/other/styles/styledComponents";
 import {
   deletedFolders,
@@ -50,6 +51,8 @@ export default function PasswordList( props ) {
 
     const userId = Meteor.userId();
 
+    const [revealedPasswords, setRevealedPasswords] = useState([]);
+
     const folderID = match.params.folderID;
     const folders = useSelector((state) => state.folders.value);
     const folder = useMemo(() => {
@@ -61,6 +64,21 @@ export default function PasswordList( props ) {
 
   const allPasswords =  useSelector((state) => state.passwords.value);
   const passwords = allPasswords.filter(password => password.folder === folderID && password.version === 0 && ((active && !password.deletedDate) || (!active && password.deletedDate) ));
+
+  const searchedPasswords = useMemo(() => {
+    return passwords.filter(password => password.title.toLowerCase().includes(search.toLowerCase()) || password.username.toLowerCase().includes(search.toLowerCase()));
+  }, [passwords, search]);
+
+  const sortedPasswords = useMemo(() => {
+    const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
+    return searchedPasswords
+    .sort((p1, p2) => {
+      if (sortBy === "date"){
+        return p1.createdDate < p2.createdDate ? 1*multiplier : (-1)*multiplier;
+      }
+        return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1*multiplier : (-1)*multiplier;
+    });
+  }, [searchedPasswords, sortBy, sortDirection]);
 
   const restoreFolder = ( ) => {
     if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
@@ -105,22 +123,7 @@ export default function PasswordList( props ) {
     }
   };
 
-    const searchedPasswords = useMemo(() => {
-      return passwords.filter(password => password.title.toLowerCase().includes(search.toLowerCase()) || password.username.toLowerCase().includes(search.toLowerCase()));
-    }, [passwords, search]);
-
-    const sortedPasswords = useMemo(() => {
-      const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
-      return searchedPasswords
-      .sort((p1, p2) => {
-        if (sortBy === "date"){
-          return p1.createdDate < p2.createdDate ? 1*multiplier : (-1)*multiplier;
-        }
-          return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1*multiplier : (-1)*multiplier;
-      });
-    }, [searchedPasswords, sortBy, sortDirection]);
-
-    const folderCanBeDeleted = useMemo(() => {
+      const folderCanBeDeleted = useMemo(() => {
       return folder?.users?.find((user) => user._id === userId).level === 0;
     }, [folder]);
 
@@ -145,6 +148,15 @@ export default function PasswordList( props ) {
       return <span> {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
     }
 
+    const displayPassword = (id, password) => {
+      if (revealedPasswords.includes(id)){
+        return password;
+      }
+      return '••••••••••••••••••••';
+    }
+
+    console.log(revealedPasswords);
+
   return (
     <List>
       {
@@ -154,15 +166,39 @@ export default function PasswordList( props ) {
 
       {
         sortedPasswords.map((password) => (
-          <PasswordContainer key={password._id} onClick={() => history.push(`${viewPasswordStart}${folderID}/${password._id}`)}>
-            <div>
+          <PasswordContainer key={password._id}>
+            <div onClick={() => history.push(`${viewPasswordStart}${folderID}/${password._id}`)}>
               <label className="title">
                 {yellowMatch(password.title)}
               </label>
               <label className="username">
-                {password.username ? yellowMatch(password.username) : "No username"}
+                {password.username ? `Username: ${yellowMatch(password.username)}` : "Username: No username"}
+              </label>
+              <label className="username">
+                {password.password ? `Username: ${displayPassword(password._id, password.password)}` : "Password: No password"}
               </label>
             </div>
+
+              <LinkButton
+                className="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (revealedPasswords.includes(password._id)){
+                    setRevealedPasswords(revealedPasswords.filter(pass => pass !== password._id));
+                  } else {
+                    setRevealedPasswords([...revealedPasswords, password._id]);
+                  }
+                }}
+                >
+                <img className="icon" src={EyeIcon} alt="reveal pass" />
+              </LinkButton>
+              <LinkButton onClick={(e) => {e.preventDefault();  navigator.clipboard.writeText(password.password ? password.password : "No password")}}>
+                  <img
+                  src={CopyIcon}
+                  alt=""
+                  className="icon"
+                  />
+              </LinkButton>
           </PasswordContainer>
             ))
       }

@@ -671,11 +671,10 @@ export const PasswordContainer = styled.div`
   cursor: pointer;
 }
 
- height: 5.5em;
  border-bottom: 1px solid #DDD;
 
 margin: 0em ${inputOffset};
-height: 4em;
+height: 5.7em;
 display: flex;
 align-items: center;
 
