@@ -12,6 +12,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setFolders } from '../redux/foldersSlice';
 import { setPasswords } from '../redux/passwordsSlice';
 import { setUsers } from '../redux/usersSlice';
+import {
+  PLAIN,
+  COLUMNS
+} from "/imports/other/constants";
 
 import {
   FoldersCollection
@@ -29,12 +33,11 @@ import Login from './login';
 import FolderList from './folders/folderList';
 import FolderAdd from './folders/addFolderContainer';
 import FolderEdit from './folders/editFolderContainer';
-import PasswordList from './passwords/passwordList';
+import PasswordList from './passwords/list';
+import PasswordContainer from './passwords/passwordsContainer';
+import PasswordView from './passwords/view';
 import PasswordHistoryList from './passwords/passwordHistoryList';
 import EditUserContainer from './users/editUserContainer';
-import PasswordAdd from './passwords/addPasswordContainer';
-import PasswordEdit from './passwords/editPasswordContainer';
-import PasswordView from './passwords/passwordView';
 
 
 import {
@@ -64,6 +67,7 @@ export default function MainPage( props ) {
   console.log("All our amazing icons are from FlatIcon (https://www.flaticon.com/). Thank you to all creators whose icons we could use: PixelPerfect (https://www.flaticon.com/authors/pixel-perfect), Dmitri13 (https://www.flaticon.com/authors/dmitri13), Phatplus (https://www.flaticon.com/authors/phatplus), Kiranshastry (https://www.flaticon.com/authors/kiranshastry), Those Icons (https://www.flaticon.com/authors/those-icons), Google (https://www.flaticon.com/authors/google), Dave Gandy (https://www.flaticon.com/authors/dave-gandy), Tomas Knop (https://www.flaticon.com/authors/tomas-knop), Gregor Cresnar (https://www.flaticon.com/authors/gregor-cresnar), Freepik (https://www.flaticon.com/authors/freepik)");
 
   const currentUser = useTracker( () => Meteor.user() );
+  const layout = useSelector( ( state ) => state.metadata.value ).layout;
 
   const userId = useMemo(() => {
     if (currentUser){
@@ -144,12 +148,12 @@ export default function MainPage( props ) {
           )}
           />
         {!currentUser &&
-          <Content>
+          <Content withSidebar={false}>
             <Route path={["/", login]} component={Login} />
           </Content>
         }
         {currentUser &&
-          <Content>
+          <Content withSidebar={openSidebar} columns={layout === COLUMNS}>
             <div style={{height: "100%", position: "relative"}}>
 
               <Route
@@ -166,26 +170,11 @@ export default function MainPage( props ) {
 
               <Route
                 exact
-                path={["/", listPasswordsInFolder]}
+                path={["/", listPasswordsInFolder, listDeletedPasswordsInFolder, passwordHistory, viewPassword, viewPreviousPassword, addPassword, editPassword]}
                 render={(props) => (
-                  <PasswordList
+                  <PasswordContainer
                     {...props}
                     search={search}
-                    active={true}
-                    sortBy={sortBy}
-                    sortDirection={sortDirection}
-                    />
-                )}
-                />
-
-              <Route
-                exact
-                path={listDeletedPasswordsInFolder}
-                render={(props) => (
-                  <PasswordList
-                    {...props}
-                    search={search}
-                    active={false}
                     sortBy={sortBy}
                     sortDirection={sortDirection}
                     />
@@ -197,47 +186,6 @@ export default function MainPage( props ) {
                 path={editCurrentUser}
                 render={(props) => (
                   <EditUserContainer {...props} />
-                )}
-                />
-
-              <Route
-                exact
-                path={addPassword}
-                render={(props) => (
-                  <PasswordAdd
-                    {...props}
-                    />
-                )}
-                />
-
-              <Route
-                exact
-                path={editPassword}
-                render={(props) => (
-                  <PasswordEdit
-                    {...props}
-                    />
-                )}
-                />
-
-              <Route
-                exact
-                path={[viewPassword, viewPreviousPassword]}
-                render={(props) => (
-                  <PasswordView
-                    {...props}
-                    />
-                )}
-                />
-
-              <Route
-                exact
-                path={passwordHistory}
-                render={(props) => (
-                  <PasswordHistoryList
-                    {...props}
-                    search={search}
-                    />
                 )}
                 />
 

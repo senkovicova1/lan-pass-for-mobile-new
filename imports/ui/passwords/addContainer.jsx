@@ -13,7 +13,7 @@ import {
   useTracker
 } from 'meteor/react-meteor-data';
 
-import PasswordForm from './passwordForm';
+import PasswordForm from './form';
 
 export default function AddPasswordContainer( props ) {
 

@@ -123,7 +123,7 @@ const submit = () => {
             id="upperCase"
             name="upperCase"
             checked={upperCase}
-            onChange={() => {console.log(upperCase);console.log("hi");setUpperCase(!upperCase);}}
+            onChange={() => setUpperCase(!upperCase)}
            />
       </section>
 

@@ -201,19 +201,15 @@ export const Content = styled.main `
     width: 100%;
   }
   @media all and (min-width: 800px) and (max-width: 1299px){
+    width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+
     ${(props) =>
-      props.withSidebar &&
+      props.columns &&
       `
-        max-width: 800px;
-        margin-left: ${sidebarWidthWeb};
-        margin-right: auto;
-      `
-    }
-    ${(props) =>
-      !props.withSidebar &&
-      `
-        width: 800px;
-        margin-left: auto;
+        width: 100%;
+        margin-left: ${props.withSidebar ? sidebarWidthWeb : "auto"};
         margin-right: auto;
       `
     }
@@ -222,6 +218,15 @@ export const Content = styled.main `
     width: 800px;
     margin-left: auto;
     margin-right: auto;
+
+    ${(props) =>
+      props.columns &&
+      `
+        width: ${props.withSidebar ? `calc(100vw - ${sidebarWidthWeb} - 18px)` : `100%`};
+        margin-left: ${props.withSidebar ? sidebarWidthWeb : "auto"};
+        margin-right: auto;
+      `
+    }
   }
 `;
 

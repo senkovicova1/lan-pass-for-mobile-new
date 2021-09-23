@@ -15,6 +15,10 @@ import {
 import {
   selectStyle
 } from '../../other/styles/selectStyles';
+import {
+  PLAIN,
+  COLUMNS
+} from "/imports/other/constants";
 
 import {
   listAllPasswords,
@@ -44,13 +48,13 @@ export default function PasswordView( props ) {
   } = props;
 
   const userId = Meteor.userId();
-  const passwordID = match.params.passwordID;
+  const { passwordID, folderID } = match.params;
+  const layout = useSelector( ( state ) => state.metadata.value ).layout;
 
   const dbUsers = useSelector((state) => state.users.value);
 
   const passwords = useSelector((state) => state.passwords.value);
   const password = passwords.find(p => p._id === passwordID);
-  const folderID = match.params.folderID;
   const folder = useSelector((state) => state.folders.value).find(f => f._id === folderID);
 
   const [ revealPassword, setRevealPassword ] = useState( false );
@@ -215,7 +219,7 @@ export default function PasswordView( props ) {
   const editedBy = password.editedBy ? dbUsers.find(user => user._id === password.editedBy) : {};
 
   return (
-    <Form>
+    <Form style={layout === COLUMNS ? {background: "white"} : {}}>
 
       {
         password.version > 0 &&
@@ -422,7 +426,7 @@ export default function PasswordView( props ) {
       <ButtonCol>
         <LinkButton
           colour=""
-          onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId}/history`)}
+          onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId ? password.passwordId : password._id}/history`)}
           >
           Password History
         </LinkButton>
@@ -440,6 +444,7 @@ export default function PasswordView( props ) {
     }
 
       {
+        !folder.deletedDate &&
         passwordCanBeEdited &&
         <FloatingButton
           onClick={() => history.push(`${location.pathname}/edit`)}
@@ -452,6 +457,8 @@ export default function PasswordView( props ) {
         </FloatingButton>
       }
 
+      {
+        layout === PLAIN &&
         <FloatingButton
           left
           onClick={(e) => {
@@ -470,6 +477,7 @@ export default function PasswordView( props ) {
             className="icon"
             />
         </FloatingButton>
+      }
 
       {
         password.deletedDate &&

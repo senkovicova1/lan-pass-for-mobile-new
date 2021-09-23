@@ -8,7 +8,7 @@ import {
 } from '/imports/api/passwordsCollection';
 import moment from 'moment';
 
-import PasswordForm from './passwordForm';
+import PasswordForm from './form';
 
 export default function EditPasswordContainer( props ) {
 
@@ -52,7 +52,7 @@ export default function EditPasswordContainer( props ) {
         passwordId,
       }, (error, _id) => {
         if (error){
-          console.log(console.error());
+          console.log(error);
         } else {
           history.push(`/folders/${folderID}/${_id}`);
         }

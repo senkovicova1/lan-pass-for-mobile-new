@@ -17,7 +17,7 @@ import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
 
-import PasswordList from '/imports/ui/passwords/passwordList';
+import PasswordList from '/imports/ui/passwords/list';
 import {
   List,
   FloatingButton,

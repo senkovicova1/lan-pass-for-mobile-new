@@ -155,8 +155,6 @@ export default function PasswordList( props ) {
       return '••••••••••••••••••••';
     }
 
-    console.log(revealedPasswords);
-
   return (
     <List>
       {
