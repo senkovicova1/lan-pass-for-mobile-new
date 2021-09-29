@@ -110,7 +110,7 @@ export default function PasswordHistoryList( props ) {
                onClick={() => history.push(`${viewPasswordStart}${folderID}/version/${password._id}`)}
               src={HourglassIcon}
               alt=""
-              className="icon"
+              className="icon start"
               />
             <div  onClick={() => history.push(`${viewPasswordStart}${folderID}/version/${password._id}`)}>
               <label className="title">

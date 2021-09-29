@@ -22,7 +22,7 @@ export default function Reroute( props ) {
 
   useEffect(() => {
     if (match.path === "/" || match.path === "/folders"){
-      if (match.params.folderID && myFolders && myFolders.length > 0){
+      if (folderID && myFolders && myFolders.length > 0){
         const newFolder = myFolders.find(folder => folder._id === match.params.folderID);
           history.push(`/folders/list/${newFolder._id}`);
       } else if (myFolders.length > 0){
@@ -32,7 +32,7 @@ export default function Reroute( props ) {
         history.push(`/folders/add`);
       }
     }
-  }, [match.path, match.params.folderID, myFolders ]);
+  }, [match.path, folderID, myFolders ]);
 
   return (<div style={{display: "none"}}></div>);
 };

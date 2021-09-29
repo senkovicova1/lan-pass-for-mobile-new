@@ -223,11 +223,17 @@ export default function PasswordView( props ) {
 
       {
         password.version > 0 &&
-        <PasswordContainer style={{margin: "0px", marginBottom: "2em"}}>
+        <PasswordContainer style={{margin: "0px", marginBottom: "2em", padding: "0px"}}>
+          <img
+             onClick={() => history.goBack()}
+            src={BackIcon}
+            alt=""
+            className="icon start"
+            />
           <img
             src={HourglassIcon}
             alt=""
-            className="icon"
+            className="icon start"
             />
           <div>
             <label className="title">
@@ -451,28 +457,6 @@ export default function PasswordView( props ) {
           >
             <img
             src={PencilIcon}
-            alt=""
-            className="icon"
-            />
-        </FloatingButton>
-      }
-
-      {
-        layout === PLAIN &&
-        <FloatingButton
-          left
-          onClick={(e) => {
-            e.preventDefault();
-            if (location.pathname.includes("version")){
-              history.goBack();
-            } else {
-              history.push(`/folders/list/${folderID}`);
-            }
-          }}
-          >
-            <img
-              style={{marginRight: "2px"}}
-            src={BackIcon}
             alt=""
             className="icon"
             />

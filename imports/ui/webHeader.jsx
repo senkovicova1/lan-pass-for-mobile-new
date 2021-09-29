@@ -84,9 +84,8 @@ export default function WebHeader( props ) {
     Meteor.logout();
   }
 
-  const folderID = match.params.folderID;
+  const { folderID, passwordID } = match.params;
   const folders = useSelector((state) => state.folders.value);
-  const passwordID = match.params.passwordID;
   const passwords = useSelector((state) => state.passwords.value);
   const password = passwords.find(p => p._id === passwordID);
 
@@ -116,51 +115,6 @@ export default function WebHeader( props ) {
         }
       }
     }, [folderID, location.pathname, folders]);
-
-    const goBackInPage = useCallback(() => {
-      switch (match.path) {
-        case folders:
-          break;
-        case addFolder:
-          history.goBack();
-          break;
-        case editFolder:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case listPasswordsInFolder:
-          history.push(`/folders`);
-          break;
-
-        case listDeletedPasswordsInFolder:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case deletedFolders:
-          history.push(`/folders`);
-          break;
-        case editCurrentUser:
-          history.goBack();
-          break;
-        case addPassword:
-          history.goBack();
-          break;
-
-        case editPassword:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case viewPassword:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case viewPreviousPassword:
-          history.goBack();
-          break;
-        case passwordHistory:
-          history.goBack();
-          break;
-        default:
-          history.goBack();
-
-      }
-    }, [match.path, match.params, history]);
 
   const avatar = useMemo(() => {
     if (!currentUser || !currentUser.profile.avatar){

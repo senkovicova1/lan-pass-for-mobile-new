@@ -47,6 +47,8 @@ export default function PasswordsContainer( props ) {
       case editPassword:
         return <EditPassword {...props} />;
       case viewPreviousPassword:
+        return <PasswordView {...props} />
+      case passwordHistory:
         return <PasswordHistoryList {...props} />
       default:
         return <PasswordList {...props} />;

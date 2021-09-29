@@ -253,8 +253,7 @@ export const Sidebar = styled.section `
     color: ${basicBlueColour} !important;
     display: flex;
     align-items: center;
-    height: 3em;
-    padding: 10px ${inputOffset};
+    padding: 1em;
     text-decoration: none !important;
     i, img.icon{
       margin-right: 10px;
@@ -276,26 +275,26 @@ export const Sidebar = styled.section `
 `;
 
 export const ButtonRow = styled.section `
-display: flex;
-margin-top: 0em !important;
-margin-bottom: 0em;
-button:first-of-type{
-  margin-right: 0.5em;
-}
-button:last-of-type{
-  margin-left: 0.5em;
-}
-}
+  display: flex;
+  margin-top: 0em !important;
+  margin-bottom: 0em;
+  button:first-of-type{
+    margin-right: 0.5em;
+  }
+  button:last-of-type{
+    margin-left: 0.5em;
+  }
+  }
 `;
 
 export const ButtonCol = styled.section `
-margin-top: 0em !important;
-button {
-  margin-bottom: 1em;
-}
-.icon{
-  margin: 0px;
-}
+  margin-top: 0em !important;
+  button {
+    margin-bottom: 1em;
+  }
+  .icon{
+    margin: 0px;
+  }
 
 `;
 
@@ -398,210 +397,210 @@ export const FloatingDangerButton = styled.button `
 `;
 
 export const List = styled.section `
-width: 100%;
-padding: 0em 0em 0em 0em;
-display: inline-block;
-verticalAlign: top;
+  width: 100%;
+  padding: 0em;
+  display: inline-block;
+  verticalAlign: top;
 
-&>div{
-    display: flex;
-}
-
-&>section.showClosed{
-  display: block;
-  height: 3em;
-  input{
-    width: 1.5em !important;
+  &>div{
+      display: flex;
   }
-  label{
-    padding: 10px;
-  }
-}
 
-  button.item{
-    i {
-      width: 1.5em;
-      margin-right: 10px;
-    }
+  &>section.showClosed{
+    display: block;
     height: 3em;
+    input{
+      width: 1.5em !important;
+    }
+    label{
+      padding: 10px;
+    }
   }
 
-&>section.showClosed, button{
-  margin-left: ${inputOffset};
-}
+    button.item{
+      i {
+        width: 1.5em;
+        margin-right: 10px;
+      }
+      height: 3em;
+    }
 
-span.message{
-  margin: 0em ${inputOffset};
-  line-height: 3em;
-}
+  &>section.showClosed, button{
+    margin-left: ${inputOffset};
+  }
+
+  span.message{
+    margin: 0em ${inputOffset};
+    line-height: 3em;
+  }
 `;
 
-
 export const ItemContainer = styled.section `
-&:hover{
-  cursor: pointer;
-}
+  &:hover{
+    cursor: pointer;
+  }
 
-margin: 0em ${inputOffset};
-height: 3em;
-display: flex;
-align-items: center;
-color: ${basicBlueColour};
+  margin: 0em ${inputOffset};
+  height: 3em;
+  display: flex;
+  align-items: center;
+  color: ${basicBlueColour};
 
-input[type=checkbox]{
-  width: 1.5em !important;
-  height: 1.5em !important;
-}
+  input[type=checkbox]{
+    width: 1.5em !important;
+    height: 1.5em !important;
+  }
 
-&> span {
-  margin-right: auto;
-  padding: 10px;
-  width: calc(100% - 6em);
-  overflow-wrap: anywhere;
-}
+  &> span {
+    margin-right: auto;
+    padding: 10px;
+    width: calc(100% - 6em);
+    overflow-wrap: anywhere;
+  }
 
-img.icon{
-  height: 1.3em;
-  filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(90%) contrast(101%);
-}
+  img.icon{
+    height: 1.3em;
+    filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(90%) contrast(101%);
+  }
 
-img.folder{
-  margin-right: 0.3em;
-}
+  img.folder{
+    margin-right: 0.3em;
+  }
 
-img.avatar {
-  margin-right: 0.6em;
-}
+  img.avatar {
+    margin-right: 0.6em;
+  }
 `;
 
 export const Form = styled.form `
-padding: 1em ${inputOffset};
-width: -webkit-fill-available;
+  padding: 1em ${inputOffset};
+  width: -webkit-fill-available;
 
-section {
-  margin: 0em 0em 1.5em 0em;
+  section {
+    margin: 0em 0em 1.5em 0em;
 
-  i {
-    font-size: 1.5em;
-  }
-
-  div{
-    display: flex;
-    img{
-      margin: 0px;
+    i {
+      font-size: 1.5em;
     }
-  }
 
-  img {
-    width:32px;
-    height: 32px;
-    border-radius: 50px;
-    margin-right: 1em;
-  }
+    div{
+      display: flex;
+      img{
+        margin: 0px;
+      }
+    }
 
-  label{
-    margin: 0px 1em 0em 0em;
-    font-weight: 500;
-  }
+    img {
+      width:32px;
+      height: 32px;
+      border-radius: 50px;
+      margin-right: 1em;
+    }
 
-  input[type=text], input[type=color], input[type=password], input[type=datetime-local], input[type=number], teaxtarea, &>div {
-    width: -webkit-fill-available;
-  }
-  input[type=color]{
+    label{
+      margin: 0px 1em 0em 0em;
+      font-weight: 500;
+    }
+
+    input[type=text], input[type=color], input[type=password], input[type=datetime-local], input[type=number], teaxtarea, &>div {
+      width: -webkit-fill-available;
+    }
+    input[type=color]{
+        border: none;
+        background-color: transparent !important;
+        padding: 0px;
+      }
+
+    input[type=file]{
+      width: calc(100% - 5em);
       border: none;
       background-color: transparent !important;
-      padding: 0px;
     }
 
-  input[type=file]{
-    width: calc(100% - 5em);
-    border: none;
-    background-color: transparent !important;
-  }
+    input[type=checkbox] + label{
+        vertical-align: middle;
+      }
 
-  input[type=checkbox] + label{
-      vertical-align: middle;
+  input[type=checkbox]{
+      margin-right: 5px;
+        width: 1.5em !important;
+        height: 1.5em !important;
+    }
+    section:last-of-type {
+      margin: 0em !important;
     }
 
-input[type=checkbox]{
-    margin-right: 5px;
-      width: 1.5em !important;
-      height: 1.5em !important;
   }
-  section:last-of-type {
-    margin: 0em !important;
+  section.password>div.input-section{
+    display: flex;
+    input#password{
+      border-right: none !important;
+    }
+    button.icon{
+      border: 1px solid #d6d6d6 !important;
+      border-left: none !important;
+      background-color: white !important;
+    }
+    input#password:focus + button.icon {
+      border: 1px solid ${basicBlueColour} !important;
+      border-left: none !important;
+    }
   }
-
-}
-section.password>div.input-section{
-  display: flex;
-  input#password{
-    border-right: none !important;
-  }
-  button.icon{
-    border: 1px solid #d6d6d6 !important;
-    border-left: none !important;
-    background-color: white !important;
-  }
-  input#password:focus + button.icon {
-    border: 1px solid ${basicBlueColour} !important;
-    border-left: none !important;
-  }
-}
 `;
+
 export const Input = styled.input `
-background-color: white !important;
-outline: none !important;
-border: ${(props) => props.error ? "1px solid red" : "1px solid #d6d6d6"};
-width: ${(props) => props.width ? props.width : "auto"};
-padding-left: 0.4em;
-height: 2.5em !important;
+  background-color: white !important;
+  outline: none !important;
+  border: ${(props) => props.error ? "1px solid red" : "1px solid #d6d6d6"};
+  width: ${(props) => props.width ? props.width : "auto"};
+  padding-left: 0.4em;
+  height: 2.5em !important;
 
-&:focus{
-  border: 1px solid ${basicBlueColour} !important;
-}
+  &:focus{
+    border: 1px solid ${basicBlueColour} !important;
+  }
 
-&[type=checkbox]{
-    vertical-align: middle;
-}
+  &[type=checkbox]{
+      vertical-align: middle;
+  }
 `;
 
 export const ViewInput = styled.input `
-background-color: transparent !important;
-outline: none !important;
-border: none;
-width: 100%;
-padding-left: 0.4em;
-height: 2.5em !important;
+  background-color: transparent !important;
+  outline: none !important;
+  border: none;
+  width: 100%;
+  padding-left: 0.4em;
+  height: 2.5em !important;
 
-&:hover{
-  cursor: default;
-}
+  &:hover{
+    cursor: default;
+  }
 `;
 
 export const Textarea = styled.textarea `
-background-color: white !important;
-outline: none !important;
-border: 1px solid #d6d6d6;
-width: 100%;
-padding-left: 0.4em;
+  background-color: white !important;
+  outline: none !important;
+  border: 1px solid #d6d6d6;
+  width: 100%;
+  padding-left: 0.4em;
 
-&:focus{
-  border: 1px solid ${basicBlueColour} !important;
-}
+  &:focus{
+    border: 1px solid ${basicBlueColour} !important;
+  }
 `;
 
 export const ViewTextarea = styled.textarea `
 
-background-color: transparent !important;
-outline: none !important;
-border: none;
-width: 100%;
-padding-left: 0.4em;
+  background-color: transparent !important;
+  outline: none !important;
+  border: none;
+  width: 100%;
+  padding-left: 0.4em;
 
-&:hover{
-  cursor: default;
-}
+  &:hover{
+    cursor: default;
+  }
 `;
 
 export const Sort = styled.div`
@@ -641,79 +640,80 @@ export const GroupButton = styled.button `
 `;
 
 export const LoginContainer = styled.div`
-@media all and (max-width: 799px), @media handheld  {
-  width: auto;
-}
-@media all and (min-width: 800px){
-  width: 500px;
-}
+  @media all and (max-width: 799px), @media handheld  {
+    width: auto;
+  }
+  @media all and (min-width: 800px){
+    width: 500px;
+  }
 
-height: calc(100vh - 50px);
-margin: auto;
+  height: calc(100vh - 50px);
+  margin: auto;
 
-&>div{
-    height: -webkit-fill-available;
-    width: inherit;
-    background-color: ${backgroundColour};
-    position: relative;
-    display: flex;
-    align-items: center;
-}
+  &>div{
+      height: -webkit-fill-available;
+      width: inherit;
+      background-color: ${backgroundColour};
+      position: relative;
+      display: flex;
+      align-items: center;
+  }
 
-h1 {
-  margin: 0px;
-  background-color: ${basicBlueColour};
-  color: white;
-  font-size: 1.5em;
-  font-weight: 400;
-  padding-left: 5px;
-  height: 1.5em;
-}
+  h1 {
+    margin: 0px;
+    background-color: ${basicBlueColour};
+    color: white;
+    font-size: 1.5em;
+    font-weight: 400;
+    padding-left: 5px;
+    height: 1.5em;
+  }
 `;
 
 export const PasswordContainer = styled.div`
-&:hover, *:hover{
-  cursor: pointer;
-}
-
- border-bottom: 1px solid #DDD;
-
-margin: 0em ${inputOffset};
-height: 5.7em;
-display: flex;
-align-items: center;
-
-div {
-  display: inline-block;
-    margin-right: auto;
-    padding: 10px 0em;
-    width: calc(100% - 6em);
-    overflow-wrap: anywhere;
-}
-
-label.title {
-display: block;
-color: ${basicBlueColour};
-}
-
-label.username {
-color: ${basicBlueColour};
-display: flex;
-align-items: center;
-font-weight: 400;
-font-size: 0.9em;
-  img {
-    filter: invert(0%) sepia(0%) saturate(17%) hue-rotate(322deg) brightness(102%) contrast(104%);
-    margin-right: 0.3em;
+  &:hover, *:hover{
+    cursor: pointer;
   }
 
-}
+  border-bottom: 1px solid #DDD;
 
-img{
-  margin-right: 0em;
-}
+  padding: 0.6em 1em;
+  display: flex;
+  align-items: center;
 
+  div {
+    align-items: flex-start;
+    display: inline-block;
+    margin-right: auto;
+    width: calc(100% - 6em);
+    overflow-wrap: anywhere;
+    padding-bottom: 0.6em;
+  }
 
+  label.title {
+  display: block;
+  color: ${basicBlueColour};
+  }
+
+  label.username {
+  color: ${basicBlueColour};
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  font-size: 0.9em;
+    img {
+      filter: invert(0%) sepia(0%) saturate(17%) hue-rotate(322deg) brightness(102%) contrast(104%);
+      margin-right: 0.3em;
+    }
+  }
+
+  img{
+    margin-right: 0em;
+  }
+
+  img.icon.start{
+    margin-right: 0.3em;
+  }
 `;
 
 export const LoadingScreen = styled.div`

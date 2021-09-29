@@ -53,7 +53,7 @@ export default function PasswordList( props ) {
 
     const [revealedPasswords, setRevealedPasswords] = useState([]);
 
-    const folderID = match.params.folderID;
+    const { folderID, passwordID } = match.params;
     const folders = useSelector((state) => state.folders.value);
     const folder = useMemo(() => {
       if (folders.length > 0){
@@ -164,7 +164,7 @@ export default function PasswordList( props ) {
 
       {
         sortedPasswords.map((password) => (
-          <PasswordContainer key={password._id}>
+          <PasswordContainer key={password._id} style={password._id === passwordID ? {backgroundColor: "#deeaf3"} : {}}>
             <div onClick={() => history.push(`${viewPasswordStart}${folderID}/${password._id}`)}>
               <label className="title">
                 {yellowMatch(password.title)}
