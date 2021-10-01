@@ -27,8 +27,8 @@ export const MainPage = styled.div `
 
   ul {
     list-style-type: none;
-    padding: 0px;
   }
+
   label {
     margin: 0px;
   }
@@ -505,11 +505,12 @@ export const Form = styled.form `
     input[type=text], input[type=color], input[type=password], input[type=datetime-local], input[type=number], teaxtarea, &>div {
       width: -webkit-fill-available;
     }
+
     input[type=color]{
         border: none;
         background-color: transparent !important;
         padding: 0px;
-      }
+    }
 
     input[type=file]{
       width: calc(100% - 5em);
@@ -521,16 +522,19 @@ export const Form = styled.form `
         vertical-align: middle;
       }
 
-  input[type=checkbox]{
-      margin-right: 5px;
+      input[type=checkbox]{
+        margin-right: 5px;
         width: 1.5em !important;
         height: 1.5em !important;
     }
-    section:last-of-type {
-      margin: 0em !important;
-    }
 
   }
+
+  section:last-of-type {
+    margin: 0em !important;
+  }
+
+
   section.password>div.input-section{
     display: flex;
     input#password{
