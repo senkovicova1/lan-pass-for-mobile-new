@@ -121,6 +121,7 @@ export default function MainPage( props ) {
           exact
           path={[
           "/",
+          "/folders", 
           login,
           addFolder,
           editFolder,
