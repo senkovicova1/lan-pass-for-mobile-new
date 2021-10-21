@@ -1,10 +1,12 @@
 import React, {
-  useState,
+  useCallback,
   useMemo,
-  useCallback
+  useState,
 } from 'react';
 
-import { useSelector } from 'react-redux';
+import {
+  useSelector
+} from 'react-redux';
 
 import {
   useTracker
@@ -13,24 +15,31 @@ import {
 import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
+
 import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
 
 import PasswordList from '/imports/ui/passwords/list';
+
 import {
-  List,
+  DeleteIcon,
+  PlusIcon,
+  FolderIcon,
+} from "/imports/other/styles/icons";
+
+import {
   FloatingButton,
   FloatingDangerButton,
   ItemContainer,
+  List,
   LinkButton
-} from "../../other/styles/styledComponents";
-import { PlusIcon, FolderIcon, DeleteIcon } from  "/imports/other/styles/icons";
+} from "/imports/other/styles/styledComponents";
 
 import {
-  listPasswordsInFolderStart,
   addFolder,
-  deletedFolders
+  deletedFolders,
+  listPasswordsInFolderStart,
 } from "/imports/other/navigationLinks";
 
 export default function FolderList( props ) {
@@ -42,38 +51,38 @@ export default function FolderList( props ) {
     search
   } = props;
 
-  const folders = useSelector((state) => state.folders.value);
-  const passwords = useSelector((state) => state.passwords.value);
+  const folders = useSelector( ( state ) => state.folders.value );
+  const passwords = useSelector( ( state ) => state.passwords.value );
   const user = useTracker( () => Meteor.user() );
 
-  const [ showClosed, setShowClosed ] = useState(false);
+  const [ showClosed, setShowClosed ] = useState( false );
 
-    const myFolders = useMemo(() => {
-      let newMyFolders = folders.filter(folder => (active && !folder.deletedDate) || (!active && folder.deletedDate));
-      return newMyFolders;
-    }, [folders]);
+  const myFolders = useMemo( () => {
+    let newMyFolders = folders.filter( folder => ( active && !folder.deletedDate ) || ( !active && folder.deletedDate ) );
+    return newMyFolders;
+  }, [ folders ] );
 
-  const mySearchedFolders = useMemo(() => {
-    return myFolders.filter(folder => folder.name.toLowerCase().includes(search.toLowerCase()));
-  }, [search, myFolders])
+  const mySearchedFolders = useMemo( () => {
+    return myFolders.filter( folder => folder.name.toLowerCase().includes( search.toLowerCase() ) );
+  }, [ search, myFolders ] )
 
-  const permanentlyDelete = useCallback(() => {
+  const permanentlyDelete = useCallback( () => {
     if ( window.confirm( "Are you sure you want to permanently remove these folders? Note: Only folders you have authorization to remove will be removed." ) ) {
-      const foldersToDelete = mySearchedFolders.filter((folder) => folder.users.find((u) => u._id ===user._id).level === 0);
-      foldersToDelete.forEach((folder) => {
-         FoldersCollection.remove( {
-        _id: folder._id
+      const foldersToDelete = mySearchedFolders.filter( ( folder ) => folder.users.find( ( u ) => u._id === user._id ).level === 0 );
+      foldersToDelete.forEach( ( folder ) => {
+        FoldersCollection.remove( {
+          _id: folder._id
         } );
-      });
-      const fodlersIds = foldersToDelete.map(folder => folder._id);
-      const passWordsToDelete = passwords.filter(pass => fodlersIds.includes(pass.folder));
-      passWordsToDelete.forEach((pass) => {
-         PasswordsCollection.remove( {
-        _id: pass._id
+      } );
+      const fodlersIds = foldersToDelete.map( folder => folder._id );
+      const passWordsToDelete = passwords.filter( pass => fodlersIds.includes( pass.folder ) );
+      passWordsToDelete.forEach( ( pass ) => {
+        PasswordsCollection.remove( {
+          _id: pass._id
         } );
-      });
+      } );
     }
-  }, [mySearchedFolders, user._id]);
+  }, [ mySearchedFolders, user._id ] );
 
   if (search){
     return <PasswordList {...props} active={true} search={search}/>
@@ -151,8 +160,8 @@ export default function FolderList( props ) {
             alt="Plus icon not found"
             />
           <span>
-          Folder
-        </span>
+            Folder
+          </span>
         </FloatingButton>
       }
 

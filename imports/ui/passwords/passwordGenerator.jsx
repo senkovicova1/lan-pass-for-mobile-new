@@ -1,29 +1,32 @@
 import React, {
-  useState,
-  useMemo,
+  useCallback,
   useEffect,
-  useCallback
+  useMemo,
+  useState,
 } from 'react';
-import { useSelector } from 'react-redux';
+
+import {
+  useSelector
+} from 'react-redux';
 
 import {
   useTracker
 } from 'meteor/react-meteor-data';
+
 import {
   Modal,
   ModalBody
 } from 'reactstrap';
 
 import {
-  Form,
-  Input,
   ButtonCol,
+  Form,
   FullButton,
-  LinkButton
+  Input,
+  LinkButton,
 } from "/imports/other/styles/styledComponents";
 
 export default function GeneratorSettings( props ) {
-
   const {
     match,
     history
@@ -55,118 +58,121 @@ export default function GeneratorSettings( props ) {
     }
   }, [ user._id ] );
 
-const submit = () => {
-      let data = {
-        ...user.profile,
-        passwordSettings: {
-          length,
-          upperCase,
-          lowerCase,
-          includeNumbers,
-          includeSymbols
-        }
-      };
+  const submit = () => {
+    let data = {
+      ...user.profile,
+      passwordSettings: {
+        length,
+        upperCase,
+        lowerCase,
+        includeNumbers,
+        includeSymbols
+      }
+    };
 
-      Meteor.users.update(user._id, {
-        $set: {
-          profile: data
-        }
-      });
-      setSettingsOpen(false);
-};
+    Meteor.users.update( user._id, {
+      $set: {
+        profile: data
+      }
+    } );
+    setSettingsOpen( false );
+  };
 
   return (
     <div  style={{width: "150px"}}>
 
-    <LinkButton
-      colour=""
-      onClick={(e) => {e.preventDefault(); setSettingsOpen(true)}}
-      >
-      Generator settings
-    </LinkButton>
+      <LinkButton
+        colour=""
+        onClick={(e) => {
+          e.preventDefault();
+          setSettingsOpen(true)
+        }}
+        >
+        Generator settings
+      </LinkButton>
 
-    <Modal isOpen={settingsOpen}>
-      <ModalBody>
-        <h1 style={{fontSize: "2em"}}>Generator settings</h1>
+      <Modal isOpen={settingsOpen}>
+        <ModalBody>
+          <h1 style={{fontSize: "2em"}}>Generator settings</h1>
 
-    <Form>
+          <Form>
 
-      <section>
-        <label htmlFor="length">Length</label>
-        <Input
-          type="number"
-          id="length"
-          name="length"
-          value={length}
-          min={6}
-          onChange={(e) => setLength(e.target.value)}
-          />
-      </section>
+            <section>
+              <label htmlFor="length">Length</label>
+              <Input
+                type="number"
+                id="length"
+                name="length"
+                value={length}
+                min={6}
+                onChange={(e) => setLength(e.target.value)}
+                />
+            </section>
 
-      <section>
-        <label htmlFor="lowerCase">Use lower case letters</label>
-          <Input
-            style={{marginBottom: "0.3em"}}
-            type="checkbox"
-            id="lowerCase"
-            name="lowerCase"
-            checked={lowerCase}
-            onChange={() => setLowerCase(!lowerCase)}
-           />
-      </section>
+            <section>
+              <label htmlFor="lowerCase">Use lower case letters</label>
+              <Input
+                style={{marginBottom: "0.3em"}}
+                type="checkbox"
+                id="lowerCase"
+                name="lowerCase"
+                checked={lowerCase}
+                onChange={() => setLowerCase(!lowerCase)}
+                />
+            </section>
 
-      <section>
-        <label htmlFor="upperCase">Use upper case letters</label>
-          <Input
-            style={{marginBottom: "0.3em"}}
-            type="checkbox"
-            id="upperCase"
-            name="upperCase"
-            checked={upperCase}
-            onChange={() => setUpperCase(!upperCase)}
-           />
-      </section>
+            <section>
+              <label htmlFor="upperCase">Use upper case letters</label>
+              <Input
+                style={{marginBottom: "0.3em"}}
+                type="checkbox"
+                id="upperCase"
+                name="upperCase"
+                checked={upperCase}
+                onChange={() => setUpperCase(!upperCase)}
+                />
+            </section>
 
-      <section>
-        <label htmlFor="numbers">Use numbers</label>
-        <Input
-          style={{marginBottom: "0.3em"}}
-          type="checkbox"
-          id="numbers"
-          name="numbers"
-          checked={includeNumbers}
-          onChange={() => setIncludeNumbers(!includeNumbers)}
-          />
-      </section>
+            <section>
+              <label htmlFor="numbers">Use numbers</label>
+              <Input
+                style={{marginBottom: "0.3em"}}
+                type="checkbox"
+                id="numbers"
+                name="numbers"
+                checked={includeNumbers}
+                onChange={() => setIncludeNumbers(!includeNumbers)}
+                />
+            </section>
 
-      <section>
-        <label htmlFor="symbols">Use symbols</label>
-          <Input
-            style={{marginBottom: "0.3em"}}
-            type="checkbox"
-            id="symbols"
-            name="symbols"
-            checked={includeSymbols}
-            onChange={() => setIncludeSymbols(!includeSymbols)}
-           />
-      </section>
+            <section>
+              <label htmlFor="symbols">Use symbols</label>
+              <Input
+                style={{marginBottom: "0.3em"}}
+                type="checkbox"
+                id="symbols"
+                name="symbols"
+                checked={includeSymbols}
+                onChange={() => setIncludeSymbols(!includeSymbols)}
+                />
+            </section>
 
-      <ButtonCol>
-        <FullButton colour="grey" onClick={(e) => {e.preventDefault(); setSettingsOpen(false)}}>Cancel</FullButton>
-        <FullButton
-          colour=""
-          disabled={length.length <= 0 || !(upperCase || lowerCase || includeSymbols || includeNumbers)}
-          onClick={(e) => {e.preventDefault(); submit();}}
-          >
-          Save
-        </FullButton>
-      </ButtonCol>
+            <ButtonCol>
+              <FullButton colour="grey" onClick={(e) => {e.preventDefault(); setSettingsOpen(false)}}>Cancel</FullButton>
+              <FullButton
+                colour=""
+                disabled={length.length <= 0 || !(upperCase || lowerCase || includeSymbols || includeNumbers)}
+                onClick={(e) => {e.preventDefault(); submit();}}
+                >
+                Save
+              </FullButton>
+            </ButtonCol>
 
-    </Form>
-  </ModalBody>
+          </Form>
+        </ModalBody>
 
-</Modal>
+      </Modal>
 
-</div>
+    </div>
   );
 };

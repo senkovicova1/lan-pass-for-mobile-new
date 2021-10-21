@@ -1,25 +1,31 @@
 import React from 'react';
+
 import {
   useSelector
 } from 'react-redux';
 
-import PasswordList from '/imports/ui/passwords/list';
-import PasswordView from '/imports/ui/passwords/view';
 import AddPassword from '/imports/ui/passwords/addContainer';
-import PasswordHistoryList from '/imports/ui/passwords/passwordHistoryList';
+
 import EditPassword from '/imports/ui/passwords/editContainer';
+
+import PasswordList from '/imports/ui/passwords/list';
+
+import PasswordView from '/imports/ui/passwords/view';
+
+import PasswordHistoryList from '/imports/ui/passwords/passwordHistoryList';
 
 import {
   PLAIN
 } from "/imports/other/constants";
+
 import {
-  listPasswordsInFolder,
-  listDeletedPasswordsInFolder,
-  viewPreviousPassword,
-  passwordHistory,
   addPassword,
   editPassword,
+  listDeletedPasswordsInFolder,
+  listPasswordsInFolder,
+  passwordHistory,
   viewPassword,
+  viewPreviousPassword,
 } from "/imports/other/navigationLinks";
 
 export default function PasswordsContainer( props ) {
@@ -32,12 +38,17 @@ export default function PasswordsContainer( props ) {
     sortDirection,
   } = props;
 
-  const { passwordID} = match.params;
+  const {
+    passwordID
+  } = match.params;
   const userId = Meteor.userId();
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
 
-  if (window.innerWidth <= 820 || layout === PLAIN){
-    switch (match.path) {
+  if ( window.innerWidth <= 820 || layout === PLAIN ) {
+    if ( passwordID === "password-add" ) {
+      return <AddPassword {...props} />;
+    }
+    switch ( match.path ) {
       case listDeletedPasswordsInFolder:
         return <PasswordList {...props} active={false}/>;
       case listPasswordsInFolder:
@@ -47,7 +58,7 @@ export default function PasswordsContainer( props ) {
       case editPassword:
         return <EditPassword {...props} />;
       case viewPreviousPassword:
-        return <PasswordView {...props} />
+        return <PasswordView {...props} />;
       case passwordHistory:
         return <PasswordHistoryList {...props} />
       default:
@@ -65,7 +76,7 @@ export default function PasswordsContainer( props ) {
         {
           !match.path.includes("deleted") &&
           <PasswordList {...props} active={true}/>
-          }
+        }
       </div>
       <div style={{width: "80%", backgroundColor: "white", height: "-webkit-fill-available", position: "relative"}}>
         {
@@ -73,25 +84,25 @@ export default function PasswordsContainer( props ) {
           (match.path === viewPassword || match.path === viewPreviousPassword) &&
           <PasswordView {...props} />
         }
-          {
-            passwordID &&
-            match.path === editPassword &&
-            <EditPassword {...props} />
-          }
-          {
-            passwordID &&
-            passwordID === "password-add" &&
-            <AddPassword {...props} />
-          }
+        {
+          passwordID &&
+          match.path === editPassword &&
+          <EditPassword {...props} />
+        }
+        {
+          passwordID &&
+          passwordID === "password-add" &&
+          <AddPassword {...props} />
+        }
 
-          {
-            passwordID && match.path.includes("history") &&
-            <PasswordHistoryList {...props} />
-          }
+        {
+          passwordID && match.path.includes("history") &&
+          <PasswordHistoryList {...props} />
+        }
         {
           !passwordID &&
-        <div style={{paddingLeft: "20px"}}><h2>No chosen note</h2> </div>
-      }
+          <div style={{paddingLeft: "20px"}}><h2>No chosen note</h2> </div>
+        }
       </div>
     </div>
   );

@@ -162,7 +162,6 @@ export const PageHeader = styled.header `
     }
 `;
 
-
 export const SearchSection = styled.section `
   display: flex;
   width: 800px !important;
@@ -192,7 +191,6 @@ export const SearchSection = styled.section `
     margin-left: ${inputOffset};
   }
 `;
-
 
 export const Content = styled.main `
   display: block;
@@ -249,7 +247,7 @@ export const Sidebar = styled.section `
   z-index: 3;
   padding: 0px;
 
-  a {
+  a, .imitation-navlink {
     color: ${basicBlueColour} !important;
     display: flex;
     align-items: center;
@@ -260,6 +258,16 @@ export const Sidebar = styled.section `
     }
     img.icon{
       filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(80%) contrast(101%);
+    }
+
+    .last-icon{
+      margin-left: auto;
+      margin-right: 0px !important;
+    }
+
+    button{
+      width: 100%;
+      height: fit-content;
     }
   }
 
@@ -272,6 +280,11 @@ export const Sidebar = styled.section `
     width: 30%;
     text-align: end;
   }
+
+  .imitation-navlink{
+    height:
+  }
+
 `;
 
 export const ButtonRow = styled.section `
@@ -295,7 +308,6 @@ export const ButtonCol = styled.section `
   .icon{
     margin: 0px;
   }
-
 `;
 
 export const LinkButton = styled.button `
@@ -432,6 +444,10 @@ export const List = styled.section `
   span.message{
     margin: 0em ${inputOffset};
     line-height: 3em;
+  }
+
+  h2{
+    color: ${basicBlueColour};
   }
 `;
 

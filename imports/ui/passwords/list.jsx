@@ -1,162 +1,197 @@
 import React, {
-  useState,
+  useEffect,
   useMemo,
-  useEffect
+  useState,
 } from 'react';
-import moment from 'moment';
-import Select from 'react-select';
-import { useSelector } from 'react-redux';
-import {
-  selectStyle
-} from '../../other/styles/selectStyles';
 
-import { DeleteIcon, PlusIcon, RestoreIcon, FolderIcon, EyeIcon, CopyIcon } from  "/imports/other/styles/icons";
+import {
+  useSelector
+} from 'react-redux';
 
 import {
   useTracker
 } from 'meteor/react-meteor-data';
+
+import moment from 'moment';
+
+import Select from 'react-select';
+
 import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
+
 import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
+
 import {
-  List,
-  PasswordContainer,
+  BackIcon,
+  CopyIcon,
+  DeleteIcon,
+  EyeIcon,
+  FolderIcon,
+  PlusIcon,
+  RestoreIcon,
+} from "/imports/other/styles/icons";
+
+import {
+  selectStyle
+} from '/imports/other/styles/selectStyles';
+
+import {
   FloatingButton,
   FloatingDangerButton,
   ItemContainer,
-  LinkButton
+  List,
+  LinkButton,
+  PasswordContainer,
 } from "/imports/other/styles/styledComponents";
+
 import {
+  addFolder,
+  addPassword,
   deletedFolders,
   listAllPasswords,
-  addPassword,
-  addFolder,
-  viewPasswordStart
+  viewPasswordStart,
 } from "/imports/other/navigationLinks";
 
 export default function PasswordList( props ) {
+const {
+  match,
+  history,
+  location,
+  search,
+  active,
+  sortBy,
+  sortDirection,
+} = props;
 
-    const {
-      match,
-      history,
-      location,
-      search,
-      active,
-      sortBy,
-      sortDirection,
-    } = props;
+const userId = Meteor.userId();
 
-    const userId = Meteor.userId();
+const [ revealedPasswords, setRevealedPasswords ] = useState( [] );
 
-    const [revealedPasswords, setRevealedPasswords] = useState([]);
+const {
+  folderID,
+  passwordID
+} = match.params;
+const folders = useSelector( ( state ) => state.folders.value );
+const folder = useMemo( () => {
+  if ( folders.length > 0 ) {
+    return folders.find( folder => folder._id === folderID );
+  }
+  return {};
+}, [ folders, folderID ] );
 
-    const { folderID, passwordID } = match.params;
-    const folders = useSelector((state) => state.folders.value);
-    const folder = useMemo(() => {
-      if (folders.length > 0){
-        return folders.find(folder => folder._id === folderID);
+const allPasswords = useSelector( ( state ) => state.passwords.value );
+const passwords = allPasswords.filter( password => password.folder === folderID && password.version === 0 && ( ( active && !password.deletedDate ) || ( !active && password.deletedDate ) ) );
+
+const searchedPasswords = useMemo( () => {
+  return passwords.filter( password => password.title.toLowerCase().includes( search.toLowerCase() ) || password.username.toLowerCase().includes( search.toLowerCase() ) );
+}, [ passwords, search ] );
+
+const sortedPasswords = useMemo( () => {
+  const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
+  return searchedPasswords
+    .sort( ( p1, p2 ) => {
+      if ( sortBy === "date" ) {
+        return p1.createdDate < p2.createdDate ? 1 * multiplier : ( -1 ) * multiplier;
       }
-      return {};
-    }, [folders, folderID]);
+      return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1 * multiplier : ( -1 ) * multiplier;
+    } );
+}, [ searchedPasswords, sortBy, sortDirection ] );
 
-  const allPasswords =  useSelector((state) => state.passwords.value);
-  const passwords = allPasswords.filter(password => password.folder === folderID && password.version === 0 && ((active && !password.deletedDate) || (!active && password.deletedDate) ));
-
-  const searchedPasswords = useMemo(() => {
-    return passwords.filter(password => password.title.toLowerCase().includes(search.toLowerCase()) || password.username.toLowerCase().includes(search.toLowerCase()));
-  }, [passwords, search]);
-
-  const sortedPasswords = useMemo(() => {
-    const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
-    return searchedPasswords
-    .sort((p1, p2) => {
-      if (sortBy === "date"){
-        return p1.createdDate < p2.createdDate ? 1*multiplier : (-1)*multiplier;
+const restoreFolder = () => {
+  if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
+    let data = {
+      deletedDate: null,
+    };
+    FoldersCollection.update( folderID, {
+      $set: {
+        ...data
       }
-        return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1*multiplier : (-1)*multiplier;
-    });
-  }, [searchedPasswords, sortBy, sortDirection]);
+    } );
+    history.push( `${listPasswordsInFolderStart}folderID` );
+  }
+};
 
-  const restoreFolder = ( ) => {
-    if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
-      let data = {
-        deletedDate: null,
-      };
-      FoldersCollection.update( folderID, {
-        $set: {
-          ...data
-        }
+const permanentlyDeleteFolder = () => {
+  if ( window.confirm( "Are you sure you want to permanently remove this folder and all passwords in it?" ) ) {
+    FoldersCollection.remove( {
+      _id: folderID
+    } );
+    const passwordsToRemove = passwords.filter( pass => pass.folder === folderID );
+    passwordsToRemove.forEach( ( pass, index ) => {
+      PasswordsCollection.remove( {
+        _id: pass._id
       } );
-      history.push(`${listPasswordsInFolderStart}folderID`);
-    }
-  };
+    } );
+    history.goBack();
+  }
+};
 
-  const permanentlyDeleteFolder = ( ) => {
-    if ( window.confirm( "Are you sure you want to permanently remove this folder and all passwords in it?" ) ) {
-        FoldersCollection.remove( {
-          _id: folderID
-        } );
-        const passwordsToRemove = passwords.filter(pass => pass.folder === folderID);
-        passwordsToRemove.forEach((pass, index) => {
-          PasswordsCollection.remove( {
-         _id: pass._id
-         } );
-        });
-        history.goBack();
-    }
-  };
-
-  const leaveFolder = ( ) => {
-    if ( folder && window.confirm( "Are you sure you want to remove yourself from this folder?" ) ) {
-        let data = {
-          users: folder.users.filter(u => u._id !== userId),
-        };
-        FoldersCollection.update( folderID, {
-          $set: {
-            ...data
-          }
-        } );
-        history.push(``);
-    }
-  };
-
-      const folderCanBeDeleted = useMemo(() => {
-      return folder?.users?.find((user) => user._id === userId).level === 0;
-    }, [folder]);
-
-    const userIsNotAdmin = useMemo(() => {
-      return folder?.users?.find((user) => user._id === userId).level !== 0;
-    }, [folder]);
-
-    const canAddPasswords = useMemo(() => {
-      return folder?.users?.find((user) => user._id === userId).level <= 1;
-    }, [folder]);
-
-    if (!folder){
-      return (<div></div>)
-    }
-
-    const yellowMatch = (string) => {
-      if (search.length === 0 || !string.toLowerCase().includes( search.toLowerCase() )){
-        return string;
+const leaveFolder = () => {
+  if ( folder && window.confirm( "Are you sure you want to remove yourself from this folder?" ) ) {
+    let data = {
+      users: folder.users.filter( u => u._id !== userId ),
+    };
+    FoldersCollection.update( folderID, {
+      $set: {
+        ...data
       }
-      let startIndex = string.toLowerCase().indexOf( search.toLowerCase() );
-      let endIndex = startIndex + search.length;
-      return <span> {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
-    }
+    } );
+    history.push( `` );
+  }
+};
 
-    const displayPassword = (id, password) => {
-      if (revealedPasswords.includes(id)){
-        return password;
-      }
-      return '••••••••••••••••••••';
-    }
+const folderCanBeDeleted = useMemo( () => {
+  return folder?.users?.find( ( user ) => user._id === userId ).level === 0;
+}, [ folder ] );
+
+const userIsNotAdmin = useMemo( () => {
+  return folder?.users?.find( ( user ) => user._id === userId ).level !== 0;
+}, [ folder ] );
+
+const canAddPasswords = useMemo( () => {
+  return folder?.users?.find( ( user ) => user._id === userId ).level <= 1;
+}, [ folder ] );
+
+if ( !folder ) {
+  return ( <div></div> )
+}
+
+const yellowMatch = ( string ) => {
+  if ( search.length === 0 || !string.toLowerCase().includes( search.toLowerCase() ) ) {
+    return string;
+  }
+  let startIndex = string.toLowerCase().indexOf( search.toLowerCase() );
+  let endIndex = startIndex + search.length;
+  return <span> {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
+}
+
+const displayPassword = ( id, password ) => {
+  if ( revealedPasswords.includes( id ) ) {
+    return password;
+  }
+  return '••••••••••••••••••••';
+}
 
   return (
     <List>
+
+      {
+        !active &&
+        <div>
+          <LinkButton onClick={(e) => {e.preventDefault();  history.goBack()}}>
+            <img
+              src={BackIcon}
+              alt=""
+              className="icon"
+              />
+          </LinkButton>
+          <h2>Deleted passwords</h2>
+        </div>
+      }
+
       {
         sortedPasswords.length === 0 &&
         <span className="message">You have no {active ? "" : "deleted"} passwords.</span>
@@ -177,28 +212,28 @@ export default function PasswordList( props ) {
               </label>
             </div>
 
-              <LinkButton
+            <LinkButton
+              className="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                if (revealedPasswords.includes(password._id)){
+                  setRevealedPasswords(revealedPasswords.filter(pass => pass !== password._id));
+                } else {
+                  setRevealedPasswords([...revealedPasswords, password._id]);
+                }
+              }}
+              >
+              <img className="icon" src={EyeIcon} alt="reveal pass" />
+            </LinkButton>
+            <LinkButton onClick={(e) => {e.preventDefault();  navigator.clipboard.writeText(password.password ? password.password : "No password")}}>
+              <img
+                src={CopyIcon}
+                alt=""
                 className="icon"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (revealedPasswords.includes(password._id)){
-                    setRevealedPasswords(revealedPasswords.filter(pass => pass !== password._id));
-                  } else {
-                    setRevealedPasswords([...revealedPasswords, password._id]);
-                  }
-                }}
-                >
-                <img className="icon" src={EyeIcon} alt="reveal pass" />
-              </LinkButton>
-              <LinkButton onClick={(e) => {e.preventDefault();  navigator.clipboard.writeText(password.password ? password.password : "No password")}}>
-                  <img
-                  src={CopyIcon}
-                  alt=""
-                  className="icon"
-                  />
-              </LinkButton>
+                />
+            </LinkButton>
           </PasswordContainer>
-            ))
+        ))
       }
 
       {
@@ -216,10 +251,10 @@ export default function PasswordList( props ) {
             />
 
           {!/Mobi|Android/i.test(navigator.userAgent) &&
-          <span>
-          Password
-          </span>
-        }
+            <span>
+              Password
+            </span>
+          }
         </FloatingButton>
       }
 
@@ -228,7 +263,7 @@ export default function PasswordList( props ) {
         <ItemContainer key={"del"}>
           <span
             style={{paddingLeft: "0px"}}
-            onClick={() => history.push(`${location.pathname}/deleted`)}
+            onClick={() => history.push(`/folders/list/${folderID}/deleted`)}
             >
             <img
               className="icon folder"
@@ -270,6 +305,24 @@ export default function PasswordList( props ) {
             />
           DELETE FOLDER FOREVER
         </FloatingDangerButton>
+      }
+
+      {
+        folder.deletedDate &&
+        folderCanBeDeleted &&
+        <FloatingButton
+          style={{bottom: "1em"}}
+          onClick={(e) => {
+            e.preventDefault();
+            restoreFolder();
+          }}
+          >
+          <img
+            className="icon"
+            src={RestoreIcon}
+            alt="RestoreIcon icon not found"
+            />
+        </FloatingButton>
       }
 
     </List>

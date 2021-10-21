@@ -1,56 +1,73 @@
 import React, {
-  useState,
+  useCallback,
   useEffect,
   useMemo,
-  useCallback
+  useState,
 } from 'react';
-import {
-  Link
-} from 'react-router-dom';
-import { useSelector } from 'react-redux';
-
-import { useDispatch } from 'react-redux';
-import { setFolders } from '../redux/foldersSlice';
-
-import { SettingsIcon, BackIcon, MenuIcon, LogoutIcon, CloseIcon, SearchIcon, LeftArrowIcon, MenuIcon2, UserIcon } from  "/imports/other/styles/icons";
-
-import Menu from './sidebar';
 
 import {
   useTracker
 } from 'meteor/react-meteor-data';
 
 import {
+  useSelector
+} from 'react-redux';
+
+import {
+  useDispatch
+} from 'react-redux';
+
+import {
+  setFolders
+} from '/imports/redux/foldersSlice';
+
+import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
+
+import Menu from './sidebar';
+
+import {
+  BackIcon,
+  CloseIcon,
+  LeftArrowIcon,
+  LogoutIcon,
+  MenuIcon,
+  MenuIcon2,
+  SearchIcon,
+  SettingsIcon,
+  UserIcon
+} from "/imports/other/styles/icons";
+
+import {
+  FullButton,
+  Input,
+  LinkButton,
+  MobilePageHeader as PageHeader,
+  Popover,
+  Sort
+} from '/imports/other/styles/styledComponents';
+
 import {
   uint8ArrayToImg
 } from '/imports/other/helperFunctions';
-import {
-  MobilePageHeader as PageHeader,
-  LinkButton,
-  FullButton,
-  Input,
-  Popover,
-  Sort
-} from '../other/styles/styledComponents';
 
 import {
-  listAllPasswords,
   addFolder,
+  addPassword,
   editFolder,
+  editCurrentUser,
+  editPassword,
   editFolderStart,
   deletedFolders,
+  listAllPasswords,
   listPasswordsInFolder,
   listPasswordsInFolderStart,
   listDeletedPasswordsInFolder,
   login,
-  editCurrentUser,
-  addPassword,
-  editPassword,
+  passwordHistory,
   viewPassword,
   viewPreviousPassword,
-  passwordHistory
 } from "/imports/other/navigationLinks";
 
 export default function MobileHeader( props ) {
@@ -72,166 +89,166 @@ export default function MobileHeader( props ) {
 
   const currentUser = useTracker( () => Meteor.user() );
   const logout = () => {
-    dispatch(setFolders([]));
+    dispatch( setFolders( [] ) );
     Meteor.logout();
   }
 
   const folderID = match.params.folderID;
-  const folders = useSelector((state) => state.folders.value);
+  const folders = useSelector( ( state ) => state.folders.value );
   const passwordID = match.params.passwordID;
-  const passwords = useSelector((state) => state.passwords.value);
-  const password = passwords.find(p => p._id === passwordID);
+  const passwords = useSelector( ( state ) => state.passwords.value );
+  const password = passwords.find( p => p._id === passwordID );
 
-  const [ openSidebar, setOpenSidebar ] = useState(false);
-  const [ openSort, setOpenSort ] = useState(false);
-  const [ openSearch, setOpenSearch ] = useState(false);
-  const [ title, setTitle ] = useState("LanPass");
+  const [ openSidebar, setOpenSidebar ] = useState( false );
+  const [ openSort, setOpenSort ] = useState( false );
+  const [ openSearch, setOpenSearch ] = useState( false );
+  const [ title, setTitle ] = useState( "LanPass" );
 
-  useEffect(() => {
-    if (location.pathname === deletedFolders) {
-        setTitle("Deleted folders");
-    } else if (location.pathname.includes("password-add")) {
-      setTitle("Add password");
-    } else if (!folderID) {
-      setTitle("LanPass");
-    } else if (location.pathname.includes("history")) {
-      setTitle("Password history");
+  useEffect( () => {
+    if ( location.pathname === deletedFolders ) {
+      setTitle( "Deleted folders" );
+    } else if ( location.pathname.includes( "password-add" ) ) {
+      setTitle( "Add password" );
+    } else if ( !folderID ) {
+      setTitle( "LanPass" );
+    } else if ( location.pathname.includes( "history" ) ) {
+      setTitle( "Password history" );
     } else {
-      let folder = folders.find(folder => folder._id === folderID);
-      if (folder) {
-        setTitle(folder.name);
+      let folder = folders.find( folder => folder._id === folderID );
+      if ( folder ) {
+        setTitle( folder.name );
       } else {
-        setTitle("LanPass");
+        setTitle( "LanPass" );
       }
     }
-  }, [folderID, location.pathname, folders]);
+  }, [ folderID, location.pathname, folders ] );
 
-  const avatar = useMemo(() => {
-    if (!currentUser || !currentUser.profile.avatar){
+  const avatar = useMemo( () => {
+    if ( !currentUser || !currentUser.profile.avatar ) {
       return null;
     }
-    return uint8ArrayToImg(currentUser.profile.avatar);
-  }, [currentUser]);
+    return uint8ArrayToImg( currentUser.profile.avatar );
+  }, [ currentUser ] );
 
-    const goBackInPage = useCallback(() => {
-      switch (match.path) {
-        case folders:
-          break;
-        case addFolder:
-          history.goBack();
-          break;
-        case editFolder:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case listPasswordsInFolder:
-          history.push(`/folders`);
-          break;
+  const goBackInPage = useCallback( () => {
+    switch ( match.path ) {
+      case folders:
+        break;
+      case addFolder:
+        history.goBack();
+        break;
+      case editFolder:
+        history.push( `/folders/list/${match.params.folderID}` );
+        break;
+      case listPasswordsInFolder:
+        history.push( `/folders` );
+        break;
 
-        case listDeletedPasswordsInFolder:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case deletedFolders:
-          history.push(`/folders`);
-          break;
-        case editCurrentUser:
-          history.goBack();
-          break;
-        case addPassword:
-          history.goBack();
-          break;
+      case listDeletedPasswordsInFolder:
+        history.push( `/folders/list/${match.params.folderID}` );
+        break;
+      case deletedFolders:
+        history.push( `/folders` );
+        break;
+      case editCurrentUser:
+        history.goBack();
+        break;
+      case addPassword:
+        history.goBack();
+        break;
 
-        case editPassword:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case viewPassword:
-          history.push(`/folders/list/${match.params.folderID}`);
-          break;
-        case viewPreviousPassword:
-          history.goBack();
-          break;
-        case passwordHistory:
-          history.goBack();
-          break;
-        default:
-          history.goBack();
+      case editPassword:
+        history.push( `/folders/list/${match.params.folderID}` );
+        break;
+      case viewPassword:
+        history.push( `/folders/list/${match.params.folderID}` );
+        break;
+      case viewPreviousPassword:
+        history.goBack();
+        break;
+      case passwordHistory:
+        history.goBack();
+        break;
+      default:
+        history.goBack();
 
-      }
-    }, [match.path, match.params, history]);
+    }
+  }, [ match.path, match.params, history ] );
 
-    const searchVisible = !openSearch &&  currentUser &&
-    (location.pathname === "/" || location.pathname.includes("list") || location.pathname === listAllPasswords || location.pathname.includes("deleted")) &&
+  const searchVisible = !openSearch && currentUser &&
+    ( location.pathname === "/" || location.pathname.includes( "list" ) || location.pathname === listAllPasswords || location.pathname.includes( "deleted" ) ) &&
     location.pathname !== editCurrentUser;
 
-    const folderCanBeEdited = folders.find(folder => folder._id === folderID)?.users.find(user => user._id === currentUser._id).level === 0;
-    const passwordCanBeEdited = passwordID ? folders.find(folder => folder._id === folderID)?.users.find(user => user._id === currentUser._id).level <= 0 : false;
+  const folderCanBeEdited = folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level === 0;
+  const passwordCanBeEdited = passwordID ? folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level <= 0 : false;
 
-    document.addEventListener("click", (evt) => {
-        const sortMenu = document.getElementById("sort-menu");
-        const openSortMenuBtn = document.getElementById("sort-menu-button");
-        let targetElement = evt.target; // clicked element
-        do {
-            if (targetElement == sortMenu) {
-                // This is a click inside. Do nothing, just return.
-                return;
-            }
-            if (targetElement == openSortMenuBtn) {
-                setOpenSort(!openSort);
-                return;
-            }
-            // Go up the DOM
-            targetElement = targetElement.parentNode;
-        } while (targetElement);
+  document.addEventListener( "click", ( evt ) => {
+    const sortMenu = document.getElementById( "sort-menu" );
+    const openSortMenuBtn = document.getElementById( "sort-menu-button" );
+    let targetElement = evt.target; // clicked element
+    do {
+      if ( targetElement == sortMenu ) {
+        // This is a click inside. Do nothing, just return.
+        return;
+      }
+      if ( targetElement == openSortMenuBtn ) {
+        setOpenSort( !openSort );
+        return;
+      }
+      // Go up the DOM
+      targetElement = targetElement.parentNode;
+    } while ( targetElement );
 
-        // This is a click outside.
-        setOpenSort(false);
-    });
+    // This is a click outside.
+    setOpenSort( false );
+  } );
 
   return (
     <PageHeader>
-        {
-          currentUser &&
-          <LinkButton
-            font="white"
-            onClick={(e) => {
-              e.preventDefault();
-              setOpenSidebar(!openSidebar);
-              setParentOpenSidebar(!openSidebar);
-            }}
-            >
-            <img
-              className="icon"
-              src={MenuIcon}
-              alt="Menu icon not found"
-              />
-          </LinkButton>
-        }
-        {
-          !openSearch &&
-          <h1>{title}</h1>
-        }
+      {
+        currentUser &&
+        <LinkButton
+          font="white"
+          onClick={(e) => {
+            e.preventDefault();
+            setOpenSidebar(!openSidebar);
+            setParentOpenSidebar(!openSidebar);
+          }}
+          >
+          <img
+            className="icon"
+            src={MenuIcon}
+            alt="Menu icon not found"
+            />
+        </LinkButton>
+      }
+      {
+        !openSearch &&
+        <h1>{title}</h1>
+      }
 
       {
         openSearch &&
         currentUser &&
-          <LinkButton
-            font="white"
-            onClick={(e) => {
-              e.preventDefault();
-              setSearch("");
-              setOpenSearch(false);
-            }}
-            >
-            <img
-              className="icon"
-              src={LeftArrowIcon}
-              alt="Left arrow icon not found"
-              />
-          </LinkButton>
-        }
-          {
-            openSearch &&
-            currentUser &&
-          <div className="search-section">
+        <LinkButton
+          font="white"
+          onClick={(e) => {
+            e.preventDefault();
+            setSearch("");
+            setOpenSearch(false);
+          }}
+          >
+          <img
+            className="icon"
+            src={LeftArrowIcon}
+            alt="Left arrow icon not found"
+            />
+        </LinkButton>
+      }
+      {
+        openSearch &&
+        currentUser &&
+        <div className="search-section">
           <Input
             placeholder="Search"
             value={search}
@@ -256,7 +273,7 @@ export default function MobileHeader( props ) {
             alt="Close icon not found"
             />
         </LinkButton>
-  }
+      }
 
       {
         !openSearch &&
@@ -308,7 +325,7 @@ export default function MobileHeader( props ) {
           >
           {
             avatar &&
-          <img className="avatar" src={avatar} alt="assignedAvatar" />
+            <img className="avatar" src={avatar} alt="assignedAvatar" />
           }
           {
             !avatar &&
@@ -384,22 +401,22 @@ export default function MobileHeader( props ) {
             <label htmlFor="sort-by-name-asc">Name (ascending)</label>
           </span>
 
-            <span>
-              <input
-                id="sort-by-name-desc"
-                name="sort-by-name-desc"
-                type="checkbox"
-                checked={sortBy === "name" && sortDirection === "desc"}
-                onChange={() => {
-                  setSortBy("name");
-                  setSortDirection("desc");
-                  if (/Mobi|Android/i.test(navigator.userAgent)) {
-                    setOpenSort(!openSort);
-                  }
-                }}
-                />
-              <label htmlFor="sort-by-name-desc">Name (descending)</label>
-            </span>
+          <span>
+            <input
+              id="sort-by-name-desc"
+              name="sort-by-name-desc"
+              type="checkbox"
+              checked={sortBy === "name" && sortDirection === "desc"}
+              onChange={() => {
+                setSortBy("name");
+                setSortDirection("desc");
+                if (/Mobi|Android/i.test(navigator.userAgent)) {
+                  setOpenSort(!openSort);
+                }
+              }}
+              />
+            <label htmlFor="sort-by-name-desc">Name (descending)</label>
+          </span>
 
           <span>
             <input
@@ -418,22 +435,22 @@ export default function MobileHeader( props ) {
             <label htmlFor="sort-by-name-asc">Date created (ascending)</label>
           </span>
 
-            <span>
-              <input
-                id="sort-by-date-desc"
-                name="sort-by-date-desc"
-                type="checkbox"
-                checked={sortBy === "date" && sortDirection === "desc"}
-                onChange={() => {
-                  setSortBy("date");
-                  setSortDirection("desc");
-                  if (/Mobi|Android/i.test(navigator.userAgent)) {
-                    setOpenSort(!openSort);
-                  }
-                }}
-                />
-              <label htmlFor="sort-by-name-asc">Date created (descending)</label>
-            </span>
+          <span>
+            <input
+              id="sort-by-date-desc"
+              name="sort-by-date-desc"
+              type="checkbox"
+              checked={sortBy === "date" && sortDirection === "desc"}
+              onChange={() => {
+                setSortBy("date");
+                setSortDirection("desc");
+                if (/Mobi|Android/i.test(navigator.userAgent)) {
+                  setOpenSort(!openSort);
+                }
+              }}
+              />
+            <label htmlFor="sort-by-name-asc">Date created (descending)</label>
+          </span>
         </Sort>
       }
 

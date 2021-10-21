@@ -1,20 +1,26 @@
 import React, {
-  useState,
   useEffect,
-  useMemo
+  useMemo,
+  useState,
 } from 'react';
+
 import moment from 'moment';
 
-import { useSelector } from 'react-redux';
+import {
+  useSelector
+} from 'react-redux';
+
 import {
   Modal,
   ModalBody
 } from 'reactstrap';
 
-import FolderForm from './folderForm';
 import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
+
+import FolderForm from '/imports/ui/folders/folderForm';
+
 import {
   listPasswordsInFolderStart,
 } from "/imports/other/navigationLinks";
@@ -27,37 +33,38 @@ export default function EditFolderContainer( props ) {
   } = props;
 
   const folderID = match.params.folderID;
-  const folders = useSelector((state) => state.folders.value);
-  const folder = useMemo(() => {
-    return  folders.find(folder => folder._id === folderID);
-  }, [folders, folderID]);
+  const folders = useSelector( ( state ) => state.folders.value );
+  const folder = useMemo( () => {
+    return folders.find( folder => folder._id === folderID );
+  }, [ folders, folderID ] );
 
   const userId = Meteor.userId();
 
-    useEffect( () => {
-      if (folder){
-        const userIsAdmin = folder.users.find(user => user._id === userId).level === 0;
+  useEffect( () => {
+    if ( folder ) {
+      const userIsAdmin = folder.users.find( user => user._id === userId ).level === 0;
 
-        if ( !userIsAdmin ) {
-          history.goBack();
-        }
+      if ( !userIsAdmin ) {
+        history.goBack();
       }
+    }
 
-    }, [ userId, folder ] );
+  }, [ userId, folder ] );
 
   const editFolder = ( name, users ) => {
     let data = {
-      name, users
+      name,
+      users
     };
     FoldersCollection.update( folderID, {
       $set: {
         ...data
       }
-    }, (error) => {
-      if (error) {
-        console.log(error);
+    }, ( error ) => {
+      if ( error ) {
+        console.log( error );
       } else {
-        history.push(`/folders/list/${folderID}`);
+        history.push( `/folders/list/${folderID}` );
       }
     } );
   };
@@ -81,6 +88,11 @@ export default function EditFolderContainer( props ) {
   }
 
   return (
-      <FolderForm {...folder} onSubmit={editFolder} onCancel={cancel} onRemove={removeFolder}/>
+    <FolderForm
+      {...folder}
+      onSubmit={editFolder}
+      onCancel={cancel}
+      onRemove={removeFolder}
+      />
   );
 };

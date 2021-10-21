@@ -6,14 +6,14 @@ import React, {
 import {
   isEmail,
   uint8ArrayToImg
-} from '../../other/helperFunctions.js';
+} from '/imports/other/helperFunctions';
 
 import {
   Form,
   Input,
   ButtonCol,
   FullButton,
-} from "../../other/styles/styledComponents";
+} from "/imports/other/styles/styledComponents";
 
 export default function UserForm( props ) {
 
@@ -31,7 +31,11 @@ export default function UserForm( props ) {
   const [ name, setName ] = useState( "" );
   const [ surname, setSurname ] = useState( "" );
   const [ email, setEmail ] = useState( "" );
-  const [ avatar, setAvatar ] = useState( {name: "", buffer: null, img: null} );
+  const [ avatar, setAvatar ] = useState( {
+    name: "",
+    buffer: null,
+    img: null
+  } );
   const [ password1, setPassword1 ] = useState( '' );
   const [ password2, setPassword2 ] = useState( '' );
 
@@ -49,10 +53,18 @@ export default function UserForm( props ) {
       setSurname( "" );
     }
     if ( profile?.avatar ) {
-      const img = uint8ArrayToImg(profile.avatar);
-      setAvatar( {name: "", buffer: profile.avatar, img} );
+      const img = uint8ArrayToImg( profile.avatar );
+      setAvatar( {
+        name: "",
+        buffer: profile.avatar,
+        img
+      } );
     } else {
-      setAvatar( {name: "", buffer: null, img: null} );
+      setAvatar( {
+        name: "",
+        buffer: null,
+        img: null
+      } );
     }
   }, [ profile ] );
 
@@ -99,7 +111,8 @@ export default function UserForm( props ) {
           />
       </section>
 
-      { !profile &&
+      {
+        !profile &&
         <section>
           <label  htmlFor="email">Email<span style={{color: "red"}}>*</span></label>
           <Input
@@ -148,7 +161,8 @@ export default function UserForm( props ) {
       </section>
 
 
-      { !profile &&
+      {
+        !profile &&
         <section>
           <label htmlFor="password1">Password<span style={{color: "red"}}>*</span></label>
           <Input
@@ -169,7 +183,8 @@ export default function UserForm( props ) {
             />
         </section>
       }
-      { !profile &&
+      {
+        !profile &&
         <section>
           <label htmlFor="password2">Repeat password<span style={{color: "red"}}>*</span></label>
           <Input
@@ -191,20 +206,48 @@ export default function UserForm( props ) {
         </section>
       }
 
-        {
-          errorMessage &&
-          <p>{errorMessage}</p>
-        }
+      {
+        errorMessage &&
+        <p>{errorMessage}</p>
+      }
       <ButtonCol>
-        {onCancel &&
-          <FullButton colour="grey" onClick={(e) => {e.preventDefault(); onCancel()}}>Back</FullButton>
+        {
+          onCancel &&
+          <FullButton
+            colour="grey"
+            onClick={(e) => {
+              e.preventDefault();
+              onCancel()
+            }}
+            >
+            Back
+          </FullButton>
         }
-        {openLogIn &&
-          <FullButton colour="grey" onClick={(e) => {e.preventDefault(); openLogIn()}}>Cancel</FullButton>
+        {
+          openLogIn &&
+          <FullButton
+            colour="grey"
+            onClick={(e) => {
+              e.preventDefault();
+              openLogIn()
+            }}
+            >
+            Cancel
+          </FullButton>
         }
-        {onRemove &&
+        {
+          onRemove &&
           false &&
-          <FullButton colour="red" onClick={(e) => {e.preventDefault(); onRemove(userId); onCancel();}}>Delete</FullButton>
+          <FullButton
+            colour="red"
+            onClick={(e) => {
+              e.preventDefault();
+              onRemove(userId);
+              onCancel();
+            }}
+            >
+            Delete
+          </FullButton>
         }
         <FullButton
           colour=""

@@ -1,14 +1,12 @@
 import React from 'react';
-import {
-  Meteor
-} from 'meteor/meteor';
+
 import {
   Spinner
 } from 'reactstrap';
 
 import {
   LoadingScreen,
-} from "../../other/styles/styledComponents";
+} from "/imports/other/styles/styledComponents";
 
 export default function Loader( props ) {
   return (

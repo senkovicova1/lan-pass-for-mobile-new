@@ -1,81 +1,93 @@
 import React, {
-  useState,
-  useMemo,
   useEffect,
+  useMemo,
+  useState,
 } from 'react';
+
+import {
+  useSelector
+} from 'react-redux';
 
 import Select from 'react-select';
 
 import {
-  selectStyle
-} from '../../other/styles/selectStyles';
+  DeleteIcon
+} from "/imports/other/styles/icons";
 
-import { DeleteIcon } from  "/imports/other/styles/icons";
+import {
+  selectStyle
+} from '/imports/other/styles/selectStyles';
+
+import {
+  ButtonCol,
+  Form,
+  FullButton,
+  Input,
+  LinkButton,
+  UserEntry
+} from "/imports/other/styles/styledComponents";
 
 import {
   uint8ArrayToImg
-} from '../../other/helperFunctions';
-
-import { useSelector } from 'react-redux';
-
-import {
-  Form,
-  Input,
-  ButtonCol,
-  LinkButton,
-  FullButton,
-  UserEntry
-} from "../../other/styles/styledComponents";
+} from '/imports/other/helperFunctions';
 
 export default function FolderForm( props ) {
 
   const {
+    match,
+    location,
     _id: folderId,
     name: folderName,
     users: folderUsers,
     onSubmit,
     onRemove,
     onCancel,
-    match,
-    location
   } = props;
 
-const dbUsers = useSelector((state) => state.users.value);
+  const dbUsers = useSelector( ( state ) => state.users.value );
 
-const userId = Meteor.userId();
+  const userId = Meteor.userId();
 
   const [ name, setName ] = useState( "" );
   const [ users, setUsers ] = useState( [] );
 
   useEffect( () => {
+
     if ( folderName ) {
       setName( folderName );
     } else {
       setName( "" );
     }
+
     if ( folderUsers ) {
       setUsers( folderUsers );
     } else {
-      setUsers( [{_id: userId, level: 0}] );
+      setUsers( [ {
+        _id: userId,
+        level: 0
+      } ] );
     }
+
   }, [ folderName, folderUsers ] );
 
-  const usersWithRights = useMemo(() => {
-   return users.map(user =>
-        {
-        let newUser = {...dbUsers.find(u => u._id === user._id), level: user.level};
-        return newUser;
-      }). sort((u1, u2) => (u1.level > u2.level ? 1 : -1));
-  }, [users, dbUsers]);
+  const usersWithRights = useMemo( () => {
+    return users.map( user => {
+      let newUser = {
+        ...dbUsers.find( u => u._id === user._id ),
+        level: user.level
+      };
+      return newUser;
+    } ).sort( ( u1, u2 ) => ( u1.level > u2.level ? 1 : -1 ) );
+  }, [ users, dbUsers ] );
 
-  const usersToSelect = useMemo(() => {
-    return dbUsers.filter(user => !users.find(u => u._id === user._id));
-  }, [dbUsers, users]);
-  document.onkeydown = function (e) {
+  const usersToSelect = useMemo( () => {
+    return dbUsers.filter( user => !users.find( u => u._id === user._id ) );
+  }, [ dbUsers, users ] );
+  document.onkeydown = function( e ) {
     e = e || window.event;
-    switch (e.which || e.keyCode) {
-      case 13 :
-      break;
+    switch ( e.which || e.keyCode ) {
+      case 13:
+        break;
     }
   }
 
@@ -145,20 +157,20 @@ const userId = Meteor.userId();
                       setUsers(newUsers);
                     }}
                     />
-              </td>
-                  <td>
-                    <Input
-                      id="read"
-                      name="read"
-                      type="checkbox"
-                      disabled={user.level === 0}
-                      checked
-                      onChange={(e) =>  {
-                        let newUsers = users.filter((u) => (user._id !== u._id));
-                        setUsers(newUsers);
-                      }}
-                      />
-                  </td>
+                </td>
+                <td>
+                  <Input
+                    id="read"
+                    name="read"
+                    type="checkbox"
+                    disabled={user.level === 0}
+                    checked
+                    onChange={(e) =>  {
+                      let newUsers = users.filter((u) => (user._id !== u._id));
+                      setUsers(newUsers);
+                    }}
+                    />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -168,9 +180,26 @@ const userId = Meteor.userId();
 
 
       <ButtonCol>
-        <FullButton colour="grey" onClick={(e) => {e.preventDefault(); onCancel();}}>Cancel</FullButton>
-        {onRemove &&
-          <FullButton colour="red" onClick={(e) => {e.preventDefault(); onRemove(folderId);}}>Delete</FullButton>
+        <FullButton
+          colour="grey"
+          onClick={(e) => {
+            e.preventDefault();
+            onCancel();
+          }}
+          >
+          Cancel
+        </FullButton>
+        {
+          onRemove &&
+          <FullButton
+            colour="red"
+            onClick={(e) => {
+              e.preventDefault();
+              onRemove(folderId);
+            }}
+            >
+            Delete
+          </FullButton>
         }
         <FullButton
           colour=""
@@ -178,8 +207,8 @@ const userId = Meteor.userId();
           onClick={(e) => {
             e.preventDefault();
             onSubmit(
-               name,
-               users
+              name,
+              users
             );
           }}
           >

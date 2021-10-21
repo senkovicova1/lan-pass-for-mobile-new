@@ -3,15 +3,11 @@ import React, {
 } from 'react';
 
 import {
-  Meteor
-} from 'meteor/meteor';
-
-import {
   Accounts
 } from 'meteor/accounts-base';
 
-import Loader from "../other/loadingScreen";
-import AddUser from '../users/userForm';
+import Loader from "/imports/ui/other/loadingScreen";
+import AddUser from '/imports/ui/users/userForm';
 
 import {
   listPasswordsInFolderStart
@@ -19,15 +15,19 @@ import {
 
 export default function SignInForm( props ) {
 
-  const { history, openLogIn } = props;
+  const {
+    history,
+    openLogIn
+  } = props;
+
   const [ errorMessage, setErrorMessage ] = useState( '' );
   const [ showLoading, setShowLoading ] = useState( false );
 
   const onSubmit = ( name, surname, avatar, email, password ) => {
-    setShowLoading(true);
-    setErrorMessage("");
+    setShowLoading( true );
+    setErrorMessage( "" );
     createUser( name, surname, avatar, email, password );
-    history.push("");
+    history.push( "" );
   };
 
   const createUser = ( name, surname, avatar, email, password ) => {
@@ -39,13 +39,13 @@ export default function SignInForm( props ) {
         surname,
         avatar,
       }
-    }, (error) => {
-      setShowLoading(false);
-      if (error) {
-        if (error.reason === "Incorrect password." || error.reason === "User not found."){
-          setErrorMessage("Incorrect login details.");
+    }, ( error ) => {
+      setShowLoading( false );
+      if ( error ) {
+        if ( error.reason === "Incorrect password." || error.reason === "User not found." ) {
+          setErrorMessage( "Incorrect login details." );
         } else {
-          setErrorMessage(error.reason);
+          setErrorMessage( error.reason );
         }
       }
     } );
@@ -57,7 +57,12 @@ export default function SignInForm( props ) {
         showLoading &&
         <Loader />
       }
-      <AddUser onSubmit={onSubmit} isSignIn openLogIn={openLogIn} errorMessage={errorMessage}/>
+      <AddUser
+        onSubmit={onSubmit}
+        isSignIn
+        openLogIn={openLogIn}
+        errorMessage={errorMessage}
+        />
     </div>
   );
 };

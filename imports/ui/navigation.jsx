@@ -1,21 +1,22 @@
 import React, {
+  useEffect,
   useState,
   useMemo,
-  useEffect
 } from 'react';
+
 import {
   Route,
   BrowserRouter
 } from 'react-router-dom';
 
-import { useDispatch, useSelector } from 'react-redux';
-import { setFolders } from '../redux/foldersSlice';
-import { setPasswords } from '../redux/passwordsSlice';
-import { setUsers } from '../redux/usersSlice';
 import {
-  PLAIN,
-  COLUMNS
-} from "/imports/other/constants";
+  useDispatch,
+  useSelector
+} from 'react-redux';
+
+import {
+  useTracker
+} from 'meteor/react-meteor-data';
 
 import {
   FoldersCollection
@@ -23,9 +24,18 @@ import {
 import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
+
 import {
-  useTracker
-} from 'meteor/react-meteor-data';
+  setFolders
+} from '../redux/foldersSlice';
+
+import {
+  setPasswords
+} from '../redux/passwordsSlice';
+
+import {
+  setUsers
+} from '../redux/usersSlice';
 
 import Reroute from './reroute';
 import Header from './header';
@@ -39,13 +49,19 @@ import PasswordView from './passwords/view';
 import PasswordHistoryList from './passwords/passwordHistoryList';
 import EditUserContainer from './users/editUserContainer';
 
+import {
+  Content
+} from '/imports/other/styles/styledComponents';
+
+import {
+  PLAIN,
+  COLUMNS
+} from "/imports/other/constants";
 
 import {
   uint8ArrayToImg
-} from '../other/helperFunctions';
-import {
-  Content
-} from '../other/styles/styledComponents';
+} from '/imports/other/helperFunctions';
+
 import {
   login,
   addFolder,
@@ -62,57 +78,72 @@ import {
 } from "/imports/other/navigationLinks";
 
 export default function MainPage( props ) {
+
   const dispatch = useDispatch();
 
-  console.log("All our amazing icons are from FlatIcon (https://www.flaticon.com/). Thank you to all creators whose icons we could use: PixelPerfect (https://www.flaticon.com/authors/pixel-perfect), Dmitri13 (https://www.flaticon.com/authors/dmitri13), Phatplus (https://www.flaticon.com/authors/phatplus), Kiranshastry (https://www.flaticon.com/authors/kiranshastry), Those Icons (https://www.flaticon.com/authors/those-icons), Google (https://www.flaticon.com/authors/google), Dave Gandy (https://www.flaticon.com/authors/dave-gandy), Tomas Knop (https://www.flaticon.com/authors/tomas-knop), Gregor Cresnar (https://www.flaticon.com/authors/gregor-cresnar), Freepik (https://www.flaticon.com/authors/freepik)");
+  console.log( "All our amazing icons are from FlatIcon (https://www.flaticon.com/). Thank you to all creators whose icons we could use: PixelPerfect (https://www.flaticon.com/authors/pixel-perfect), Dmitri13 (https://www.flaticon.com/authors/dmitri13), Phatplus (https://www.flaticon.com/authors/phatplus), Kiranshastry (https://www.flaticon.com/authors/kiranshastry), Those Icons (https://www.flaticon.com/authors/those-icons), Google (https://www.flaticon.com/authors/google), Dave Gandy (https://www.flaticon.com/authors/dave-gandy), Tomas Knop (https://www.flaticon.com/authors/tomas-knop), Gregor Cresnar (https://www.flaticon.com/authors/gregor-cresnar), Freepik (https://www.flaticon.com/authors/freepik)" );
 
   const currentUser = useTracker( () => Meteor.user() );
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
 
-  const userId = useMemo(() => {
-    if (currentUser){
+  const userId = useMemo( () => {
+    if ( currentUser ) {
       return currentUser._id;
     }
     return null;
-  }, [currentUser]);
+  }, [ currentUser ] );
 
-  const folders = useTracker( () => FoldersCollection.find( { users:  { $elemMatch: { _id: userId } } } ).fetch() );
+  const folders = useTracker( () => FoldersCollection.find( {
+    users: {
+      $elemMatch: {
+        _id: userId
+      }
+    }
+  } ).fetch() );
 
-  useEffect(() => {
-    if (folders.length > 0){
-      dispatch(setFolders(folders.map(folder => ({...folder, label: folder.name, value: folder._id})).sort((f1, f2) => f1.name > f2.name ? 1 : -1)));
+  useEffect( () => {
+    if ( folders.length > 0 ) {
+      dispatch( setFolders( folders.map( folder => ( {
+        ...folder,
+        label: folder.name,
+        value: folder._id
+      } ) ).sort( ( f1, f2 ) => f1.name > f2.name ? 1 : -1 ) ) );
     } else {
-      dispatch(setFolders([]));
+      dispatch( setFolders( [] ) );
     }
-  }, [folders]);
+  }, [ folders ] );
 
-  const savedFolderIds = folders.map(folder => folder._id);
-  const passwords = useTracker( () => PasswordsCollection.find( { folder:  { $in: savedFolderIds} } ).fetch() );
-  useEffect(() => {
-    if (passwords.length > 0){
-      dispatch(setPasswords(passwords));
+  const savedFolderIds = folders.map( folder => folder._id );
+  const passwords = useTracker( () => PasswordsCollection.find( {
+    folder: {
+      $in: savedFolderIds
     }
-  }, [ passwords ]);
+  } ).fetch() );
+  useEffect( () => {
+    if ( passwords.length > 0 ) {
+      dispatch( setPasswords( passwords ) );
+    }
+  }, [ passwords ] );
 
   const users = useTracker( () => Meteor.users.find( {} ).fetch() );
-  useEffect(() => {
+  useEffect( () => {
     dispatch(
       setUsers(
-        users.map(user => ({
+        users.map( user => ( {
           _id: user._id,
           ...user.profile,
-          label:  `${user.profile.name} ${user.profile.surname}`,
+          label: `${user.profile.name} ${user.profile.surname}`,
           value: user._id,
-          img: uint8ArrayToImg(user.profile.avatar)
-        }) )
+          img: uint8ArrayToImg( user.profile.avatar )
+        } ) )
       )
     );
-  }, [users]);
+  }, [ users ] );
 
   const [ search, setSearch ] = useState( "" );
   const [ openSidebar, setOpenSidebar ] = useState( false );
-  const [ sortBy, setSortBy ] = useState("name");
-  const [ sortDirection, setSortDirection ] = useState("asc");
+  const [ sortBy, setSortBy ] = useState( "name" );
+  const [ sortDirection, setSortDirection ] = useState( "asc" );
 
   return (
     <div style={{height: "100vh"}}>
@@ -120,23 +151,23 @@ export default function MainPage( props ) {
         <Route
           exact
           path={[
-          "/",
-          "/folders", 
-          login,
-          addFolder,
-          editFolder,
-          listPasswordsInFolder,
-          deletedFolders,
-          viewPreviousPassword,
-          editCurrentUser,
-          addPassword,
-          editPassword,
-          viewPassword,
-          passwordHistory,
-          listDeletedPasswordsInFolder
-        ]}
-        component={Reroute}
-        />
+            "/",
+            "/folders",
+            login,
+            addFolder,
+            editFolder,
+            listPasswordsInFolder,
+            deletedFolders,
+            viewPreviousPassword,
+            editCurrentUser,
+            addPassword,
+            editPassword,
+            viewPassword,
+            passwordHistory,
+            listDeletedPasswordsInFolder
+          ]}
+          component={Reroute}
+          />
 
         <Route
           exact
@@ -168,12 +199,14 @@ export default function MainPage( props ) {
               />
           )}
           />
-        {!currentUser &&
+        {
+          !currentUser &&
           <Content withSidebar={false}>
             <Route path={["/", login]} component={Login} />
           </Content>
         }
-        {currentUser &&
+        {
+          currentUser &&
           <Content withSidebar={openSidebar} columns={layout === COLUMNS}>
             <div style={{height: "100%", position: "relative"}}>
 

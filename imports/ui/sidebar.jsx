@@ -10,14 +10,15 @@ import moment from 'moment';
 
 import { useSelector } from 'react-redux';
 
-import { FolderIcon, DeleteIcon, PlusIcon } from  "/imports/other/styles/icons";
+import { FolderIcon, DeleteIcon, PlusIcon, ExpandIcon } from  "/imports/other/styles/icons";
 
 import {
   useTracker
 } from 'meteor/react-meteor-data';
 
 import {
-  Sidebar
+  Sidebar,
+  LinkButton
 } from "/imports/other/styles/styledComponents";
 import {
   listPasswordsInFolderStart,
@@ -37,12 +38,18 @@ export default function Menu( props ) {
   const user = useTracker( () => Meteor.user() );
   const folders = useSelector((state) => state.folders.value);
 
+  const [ showDeletedFolders, setShowDeletedFolders ] = useState( false );
+
   const myFolders = useMemo(() => {
-    return folders.filter(folder => !folder.deletedDate).map(folder => ({...folder, label: folder.name, value: folder._id}));
+    return folders.map(folder => ({...folder, label: folder.name, value: folder._id}));
   }, [userId, folders]);
 
   const myActiveFolders = useMemo(() => {
-    return [...myFolders.filter(folder => !folder.deleted), {label: "Deleted folders", value: "deleted"}];
+    return [...myFolders.filter(folder => !folder.deletedDate)];
+  }, [myFolders]);
+
+  const myInactiveFolders = useMemo(() => {
+    return [...myFolders.filter(folder => folder.deletedDate)];
   }, [myFolders]);
 
   const getRights = (folder) => {
@@ -65,9 +72,7 @@ export default function Menu( props ) {
   return (
     <Sidebar>
       {
-        myActiveFolders.map(folder => {
-          if (folder.value !== "deleted"){
-          return (
+        myActiveFolders.map(folder => (
             <NavLink
               key={folder.value}
               className={folderID === folder.value ? "active" : ""}
@@ -88,9 +93,7 @@ export default function Menu( props ) {
               <span className="rights">{getRights(folder)}</span>
 
             </NavLink>
-          );
-        }
-        })
+          ))
       }
 
       <NavLink
@@ -110,23 +113,53 @@ export default function Menu( props ) {
         Folder
       </NavLink>
 
-      <NavLink
-        key={"del"}
-        className={location.pathname.includes("deleted") ? "active" : ""}
-        to={deletedFolders}
-        onClick={() => {
-          if (/Mobi|Android/i.test(navigator.userAgent)) {
-            closeSelf();
-          }
-        }}
-        >
-        <img
-          className="icon"
-          src={DeleteIcon}
-          alt=""
-          />
-        Deleted
-      </NavLink>
+      <div className="imitation-navlink">
+        <LinkButton
+          onClick={() => {
+            console.log("HI");
+            setShowDeletedFolders(!showDeletedFolders);
+          }}
+          >
+          <img
+            className="icon"
+            src={DeleteIcon}
+            alt=""
+            />
+          Deleted
+          <img
+            className="icon last-icon"
+            src={ExpandIcon}
+            alt=""
+            />
+        </LinkButton>
+      </div>
+
+      {
+        showDeletedFolders &&
+        myInactiveFolders.map(folder => (
+            <NavLink
+              key={folder.value}
+              className={folderID === folder.value ? "active" : ""}
+              to={`/folders/list/${folder.value}`}
+              onClick={() => {
+                if (/Mobi|Android/i.test(navigator.userAgent)) {
+                  closeSelf();
+                }
+              }}
+              >
+                <img
+                  className="icon"
+                  src={FolderIcon}
+                  alt="Folder icon not found"
+                  />
+              <span>{folder.label}</span>
+
+              <span className="rights">{getRights(folder)}</span>
+
+            </NavLink>
+          )
+        )
+      }
 
     </Sidebar>
   );

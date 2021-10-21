@@ -1,30 +1,34 @@
-import {
-  Meteor
-} from 'meteor/meteor';
-
 import React, {
   useState
 } from 'react';
 
 import {
+  Meteor
+} from 'meteor/meteor';
+
+import {
   Accounts
 } from 'meteor/accounts-base';
 
+import Loader from "/imports/ui/other/loadingScreen";
+
 import {
+  FullButton,
   Form,
   Input,
-  FullButton,
   LinkButton
-} from "../../other/styles/styledComponents";
+} from "/imports/other/styles/styledComponents";
 
-import Loader from "../other/loadingScreen";
 import {
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
 export default function LoginForm( props ) {
 
-  const { history, openSignUp } = props;
+  const {
+    history,
+    openSignUp
+  } = props;
 
   const [ email, setEmail ] = useState( '' );
   const [ password, setPassword ] = useState( '' );
@@ -32,26 +36,28 @@ export default function LoginForm( props ) {
   const [ showLoading, setShowLoading ] = useState( false );
 
   const onSubmit = event => {
-    setShowLoading(true);
-    setErrorMessage("");
+    setShowLoading( true );
+    setErrorMessage( "" );
     event.preventDefault();
-      Meteor.loginWithPassword( email, password, (error) => {
-        setShowLoading(false);
-        if (error) {
-          if (error.reason === "Incorrect password." || error.reason === "User not found."){
-            setErrorMessage("Incorrect login details.");
-          } else {
-            setErrorMessage(error.reason);
-          }
-          setShowLoading(false);
+    Meteor.loginWithPassword( email, password, ( error ) => {
+      setShowLoading( false );
+      if ( error ) {
+        if ( error.reason === "Incorrect password." || error.reason === "User not found." ) {
+          setErrorMessage( "Incorrect login details." );
+        } else {
+          setErrorMessage( error.reason );
         }
-      });
-    history.push("");
+        setShowLoading( false );
+      }
+    } );
+    history.push( "" );
   };
 
   const handleForgotPassword = () => {
-    Accounts.forgotPassword({email});
-  } ;
+    Accounts.forgotPassword( {
+      email
+    } );
+  };
 
   return (
     <Form onSubmit={onSubmit}>
@@ -94,16 +100,21 @@ export default function LoginForm( props ) {
 
       <LinkButton
         disabled={email.length === 0}
-        onClick={(e) => {e.preventDefault(); handleForgotPassword()}}
+        onClick={(e) => {
+          e.preventDefault();
+          handleForgotPassword()
+        }}
         >
         Forgot password
       </LinkButton>
       <LinkButton
-        onClick={(e) => {e.preventDefault(); openSignUp()}}
+        onClick={(e) => {
+          e.preventDefault();
+          openSignUp()
+        }}
         >
         Account registration
       </LinkButton>
-
 
     </Form>
   );

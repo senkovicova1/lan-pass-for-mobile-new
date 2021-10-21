@@ -20,18 +20,26 @@ export default function EditUserContainer( props ) {
   const user = useTracker( () => Meteor.user() );
 
   const editUser = ( name, surname, avatar ) => {
-    let data = {...user.profile, name, surname, avatar};
+    let data = {
+      ...user.profile,
+      name,
+      surname,
+      avatar
+    };
 
-    Meteor.users.update(user._id, {
+    Meteor.users.update( user._id, {
       $set: {
         profile: data
       }
-    });
-    history.push("");
+    } );
+    history.push( "" );
   };
 
-
   return (
-        <UserForm {...user} onSubmit={editUser} onCancel={() => props.history.push(``)}/>
+    <UserForm 
+      {...user}
+      onSubmit={editUser}
+      onCancel={() => props.history.push(``)}
+      />
   );
 };
