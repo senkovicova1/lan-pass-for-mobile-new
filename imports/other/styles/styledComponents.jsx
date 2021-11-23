@@ -22,7 +22,7 @@ export const MainPage = styled.div `
   }
 
   h2 {
-    font-size: 2em;
+    font-size: 1.3em;
   }
 
   ul {
@@ -229,7 +229,7 @@ export const Content = styled.main `
 `;
 
 export const Sidebar = styled.section `
-  background-color: ${backgroundColour};
+  background-color: #f6f6f6;
   position: absolute;
   left: 0;
   @media all and (max-width: 799px), @media handheld  {
@@ -240,7 +240,6 @@ export const Sidebar = styled.section `
     box-shadow: none;
     border-right: 0px solid #d6d6d6;
     width: ${sidebarWidthWeb};
-    background-color: white;
   }
   top: 50px;
   height: calc(100vh - 50px);
@@ -273,6 +272,7 @@ export const Sidebar = styled.section `
 
   a.active {
     background-color: ${basicBlueColour}22;
+    border-radius: 0px 10px 10px 0px;
   }
 
   .rights{
@@ -355,6 +355,62 @@ export const FullButton = styled.button `
   }
 `;
 
+
+export const BorderedLinkButton = styled.button `
+  display: inline-flex;
+  color: ${(props) => props.font ? props.font : basicBlueColour};
+
+  marginRight: 0.6em;
+  width: auto;
+  min-width: 80px;
+  padding: 7px;
+  margin-right: 15px;
+  height: ${(props) => props.fit ? "fit-content" : "2.5em"};
+  background-color: ${(props) => props.searchButton ? "white" : "transparent" } !important;
+  outline: none !important;
+  border: 1px solid ${(props) => props.font ? props.font : basicBlueColour} !important;
+  border-radius: 10px;
+  line-height: 1em;
+  align-items: center;
+
+  i, img {
+    margin-right: 0em !important;
+  }
+
+  img.icon {
+      height: 1em;
+      width: 1.5em !important;
+      filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(90%) contrast(101%);
+  }
+`;
+
+export const BorderedFullButton = styled.button `
+  color: white;
+  marginRight: 0.6em;
+  width: auto;
+  min-width: 80px;
+  padding: 7px;
+  margin-right: 15px;
+  height: ${(props) => props.fit ? "fit-content" : "2.5em"};
+  background-color: ${(props) => props.colour ? props.colour : "#0078d4" } !important;
+  outline: none !important;
+  border: 1px solid ${(props) => props.font ? props.font : basicBlueColour} !important;
+  border-radius: 10px;
+  line-height: 1em;
+  display: flex;
+  align-items: center;
+
+  i, img {
+    margin-right: 0em !important;
+  }
+
+  img.icon {
+      height: 1em;
+      width: 1.5em !important;
+      filter: invert(1);
+  }
+`;
+
 export const FloatingButton = styled.button `
   color: white;
   padding: 0px 0.8em;
@@ -409,10 +465,23 @@ export const FloatingDangerButton = styled.button `
 `;
 
 export const List = styled.section `
-  width: 100%;
+  width: 1200px;
   padding: 0em;
   display: inline-block;
   verticalAlign: top;
+
+  .command-bar{
+    display: flow-root;
+    padding: 0px;
+    margin-bottom: 1em;
+  }
+
+  h2{
+    padding: 0.5em 0em;
+    line-height: 40px;
+    font-weight: 500 !important;
+    width: -webkit-fill-available;
+  }
 
   &>div{
       display: flex;
@@ -446,8 +515,9 @@ export const List = styled.section `
     line-height: 3em;
   }
 
-  h2{
-    color: ${basicBlueColour};
+  button{
+    margin: 0px;
+    margin-right: 0.6em;
   }
 `;
 
@@ -491,6 +561,19 @@ export const ItemContainer = styled.section `
 export const Form = styled.form `
   padding: 1em ${inputOffset};
   width: -webkit-fill-available;
+
+  h2{
+    margin-top: 0px;
+    font-weight: 500;
+    line-height: 40px;
+    width: -webkit-fill-available;
+  }
+
+  .command-bar{
+    display: flex;
+    padding: 0px;
+    margin-bottom: 1em;
+  }
 
   section {
     margin: 0em 0em 1.5em 0em;
@@ -690,14 +773,42 @@ export const LoginContainer = styled.div`
   }
 `;
 
+export const Card = styled.div`
+  display: block;
+  background: white;
+  border-radius: 0.5em;
+  border: 1px solid #d6d6d6;
+  padding: ${(props) => props.noPadding ? "0em" : "1em"};
+`;
+
+export const CommandRow = styled.section `
+position: sticky;
+  bottom: 0px;
+  width: 100%;
+  height: 50px;
+  background: #f6f6f6;
+  margin: 0px !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  button{
+    margin: 0px 0.3em;
+  }
+`;
+
 export const PasswordContainer = styled.div`
+  background: white;
+  border-radius: 0.5em;
+  border: 1px solid #d6d6d6;
+  padding: ${(props) => props.noPadding ? "0em" : "1em"};
+  margin-bottom: 1em;
+
   &:hover, *:hover{
     cursor: pointer;
   }
 
-  border-bottom: 1px solid #DDD;
-
-  padding: 0.6em 1em;
   display: flex;
   align-items: center;
 

@@ -39,8 +39,8 @@ import {
 } from '/imports/other/styles/selectStyles';
 
 import {
-  FloatingButton,
-  FloatingDangerButton,
+  Card,
+  BorderedLinkButton,
   ItemContainer,
   List,
   LinkButton,
@@ -179,6 +179,11 @@ const displayPassword = ( id, password ) => {
     <List>
 
       {
+      active &&
+      <h2>{folder.name}</h2>
+    }
+
+      {
         !active &&
         <div>
           <LinkButton onClick={(e) => {e.preventDefault();  history.goBack()}}>
@@ -192,9 +197,75 @@ const displayPassword = ( id, password ) => {
         </div>
       }
 
+      <span className="command-bar">
+
+              {
+                active &&
+                match.params.folderID &&
+                !folder.deletedDate &&
+                canAddPasswords &&
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={() => history.push(`/folders/${match.params.folderID}/password-add`)}
+                  >
+                  <img
+                    className="icon"
+                    src={PlusIcon}
+                    alt="Plus icon not found"
+                    />
+
+                  {!/Mobi|Android/i.test(navigator.userAgent) &&
+                    <span>
+                      Password
+                    </span>
+                  }
+                </BorderedLinkButton>
+              }
+
+              {
+                folder.deletedDate &&
+                folderCanBeDeleted &&
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    permanentlyDeleteFolder();
+                  }}
+                  >
+                  <img
+                    className="icon"
+                    src={DeleteIcon}
+                    alt="Delete icon not found"
+                    />
+                  DELETE FOLDER FOREVER
+                </BorderedLinkButton>
+              }
+
+              {
+                folder.deletedDate &&
+                folderCanBeDeleted &&
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    restoreFolder();
+                  }}
+                  >
+                  <img
+                    className="icon"
+                    src={RestoreIcon}
+                    alt="RestoreIcon icon not found"
+                    />
+                  Restore
+                </BorderedLinkButton>
+              }
+      </span>
+
       {
         sortedPasswords.length === 0 &&
+        <Card>
         <span className="message">You have no {active ? "" : "deleted"} passwords.</span>
+      </Card>
       }
 
       {
@@ -236,94 +307,35 @@ const displayPassword = ( id, password ) => {
         ))
       }
 
-      {
-        active &&
-        match.params.folderID &&
-        !folder.deletedDate &&
-        canAddPasswords &&
-        <FloatingButton
-          onClick={() => history.push(`/folders/${match.params.folderID}/password-add`)}
-          >
-          <img
-            className="icon"
-            src={PlusIcon}
-            alt="Plus icon not found"
-            />
+                    {
+                      active &&
+                      <ItemContainer key={"del"}>
+                        <span
+                          style={{paddingLeft: "0px"}}
+                          onClick={() => history.push(`/folders/list/${folderID}/deleted`)}
+                          >
+                          <img
+                            className="icon folder"
+                            src={DeleteIcon}
+                            alt="Delete icon not found"
+                            />
+                          Deleted passwords
+                        </span>
+                      </ItemContainer>
+                    }
 
-          {!/Mobi|Android/i.test(navigator.userAgent) &&
-            <span>
-              Password
-            </span>
-          }
-        </FloatingButton>
-      }
-
-      {
-        active &&
-        <ItemContainer key={"del"}>
-          <span
-            style={{paddingLeft: "0px"}}
-            onClick={() => history.push(`/folders/list/${folderID}/deleted`)}
-            >
-            <img
-              className="icon folder"
-              src={DeleteIcon}
-              alt="Delete icon not found"
-              />
-            Deleted passwords
-          </span>
-        </ItemContainer>
-      }
-
-      {
-        active &&
-        userIsNotAdmin &&
-        <ItemContainer key={"leave"}>
-          <span
-            style={{paddingLeft: "0px", color: "red"}}
-            onClick={() => leaveFolder()}
-            >
-            LEAVE THIS FOLDER
-          </span>
-        </ItemContainer>
-      }
-
-      {
-        folder.deletedDate &&
-        folderCanBeDeleted &&
-        <FloatingDangerButton
-          font="red"
-          onClick={(e) => {
-            e.preventDefault();
-            permanentlyDeleteFolder();
-          }}
-          >
-          <img
-            className="icon"
-            src={DeleteIcon}
-            alt="Delete icon not found"
-            />
-          DELETE FOLDER FOREVER
-        </FloatingDangerButton>
-      }
-
-      {
-        folder.deletedDate &&
-        folderCanBeDeleted &&
-        <FloatingButton
-          style={{bottom: "1em"}}
-          onClick={(e) => {
-            e.preventDefault();
-            restoreFolder();
-          }}
-          >
-          <img
-            className="icon"
-            src={RestoreIcon}
-            alt="RestoreIcon icon not found"
-            />
-        </FloatingButton>
-      }
+                    {
+                      active &&
+                      userIsNotAdmin &&
+                      <ItemContainer key={"leave"}>
+                        <span
+                          style={{paddingLeft: "0px", color: "red"}}
+                          onClick={() => leaveFolder()}
+                          >
+                          LEAVE THIS FOLDER
+                        </span>
+                      </ItemContainer>
+                    }
 
     </List>
   );

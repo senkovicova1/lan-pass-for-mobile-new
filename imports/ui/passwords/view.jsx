@@ -32,6 +32,8 @@ import {
 } from '/imports/other/styles/selectStyles';
 
 import {
+  Card,
+  BorderedLinkButton,
   PasswordContainer,
   Form,
   ViewInput,
@@ -300,6 +302,87 @@ export default function PasswordView( props ) {
         </PasswordContainer>
       }
 
+
+      <span className="command-bar">
+        <BorderedLinkButton
+          fit={true}
+          onClick={(e) => {
+            e.preventDefault();
+            history.goBack();
+          }}
+          >
+          <img
+            src={BackIcon}
+            alt=""
+            className="icon"
+            />
+          Back
+        </BorderedLinkButton>
+              {
+                password.version === 0 &&
+                !password.deletedDate &&
+                  <BorderedLinkButton
+                    fit={true}
+                    colour=""
+                    onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId ? password.passwordId : password._id}/history`)}
+                    >
+                    Password History
+                  </BorderedLinkButton>
+              }
+
+                    {
+                      password.version === 0 &&
+                      !password.deletedDate &&
+              <BorderedLinkButton
+                fit={true}
+                onClick={(e) => {
+                  e.preventDefault();
+                  removePassword();
+                }}
+                >
+                <img className="icon" src={DeleteIcon} alt="delete" />
+                Delete
+              </BorderedLinkButton>
+            }
+
+              {
+                !folder.deletedDate &&
+                passwordCanBeEdited &&
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={() => history.push(`${location.pathname}/edit`)}
+                  >
+                  <img
+                    src={PencilIcon}
+                    alt=""
+                    className="icon"
+                    />
+                  {
+                    !/Mobi|Android/i.test(navigator.userAgent) &&
+                    <span>Edit</span>
+                  }
+                </BorderedLinkButton>
+              }
+
+              {
+                passwordCanBeRestored &&
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    restoreDeletedPassword();
+                  }}
+                  >
+                  <img
+                    src={RestoreIcon}
+                    alt=""
+                    className="icon"
+                    />
+                </BorderedLinkButton>
+              }
+      </span>
+
+      <Card>
       <section>
         <label htmlFor="title">Title</label>
         <div>
@@ -487,63 +570,7 @@ export default function PasswordView( props ) {
           />
       </section>
 
-      {
-        password.version === 0 &&
-        !password.deletedDate &&
-        <ButtonCol>
-          <LinkButton
-            colour=""
-            onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId ? password.passwordId : password._id}/history`)}
-            >
-            Password History
-          </LinkButton>
-
-          <LinkButton
-            onClick={(e) => {
-              e.preventDefault();
-              removePassword();
-            }}
-            >
-            <img className="icon" src={DeleteIcon} alt="delete" />
-            Delete
-          </LinkButton>
-        </ButtonCol>
-      }
-
-      {
-        !folder.deletedDate &&
-        passwordCanBeEdited &&
-        <FloatingButton
-          onClick={() => history.push(`${location.pathname}/edit`)}
-          >
-          <img
-            src={PencilIcon}
-            alt=""
-            className="icon"
-            />
-          {
-            !/Mobi|Android/i.test(navigator.userAgent) &&
-            <span>Edit</span>
-          }
-        </FloatingButton>
-      }
-
-      {
-        passwordCanBeRestored &&
-        <FloatingButton
-          onClick={(e) => {
-            e.preventDefault();
-            restoreDeletedPassword();
-          }}
-          >
-          <img
-            src={RestoreIcon}
-            alt=""
-            className="icon"
-            />
-        </FloatingButton>
-      }
-
+    </Card>
     </Form>
   );
 };

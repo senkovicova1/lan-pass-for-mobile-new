@@ -11,7 +11,9 @@ import {
 import Select from 'react-select';
 
 import {
-  DeleteIcon
+  DeleteIcon,
+  PencilIcon,
+  BackIcon
 } from "/imports/other/styles/icons";
 
 import {
@@ -19,6 +21,9 @@ import {
 } from '/imports/other/styles/selectStyles';
 
 import {
+  Card,
+  BorderedLinkButton,
+  BorderedFullButton,
   ButtonCol,
   Form,
   FullButton,
@@ -93,6 +98,60 @@ export default function FolderForm( props ) {
 
   return (
     <Form>
+
+            <span className="command-bar">
+              <BorderedLinkButton
+                fit={true}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onCancel();
+                }}
+                >
+                <img
+                  src={BackIcon}
+                  alt=""
+                  className="icon"
+                  />
+                Cancel
+              </BorderedLinkButton>
+              {
+                onRemove &&
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onRemove(folderId);
+                  }}
+                  >
+                  <img
+                    src={DeleteIcon}
+                    alt=""
+                    className="icon"
+                    />
+                  Delete
+                </BorderedLinkButton>
+              }
+              <BorderedFullButton
+                fit={true}
+                disabled={name.length === 0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onSubmit(
+                    name,
+                    users
+                  );
+                }}
+                >
+                <img
+                  src={PencilIcon}
+                  alt=""
+                  className="icon"
+                  />
+                Save
+              </BorderedFullButton>
+            </span>
+
+      <Card>
 
       <section>
         <label htmlFor="name">Name</label>
@@ -176,45 +235,7 @@ export default function FolderForm( props ) {
           </tbody>
         </table>
       </section>
-
-
-
-      <ButtonCol>
-        <FullButton
-          colour="grey"
-          onClick={(e) => {
-            e.preventDefault();
-            onCancel();
-          }}
-          >
-          Cancel
-        </FullButton>
-        {
-          onRemove &&
-          <FullButton
-            colour="red"
-            onClick={(e) => {
-              e.preventDefault();
-              onRemove(folderId);
-            }}
-            >
-            Delete
-          </FullButton>
-        }
-        <FullButton
-          colour=""
-          disabled={name.length === 0}
-          onClick={(e) => {
-            e.preventDefault();
-            onSubmit(
-              name,
-              users
-            );
-          }}
-          >
-          Save
-        </FullButton>
-      </ButtonCol>
+    </Card>
 
     </Form>
   );

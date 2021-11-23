@@ -24,7 +24,10 @@ import {
 } from '/imports/api/passwordsCollection';
 
 import {
-  EyeIcon
+  EyeIcon,
+  BackIcon,
+  DeleteIcon,
+  PencilIcon
 } from "/imports/other/styles/icons";
 
 import {
@@ -33,6 +36,10 @@ import {
 
 import {
   ButtonCol,
+  Card,
+  CommandRow,
+  BorderedLinkButton,
+  BorderedFullButton,
   DifficultyInput,
   Form,
   FormTable,
@@ -242,6 +249,7 @@ const scoreTranslation = useCallback( () => {
   return (
     <Form>
 
+      <Card>
       <section>
         <label htmlFor="title">Title</label>
         <Input
@@ -369,37 +377,68 @@ const scoreTranslation = useCallback( () => {
             />
         </div>
       </section>
+    </Card>
 
-      <ButtonCol>
-        <FullButton colour="grey" onClick={(e) => {e.preventDefault(); history.goBack()}}>Cancel</FullButton>
-        <FullButton colour="red" onClick={(e) => {e.preventDefault(); removePassword();}}>Delete</FullButton>
-        {
-          folder &&
-          folder.users &&
-          folder.users.find(user => user._id === userId) &&
-          folder.users.find(user => user._id === userId).level<= 1 &&
-          <FullButton
-            colour=""
-            disabled={title.length === 0 || password1 !== password2}
-            onClick={(e) => {e.preventDefault(); onSubmit(
-              title,
-              folder.value,
-              username,
-              password1,
-              quality,
-              note,
-              expires,
-              expireDate,
-              password ? password.createdDate : moment().unix(),
-              moment().unix(),
-              password ? (password.passwordId ? password.passwordId : password._id) : null
-            );}}
-            >
-            Save
-          </FullButton>
-        }
-      </ButtonCol>
-
+                <CommandRow>
+                  <BorderedLinkButton
+                    fit={true}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      history.goBack()
+                    }}
+                    >
+                    <img
+                      src={BackIcon}
+                      alt=""
+                      className="icon"
+                      />
+                    Cancel
+                  </BorderedLinkButton>
+                  <BorderedLinkButton
+                    fit={true}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removePassword();
+                    }}
+                    >
+                    <img
+                      src={DeleteIcon}
+                      alt=""
+                      className="icon"
+                      />
+                    Delete
+                  </BorderedLinkButton>
+                  {
+                    folder &&
+                    folder.users &&
+                    folder.users.find(user => user._id === userId) &&
+                    folder.users.find(user => user._id === userId).level<= 1 &&
+                    <BorderedFullButton
+                      fit={true}
+                      disabled={title.length === 0 || password1 !== password2}
+                      onClick={(e) => {e.preventDefault(); onSubmit(
+                        title,
+                        folder.value,
+                        username,
+                        password1,
+                        quality,
+                        note,
+                        expires,
+                        expireDate,
+                        password ? password.createdDate : moment().unix(),
+                        moment().unix(),
+                        password ? (password.passwordId ? password.passwordId : password._id) : null
+                      );}}
+                      >
+                      <img
+                        src={PencilIcon}
+                        alt=""
+                        className="icon"
+                        />
+                      Save
+                    </BorderedFullButton>
+                  }
+                </CommandRow>
     </Form>
   );
 };
