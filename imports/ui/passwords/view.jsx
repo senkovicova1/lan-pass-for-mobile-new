@@ -60,7 +60,8 @@ export default function PasswordView( props ) {
   const {
     match,
     history,
-    location
+    location,
+    columns
   } = props;
 
   const userId = Meteor.userId();
@@ -258,11 +259,11 @@ export default function PasswordView( props ) {
   const editedBy = password.editedBy ? dbUsers.find( user => user._id === password.editedBy ) : {};
 
   return (
-    <Form style={layout === COLUMNS ? {background: "white"} : {}}>
+    <Form columns={columns}>
 
       {
         password.version > 0 &&
-        <PasswordContainer style={{margin: "0px", marginBottom: "2em", padding: "0px"}}>
+        <PasswordContainer style={{padding: "0.5em 1em"}}>
           <img
             onClick={() => history.goBack()}
             src={BackIcon}
@@ -303,23 +304,25 @@ export default function PasswordView( props ) {
       }
 
 
-      <span className="command-bar">
-        <BorderedLinkButton
-          fit={true}
-          onClick={(e) => {
-            e.preventDefault();
-            history.goBack();
-          }}
-          >
-          <img
-            src={BackIcon}
-            alt=""
-            className="icon"
-            />
-          Back
-        </BorderedLinkButton>
+        {
+          password.version === 0 &&
+          <span className="command-bar">
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    history.goBack();
+                  }}
+                  >
+                  <img
+                    src={BackIcon}
+                    alt=""
+                    className="icon"
+                    />
+                  Back
+                </BorderedLinkButton>
+
               {
-                password.version === 0 &&
                 !password.deletedDate &&
                   <BorderedLinkButton
                     fit={true}
@@ -330,9 +333,8 @@ export default function PasswordView( props ) {
                   </BorderedLinkButton>
               }
 
-                    {
-                      password.version === 0 &&
-                      !password.deletedDate &&
+            {
+              !password.deletedDate &&
               <BorderedLinkButton
                 fit={true}
                 onClick={(e) => {
@@ -378,9 +380,11 @@ export default function PasswordView( props ) {
                     alt=""
                     className="icon"
                     />
+                  Restore
                 </BorderedLinkButton>
               }
       </span>
+    }
 
       <Card>
       <section>

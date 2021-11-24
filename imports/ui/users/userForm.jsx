@@ -9,10 +9,18 @@ import {
 } from '/imports/other/helperFunctions';
 
 import {
+  PencilIcon,
+  BackIcon,
+  DeleteIcon
+} from "/imports/other/styles/icons";
+
+import {
   Form,
   Input,
-  ButtonCol,
-  FullButton,
+  Card,
+  CommandRow,
+  BorderedLinkButton,
+  BorderedFullButton,
 } from "/imports/other/styles/styledComponents";
 
 export default function UserForm( props ) {
@@ -71,9 +79,9 @@ export default function UserForm( props ) {
   return (
     <Form>
 
-      <section>
-        <h1>User profile</h1>
-      </section>
+        <h2>User profile</h2>
+
+      <Card>
 
       <section>
         <label htmlFor="name">Name<span style={{color: "red"}}>*</span></label>
@@ -210,35 +218,48 @@ export default function UserForm( props ) {
         errorMessage &&
         <p>{errorMessage}</p>
       }
-      <ButtonCol>
+
+    </Card>
+
+      <CommandRow>
         {
           onCancel &&
-          <FullButton
+          <BorderedLinkButton
             colour="grey"
             onClick={(e) => {
               e.preventDefault();
               onCancel()
             }}
             >
+              <img
+                src={BackIcon}
+                alt=""
+                className="icon start"
+                />
             Back
-          </FullButton>
+          </BorderedLinkButton>
         }
         {
           openLogIn &&
-          <FullButton
+          <BorderedLinkButton
             colour="grey"
             onClick={(e) => {
               e.preventDefault();
               openLogIn()
             }}
             >
+              <img
+                src={BackIcon}
+                alt=""
+                className="icon start"
+                />
             Cancel
-          </FullButton>
+          </BorderedLinkButton>
         }
         {
           onRemove &&
           false &&
-          <FullButton
+          <BorderedLinkButton
             colour="red"
             onClick={(e) => {
               e.preventDefault();
@@ -246,10 +267,15 @@ export default function UserForm( props ) {
               onCancel();
             }}
             >
+              <img
+                src={DeleteIcon}
+                alt=""
+                className="icon start"
+                />
             Delete
-          </FullButton>
+          </BorderedLinkButton>
         }
-        <FullButton
+        <BorderedFullButton
           colour=""
           onClick={(e) => {
             e.preventDefault();
@@ -278,9 +304,14 @@ export default function UserForm( props ) {
             setErrors(errors);
           }}
           >
+            <img
+              src={PencilIcon}
+              alt=""
+              className="icon start"
+              />
           { isSignIn ? "Sign in" : "Save changes"}
-        </FullButton>
-      </ButtonCol>
+        </BorderedFullButton>
+      </CommandRow>
 
     </Form>
   );

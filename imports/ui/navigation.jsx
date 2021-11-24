@@ -189,8 +189,6 @@ export default function MainPage( props ) {
           render={(props) => (
             <Header
               {...props}
-              setSearch={setSearch}
-              search={search}
               setParentOpenSidebar={setOpenSidebar}
               sortBy={sortBy}
               setSortBy={setSortBy}
@@ -228,6 +226,7 @@ export default function MainPage( props ) {
                 render={(props) => (
                   <PasswordContainer
                     {...props}
+                    setSearch={setSearch}
                     search={search}
                     sortBy={sortBy}
                     sortDirection={sortDirection}

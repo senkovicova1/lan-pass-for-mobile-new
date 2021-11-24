@@ -163,32 +163,47 @@ export const PageHeader = styled.header `
 `;
 
 export const SearchSection = styled.section `
-  display: flex;
-  width: 800px !important;
+  display: inline-flex;
+  width: 400px !important;
+  height: 36px;
+  margin-bottom: 1em;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  margin-right: 0.6em;
+  background: white;
+
   input{
     width: -webkit-fill-available;
+    min-width: 200px;
+    height: inherit !important;
     border: none !important;
     outline: none !important;
+    background: transparent !important;
   }
+
+  button{
+    height: inherit;
+    background: transparent !important;
+  }
+
   input:focus{
     border: none !important;
   }
 
-    img.search-icon{
-      height: 1.3em;
-      width: 1.3em;
-    }
+  img.search-icon{
+    height: 1em;
+    width: 1.3em;
+  }
 
   button:last-of-type {
     margin-left: 0em !important;
-    margin-right: 1em;
+    margin-right: 0em;
     padding-left: ${inputOffset};
   }
 
   button:first-of-type {
     margin-right: 0em;
     padding-left: ${inputOffset};
-    margin-left: ${inputOffset};
   }
 `;
 
@@ -213,16 +228,22 @@ export const Content = styled.main `
     }
   }
   @media all and (min-width: 1300px) {
-    width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-
     ${(props) =>
-      props.columns &&
+      props.withSidebar &&
       `
-        width: ${props.withSidebar ? `calc(100vw - ${sidebarWidthWeb} - 18px)` : `100%`};
-        margin-left: ${props.withSidebar ? sidebarWidthWeb : "auto"};
-        margin-right: auto;
+        padding-left: 250px;
+        padding-right: 0px;
+        margin: 0px;
+        overflow-y: auto;
+      `
+    }
+    ${(props) =>
+      !props.withSidebar &&
+      `
+      margin: 0px;
+      margin-left: auto;
+      margin-right: auto;
+      overflow-y: auto;
       `
     }
   }
@@ -365,7 +386,7 @@ export const BorderedLinkButton = styled.button `
   min-width: 80px;
   padding: 7px;
   margin-right: 15px;
-  height: ${(props) => props.fit ? "fit-content" : "2.5em"};
+  height: fit-content;
   background-color: ${(props) => props.searchButton ? "white" : "transparent" } !important;
   outline: none !important;
   border: 1px solid ${(props) => props.font ? props.font : basicBlueColour} !important;
@@ -391,7 +412,7 @@ export const BorderedFullButton = styled.button `
   min-width: 80px;
   padding: 7px;
   margin-right: 15px;
-  height: ${(props) => props.fit ? "fit-content" : "2.5em"};
+  height: fit-content;
   background-color: ${(props) => props.colour ? props.colour : "#0078d4" } !important;
   outline: none !important;
   border: 1px solid ${(props) => props.font ? props.font : basicBlueColour} !important;
@@ -465,15 +486,32 @@ export const FloatingDangerButton = styled.button `
 `;
 
 export const List = styled.section `
-  width: 1200px;
-  padding: 0em;
-  display: inline-block;
-  verticalAlign: top;
+  width: ${(props) => props.columns ? 'inherit' : "1200px"};
+  padding: 0em ${inputOffset};
+  margin: 0px auto !important;
 
   .command-bar{
-    display: flow-root;
+    display: block;
+    align-items: center;
     padding: 0px;
     margin-bottom: 1em;
+  }
+
+  .command{
+    display: inline-block;
+  }
+
+  .card-header{
+    padding: 0px;
+    line-height: 40px;
+    display: flex;
+    align-items: center;
+    border: 0px;
+    background: transparent;
+  }
+
+  .card-header img{
+    filter: invert(0);
   }
 
   h2{
@@ -481,6 +519,7 @@ export const List = styled.section `
     line-height: 40px;
     font-weight: 500 !important;
     width: -webkit-fill-available;
+    margin: 0px;
   }
 
   &>div{
@@ -558,12 +597,14 @@ export const ItemContainer = styled.section `
   }
 `;
 
+// width: ${(props) => props.columns ? 'inherit' : "1200px"};
 export const Form = styled.form `
   padding: 1em ${inputOffset};
-  width: -webkit-fill-available;
+    width: ${(props) => props.columns ? '-webkit-fill-available' : "1200px"};
+    margin: 0px auto !important;
 
   h2{
-    margin-top: 0px;
+    margin: 0px;
     font-weight: 500;
     line-height: 40px;
     width: -webkit-fill-available;
@@ -805,20 +846,24 @@ export const PasswordContainer = styled.div`
   padding: ${(props) => props.noPadding ? "0em" : "1em"};
   margin-bottom: 1em;
 
-  &:hover, *:hover{
-    cursor: pointer;
-  }
-
   display: flex;
   align-items: center;
 
-  div {
+  div:first-of-type {
     align-items: flex-start;
     display: inline-block;
     margin-right: auto;
     width: calc(100% - 6em);
     overflow-wrap: anywhere;
     padding-bottom: 0.6em;
+  }
+
+  div:last-of-type>div {
+    display: flex;
+    justify-content: flex-end;
+    width: auto;
+    margin-right: 0px;
+    padding: 0px;
   }
 
   label.title {

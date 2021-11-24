@@ -31,7 +31,8 @@ import {
 } from "/imports/other/styles/icons";
 
 import {
-  FloatingButton,
+  BorderedLinkButton,
+  Card,
   List,
   LinkButton,
   PasswordContainer,
@@ -48,6 +49,7 @@ export default function PasswordHistoryList( props ) {
     match,
     history,
     search,
+    columns
   } = props;
 
   const userId = Meteor.userId();
@@ -124,10 +126,32 @@ export default function PasswordHistoryList( props ) {
   }
 
   return (
-    <List>
+    <List columns={columns}>
+
+      <h2>Previous versions</h2>
+
+      <div className="command-bar">
+              <BorderedLinkButton
+                left
+                onClick={(e) => {
+                  e.preventDefault();
+                  history.goBack();
+                }}
+                >
+                <img
+                  src={BackIcon}
+                  alt=""
+                  className="icon"
+                  />
+                Back
+              </BorderedLinkButton>
+      </div>
+
       {
         previousVersions.length === 0 &&
+        <Card>
         <span className="message">There are no previous versions.</span>
+      </Card>
       }
 
       {
@@ -162,20 +186,6 @@ export default function PasswordHistoryList( props ) {
         ))
       }
 
-      <FloatingButton
-        left
-        onClick={(e) => {
-          e.preventDefault();
-          history.goBack();
-        }}
-        >
-        <img
-          style={{marginRight: "2px"}}
-          src={BackIcon}
-          alt=""
-          className="icon"
-          />
-      </FloatingButton>
 
     </List>
   );

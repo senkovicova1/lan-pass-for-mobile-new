@@ -27,6 +27,9 @@ import {
 import {
   BackIcon,
   CopyIcon,
+  SearchIcon,
+  PencilIcon,
+  CloseIcon,
   DeleteIcon,
   EyeIcon,
   FolderIcon,
@@ -41,6 +44,8 @@ import {
 import {
   Card,
   BorderedLinkButton,
+  SearchSection,
+  Input,
   ItemContainer,
   List,
   LinkButton,
@@ -60,10 +65,12 @@ const {
   match,
   history,
   location,
+  setSearch,
   search,
   active,
   sortBy,
   sortDirection,
+  columns,
 } = props;
 
 const userId = Meteor.userId();
@@ -176,7 +183,7 @@ const displayPassword = ( id, password ) => {
 }
 
   return (
-    <List>
+    <List columns={columns}>
 
       {
       active &&
@@ -185,7 +192,7 @@ const displayPassword = ( id, password ) => {
 
       {
         !active &&
-        <div>
+        <div className="card-header">
           <LinkButton onClick={(e) => {e.preventDefault();  history.goBack()}}>
             <img
               src={BackIcon}
@@ -197,13 +204,48 @@ const displayPassword = ( id, password ) => {
         </div>
       }
 
-      <span className="command-bar">
+      <span className="command-bar" style={{marginBottom: "0em"}}>
+        <div className="command">
+            <SearchSection>
+              <LinkButton
+                font="#0078d4"
+                searchButton
+                onClick={(e) => {}}
+                >
+                <img
+                  className="search-icon"
+                  src={SearchIcon}
+                  alt="Search icon not found"
+                  />
+              </LinkButton>
+              <Input
+                placeholder="Search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                />
+              <LinkButton
+                font="#0078d4"
+                searchButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSearch("");
+                }}
+                >
+                <img
+                  className="search-icon"
+                  src={CloseIcon}
+                  alt="Close icon not found"
+                  />
+              </LinkButton>
+            </SearchSection>
+          </div>
 
               {
                 active &&
                 match.params.folderID &&
                 !folder.deletedDate &&
                 canAddPasswords &&
+                <div className="command">
                 <BorderedLinkButton
                   fit={true}
                   onClick={() => history.push(`/folders/${match.params.folderID}/password-add`)}
@@ -220,11 +262,13 @@ const displayPassword = ( id, password ) => {
                     </span>
                   }
                 </BorderedLinkButton>
+              </div>
               }
 
               {
                 folder.deletedDate &&
                 folderCanBeDeleted &&
+                <div className="command">
                 <BorderedLinkButton
                   fit={true}
                   onClick={(e) => {
@@ -239,11 +283,13 @@ const displayPassword = ( id, password ) => {
                     />
                   DELETE FOLDER FOREVER
                 </BorderedLinkButton>
+              </div>
               }
 
               {
                 folder.deletedDate &&
                 folderCanBeDeleted &&
+                <div className="command">
                 <BorderedLinkButton
                   fit={true}
                   onClick={(e) => {
@@ -258,6 +304,7 @@ const displayPassword = ( id, password ) => {
                     />
                   Restore
                 </BorderedLinkButton>
+              </div>
               }
       </span>
 
@@ -271,7 +318,7 @@ const displayPassword = ( id, password ) => {
       {
         sortedPasswords.map((password) => (
           <PasswordContainer key={password._id} style={password._id === passwordID ? {backgroundColor: "#deeaf3"} : {}}>
-            <div onClick={() => history.push(`${viewPasswordStart}${folderID}/${password._id}`)}>
+            <div onClick={() => {}}>
               <label className="title">
                 {yellowMatch(password.title)}
               </label>
@@ -283,26 +330,44 @@ const displayPassword = ( id, password ) => {
               </label>
             </div>
 
-            <LinkButton
-              className="icon"
+            <div>
+              <div>
+              <LinkButton
+                className="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (revealedPasswords.includes(password._id)){
+                    setRevealedPasswords(revealedPasswords.filter(pass => pass !== password._id));
+                  } else {
+                    setRevealedPasswords([...revealedPasswords, password._id]);
+                  }
+                }}
+                >
+                <img className="icon" src={EyeIcon} alt="reveal pass" />
+              </LinkButton>
+              <LinkButton onClick={(e) => {e.preventDefault();  navigator.clipboard.writeText(password.password ? password.password : "No password")}}>
+                <img
+                  src={CopyIcon}
+                  alt=""
+                  className="icon"
+                  />
+              </LinkButton>
+            </div>
+            <BorderedLinkButton
+              fit={true}
               onClick={(e) => {
                 e.preventDefault();
-                if (revealedPasswords.includes(password._id)){
-                  setRevealedPasswords(revealedPasswords.filter(pass => pass !== password._id));
-                } else {
-                  setRevealedPasswords([...revealedPasswords, password._id]);
-                }
-              }}
-              >
-              <img className="icon" src={EyeIcon} alt="reveal pass" />
-            </LinkButton>
-            <LinkButton onClick={(e) => {e.preventDefault();  navigator.clipboard.writeText(password.password ? password.password : "No password")}}>
+                 history.push(`${viewPasswordStart}${folderID}/${password._id}`);
+               }}
+               >
               <img
-                src={CopyIcon}
+                src={PencilIcon}
                 alt=""
                 className="icon"
                 />
-            </LinkButton>
+              Edit
+            </BorderedLinkButton>
+            </div>
           </PasswordContainer>
         ))
       }

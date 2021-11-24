@@ -34,7 +34,6 @@ import {
   LogoutIcon,
   MenuIcon,
   MenuIcon2,
-  SearchIcon,
   SettingsIcon,
   UserIcon
 } from "/imports/other/styles/icons";
@@ -78,8 +77,6 @@ export default function MobileHeader( props ) {
     match,
     location,
     history,
-    setSearch,
-    search,
     setParentOpenSidebar,
     sortBy,
     setSortBy,
@@ -101,7 +98,6 @@ export default function MobileHeader( props ) {
 
   const [ openSidebar, setOpenSidebar ] = useState( false );
   const [ openSort, setOpenSort ] = useState( false );
-  const [ openSearch, setOpenSearch ] = useState( false );
   const [ title, setTitle ] = useState( "LanPass" );
 
   useEffect( () => {
@@ -175,10 +171,6 @@ export default function MobileHeader( props ) {
     }
   }, [ match.path, match.params, history ] );
 
-  const searchVisible = !openSearch && currentUser &&
-    ( location.pathname === "/" || location.pathname.includes( "list" ) || location.pathname === listAllPasswords || location.pathname.includes( "deleted" ) ) &&
-    location.pathname !== editCurrentUser;
-
   const folderCanBeEdited = folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level === 0;
   const passwordCanBeEdited = passwordID ? folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level <= 0 : false;
 
@@ -222,79 +214,10 @@ export default function MobileHeader( props ) {
             />
         </LinkButton>
       }
-      {
-        !openSearch &&
+
         <h1>{title}</h1>
-      }
 
-      {
-        openSearch &&
-        currentUser &&
-        <LinkButton
-          font="white"
-          onClick={(e) => {
-            e.preventDefault();
-            setSearch("");
-            setOpenSearch(false);
-          }}
-          >
-          <img
-            className="icon"
-            src={LeftArrowIcon}
-            alt="Left arrow icon not found"
-            />
-        </LinkButton>
-      }
-      {
-        openSearch &&
-        currentUser &&
-        <div className="search-section">
-          <Input
-            placeholder="Search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            />
-        </div>
-      }
-      {
-        openSearch &&
-        currentUser &&
-        <LinkButton
-          font="#0078d4"
-          searchButton
-          onClick={(e) => {
-            e.preventDefault();
-            setSearch("");
-          }}
-          >
-          <img
-            className="search-icon"
-            src={CloseIcon}
-            alt="Close icon not found"
-            />
-        </LinkButton>
-      }
-
-      {
-        !openSearch &&
-        currentUser &&
-        <LinkButton
-          style={{marginLeft: "auto"}}
-          font="white"
-          onClick={(e) => {
-            e.preventDefault();
-            setOpenSearch(true);
-          }}
-          >
-          <img
-            className="icon"
-            src={SearchIcon}
-            alt="Search icon not found"
-            />
-        </LinkButton>
-      }
-
-      {
+          {
         currentUser &&
         <LinkButton
           font="white"

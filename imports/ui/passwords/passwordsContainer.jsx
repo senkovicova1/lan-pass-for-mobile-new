@@ -15,6 +15,10 @@ import PasswordView from '/imports/ui/passwords/view';
 import PasswordHistoryList from '/imports/ui/passwords/passwordHistoryList';
 
 import {
+  Card,
+} from "/imports/other/styles/styledComponents";
+
+import {
   PLAIN
 } from "/imports/other/constants";
 
@@ -33,6 +37,7 @@ export default function PasswordsContainer( props ) {
   const {
     match,
     history,
+    setSearch,
     search,
     sortBy,
     sortDirection,
@@ -68,40 +73,42 @@ export default function PasswordsContainer( props ) {
 
   return (
     <div style={{display: "flex", height: "-webkit-fill-available"}}>
-      <div style={{width: "100%", position: "relative"}}>
+      <div style={{width: "600px"}}>
         {
           match.path.includes("deleted") &&
-          <PasswordList {...props} active={false}/>
+          <PasswordList {...props} columns={true} active={false}/>
         }
         {
           !match.path.includes("deleted") &&
-          <PasswordList {...props} active={true}/>
+          <PasswordList {...props} columns={true} active={true}/>
         }
       </div>
-      <div style={{width: "80%", backgroundColor: "white", height: "-webkit-fill-available", position: "relative"}}>
+      <div style={{width: "-webkit-fill-available", backgroundColor: "transparent", height: "-webkit-fill-available", borderLeft: "0px solid #d6d6d6"}}>
         {
           passwordID &&
           (match.path === viewPassword || match.path === viewPreviousPassword) &&
-          <PasswordView {...props} />
+          <PasswordView {...props} columns={true} />
         }
         {
           passwordID &&
           match.path === editPassword &&
-          <EditPassword {...props} />
+          <EditPassword {...props} columns={true} />
         }
         {
           passwordID &&
           passwordID === "password-add" &&
-          <AddPassword {...props} />
+          <AddPassword {...props} columns={true} />
         }
 
         {
           passwordID && match.path.includes("history") &&
-          <PasswordHistoryList {...props} />
+          <PasswordHistoryList {...props} columns={true} />
         }
         {
           !passwordID &&
+          <Card style={{marginTop: "63.5px"}}>
           <div style={{paddingLeft: "20px"}}><h2>No chosen note</h2> </div>
+        </Card>
         }
       </div>
     </div>

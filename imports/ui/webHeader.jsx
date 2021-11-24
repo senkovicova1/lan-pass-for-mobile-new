@@ -39,7 +39,6 @@ import {
   MenuIcon,
   LogoutIcon,
   CloseIcon,
-  SearchIcon,
   LeftArrowIcon,
   UserIcon,
   MenuIcon2
@@ -49,7 +48,6 @@ import {
   PageHeader,
   LinkButton,
   FullButton,
-  SearchSection,
   Input,
   Popover,
   Sort
@@ -90,8 +88,6 @@ export default function WebHeader( props ) {
     match,
     location,
     history,
-    setSearch,
-    search,
     setParentOpenSidebar,
     sortBy,
     setSortBy,
@@ -117,7 +113,6 @@ export default function WebHeader( props ) {
 
   const [ openSidebar, setOpenSidebar ] = useState( true );
   const [ openSort, setOpenSort ] = useState( false );
-  const [ openSearch, setOpenSearch ] = useState( true );
   const [ title, setTitle ] = useState( "LanPass" );
   const [ popoverOpen, setPopoverOpen ] = useState( false );
 
@@ -205,41 +200,6 @@ export default function WebHeader( props ) {
         }
         <h1 onClick={(e) => props.history.push(`${listPasswordsInFolderStart}all`)}>{title}</h1>
       </section>
-      {
-        currentUser &&
-        <SearchSection>
-          <LinkButton
-            font="#0078d4"
-            searchButton
-            onClick={(e) => {}}
-            >
-            <img
-              className="search-icon"
-              src={SearchIcon}
-              alt="Search icon not found"
-              />
-          </LinkButton>
-          <Input
-            placeholder="Search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            />
-          <LinkButton
-            font="#0078d4"
-            searchButton
-            onClick={(e) => {
-              e.preventDefault();
-              setSearch("");
-            }}
-            >
-            <img
-              className="search-icon"
-              src={CloseIcon}
-              alt="Close icon not found"
-              />
-          </LinkButton>
-        </SearchSection>
-      }
 
       <section className="header-section" style={{justifyContent: "flex-end"}}>
 
