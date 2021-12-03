@@ -10,7 +10,7 @@ import moment from 'moment';
 
 import { useSelector } from 'react-redux';
 
-import { FolderIcon, DeleteIcon, PlusIcon, ExpandIcon } from  "/imports/other/styles/icons";
+import { FolderIcon, DeleteIcon, PlusIcon, UserIcon, ExpandIcon } from  "/imports/other/styles/icons";
 
 import {
   useTracker
@@ -69,6 +69,8 @@ export default function Menu( props ) {
     }
   }
 
+  const userCanManageUsers = user && user.profile.rights && user.profile.rights.sysAdmin;
+
   return (
     <Sidebar>
       {
@@ -116,7 +118,6 @@ export default function Menu( props ) {
       <div className="imitation-navlink">
         <LinkButton
           onClick={() => {
-            console.log("HI");
             setShowDeletedFolders(!showDeletedFolders);
           }}
           >
@@ -160,6 +161,28 @@ export default function Menu( props ) {
           )
         )
       }
+
+      {
+        userCanManageUsers &&
+      <NavLink
+        key={"users"}
+        className={location.pathname.includes("users") ? "active" : ""}
+        to={`/users/list`}
+        onClick={() => {
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            closeSelf();
+          }
+        }}
+        >
+          <img
+            className="icon"
+            src={UserIcon}
+            alt="Folder icon not found"
+            />
+          <span>Users</span>
+
+      </NavLink>
+    }
 
     </Sidebar>
   );

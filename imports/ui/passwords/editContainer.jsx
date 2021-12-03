@@ -23,6 +23,7 @@ export default function EditPasswordContainer( props ) {
   } = props;
 
   const userId = Meteor.userId();
+  const encryptionData = useSelector( ( state ) => state.encryptionData.value );
   const folderID = match.params.folderID;
   const folder = useSelector( ( state ) => state.folders.value ).find( f => f._id === folderID );
   const passwords = useSelector( ( state ) => state.passwords.value );
@@ -38,13 +39,77 @@ export default function EditPasswordContainer( props ) {
 
   }, [ userId, folder ] );
 
-  const editPassword = ( title, folder, username, password, quality, note, expires, expireDate, createdDate, updatedDate, passwordId ) => {
+  async function encryptPassword(text){
+
+    const symetricKey = await crypto.subtle.importKey(
+      "raw",
+        encryptionData.symetricKey,
+        encryptionData.algorithm,
+      true,
+      ["encrypt", "decrypt"]
+    );
+
+    let encoder = new TextEncoder();
+    let encryptedPassword = await crypto.subtle.encrypt(
+        encryptionData.algorithm,
+        symetricKey,
+        encoder.encode( text )
+    );
+
+    return new Uint8Array(encryptedPassword);
+  }
+
+    async function decryptPassword(text){
+      if (!encryptionData){
+        return [];
+      }
+      const symetricKey = await crypto.subtle.importKey(
+        "raw",
+          encryptionData.symetricKey,
+          encryptionData.algorithm,
+        true,
+        ["encrypt", "decrypt"]
+      );
+
+      let decryptedText = null;
+      await window.crypto.subtle.decrypt(
+        encryptionData.algorithm,
+        symetricKey,
+        text
+      )
+      .then(function(decrypted){
+        decryptedText = decrypted;
+      })
+      .catch(function(err){
+        console.error(err);
+      });
+      let dec = new TextDecoder();
+      const decryptedValue = dec.decode(decryptedText);
+      return decryptedValue;
+    }
+
+  async function editPassword( title, folder, username, password, originalPassword, quality, note, expires, expireDate, createdDate, updatedDate, passwordId ) {
+    let previousDecryptedPassword = "";
+    if (originalPassword){
+      previousDecryptedPassword = await decryptPassword(originalPassword)
+    }
+    let decryptedPassword = password;
+    if (typeof password !== "string"){
+      previousDecryptedPassword = await decryptPassword(password)
+    }
+    let newPassword = decryptedPassword;
+
+    if (decryptedPassword === previousDecryptedPassword){
+      newPassword = originalPassword;
+    } else {
+      newPassword = await encryptPassword(newPassword);
+    }
 
     PasswordsCollection.insert( {
       title,
       folder,
       username,
-      password,
+      password: newPassword,
       quality,
       note,
       expires,
@@ -96,7 +161,7 @@ export default function EditPasswordContainer( props ) {
   }
 
   return (
-    <PasswordForm 
+    <PasswordForm
       {...props}
       revealPassword={revealPassword}
       onSubmit={editPassword}

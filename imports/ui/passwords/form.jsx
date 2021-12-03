@@ -24,6 +24,10 @@ import {
 } from '/imports/api/passwordsCollection';
 
 import {
+  listPasswordsInFolderStart
+} from "/imports/other/navigationLinks";
+
+import {
   EyeIcon,
   BackIcon,
   DeleteIcon,
@@ -66,6 +70,7 @@ const {
 
 const userId = Meteor.userId();
 const user = useTracker( () => Meteor.user() );
+const encryptionData = useSelector( ( state ) => state.encryptionData.value );
 
 const folderID = match.params.folderID;
 const allFolders = useSelector( ( state ) => state.folders.value );
@@ -89,8 +94,13 @@ const [ expireDate, setExpireDate ] = useState( "" );
 
 const [ revealPassword, setRevealPassword ] = useState( false );
 
-const toggleRevealPassword = () => {
-  setRevealPassword( !revealPassword )
+async function toggleRevealPassword(){
+  setRevealPassword( !revealPassword );
+  if (passwordID && typeof password1 !== "string"){
+    const decryptedPassword = await decryptPassword(password1);
+    setPassword1(decryptedPassword);
+    setPassword2(decryptedPassword);
+  }
 };
 
 useEffect( () => {
@@ -246,8 +256,60 @@ const scoreTranslation = useCallback( () => {
   return <span style={{color: result.colour, width: "40%", textAlign: "end"}}>{result.mark}</span>
 }, [ passwordScore ] );
 
+
+  async function decryptPassword(text){
+    if (!encryptionData){
+      return [];
+    }
+
+    const symetricKey = await crypto.subtle.importKey(
+      "raw",
+        encryptionData.symetricKey,
+        encryptionData.algorithm,
+      true,
+      ["encrypt", "decrypt"]
+    );
+
+    let decryptedText = null;
+    await window.crypto.subtle.decrypt(
+      encryptionData.algorithm,
+      symetricKey,
+      text
+    )
+    .then(function(decrypted){
+      decryptedText = decrypted;
+    })
+    .catch(function(err){
+      console.error(err);
+    });
+    let dec = new TextDecoder();
+    const decryptedValue = dec.decode(decryptedText);
+    return decryptedValue;
+  }
+
+  let password1Value = "";
+  if (typeof password1 === "string"){
+    password1Value = password1;
+  } else {
+    if (revealPassword){
+      password1Value = "";
+    } else {
+      password1Value = "decrypting_password";
+    }
+  }
+  let password2Value = "";
+  if (typeof password2 === "string"){
+    password2Value = password2;
+  } else {
+    if (revealPassword){
+      password2Value = "";
+    } else {
+      password2Value = "decrypting_password";
+    }
+  }
+
   return (
-    <Form>
+    <Form autocomplete="off">
 
       <Card>
       <section>
@@ -285,13 +347,14 @@ const scoreTranslation = useCallback( () => {
       </section>
 
       <section className="password">
-        <label htmlFor="password" className="password-label">Password</label>
+        <label htmlFor="first-password" className="password-label">Password</label>
         <div className="input-section">
           <Input
             type={revealPassword ? "text" : "password"}
-            id="password"
-            name="password"
-            value={password1}
+            autocomplete="new-password"
+            id="first-password"
+            name="first-password"
+            value={password1Value}
             onChange={(e) => setPassword1(e.target.value)}
             />
           <LinkButton
@@ -310,9 +373,10 @@ const scoreTranslation = useCallback( () => {
         <label htmlFor="repeat-password">Repeat password</label>
         <Input
           type={revealPassword ? "text" : "password"}
+          autocomplete="new-password"
           id="repeat-password"
           name="repeat-password"
-          value={password2}
+          value={password2Value}
           onChange={(e) => setPassword2(e.target.value)}
           />
       </section>
@@ -414,6 +478,7 @@ const scoreTranslation = useCallback( () => {
                     folder.users.find(user => user._id === userId) &&
                     folder.users.find(user => user._id === userId).level<= 1 &&
                     <BorderedFullButton
+                      type="submit"
                       fit={true}
                       disabled={title.length === 0 || password1 !== password2}
                       onClick={(e) => {e.preventDefault(); onSubmit(
@@ -421,6 +486,7 @@ const scoreTranslation = useCallback( () => {
                         folder.value,
                         username,
                         password1,
+                        password ? password.password : null,
                         quality,
                         note,
                         expires,

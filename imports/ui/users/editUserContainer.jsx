@@ -3,43 +3,66 @@ import React from 'react';
 import {
   useTracker
 } from 'meteor/react-meteor-data';
+import { useSelector } from 'react-redux';
 
-import UserForm from './userForm';
+import UserForm from './form';
+import CurrentUserForm from './currentUserForm';
 
 import {
-  listAllPasswords,
-  listPasswordsInFolderStart
+  getGoToLink
 } from "/imports/other/navigationLinks";
 
 export default function EditUserContainer( props ) {
 
   const {
     history,
+    userID,
+    closeSelf
   } = props;
 
-  const user = useTracker( () => Meteor.user() );
+  const userId = Meteor.userId();
+  const user = useSelector((state) => state.users.value).find(u => u._id === (userID ? userID : userId));
 
-  const editUser = ( name, surname, avatar ) => {
-    let data = {
-      ...user.profile,
-      name,
-      surname,
-      avatar
-    };
-
-    Meteor.users.update( user._id, {
+  const editUser = ( name, surname, avatar, rights ) => {
+    let data = { name, surname, avatar, rights};
+    Meteor.users.update((userID ? userID : userId), {
       $set: {
         profile: data
       }
-    } );
-    history.push( "" );
+    }, (error) => {
+      if (error){
+        console.log(error);
+      } else if (closeSelf){
+          closeSelf();
+      } else {
+        history.push( "" );
+      }
+    });
   };
 
+  const onCancel = () => {
+    if (closeSelf){
+      closeSelf();
+    } else {
+      history.push( "" );
+    }
+  }
+
+  if (!userID){
+    return (
+        <CurrentUserForm
+          user={user}
+          onSubmit={editUser}
+          onCancel={onCancel}
+          />
+    )
+  }
+
   return (
-    <UserForm 
-      {...user}
-      onSubmit={editUser}
-      onCancel={() => props.history.push(``)}
-      />
+        <UserForm
+          user={user}
+          onSubmit={editUser}
+          onCancel={onCancel}
+          />
   );
 };

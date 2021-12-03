@@ -27,7 +27,6 @@ export default function LoginForm( props ) {
 
   const {
     history,
-    openSignUp
   } = props;
 
   const [ email, setEmail ] = useState( '' );
@@ -96,25 +95,21 @@ export default function LoginForm( props ) {
         <p>{errorMessage}</p>
       }
 
-      <FullButton type="submit" >Log In</FullButton>
+      <FullButton type="submit" style={{marginTop: "1.5em"}}>Log In</FullButton>
 
-      <LinkButton
-        disabled={email.length === 0}
-        onClick={(e) => {
-          e.preventDefault();
-          handleForgotPassword()
-        }}
-        >
-        Forgot password
-      </LinkButton>
-      <LinkButton
-        onClick={(e) => {
-          e.preventDefault();
-          openSignUp()
-        }}
-        >
-        Account registration
-      </LinkButton>
+      {
+        false &&
+        <LinkButton
+          disabled={email.length === 0}
+          onClick={(e) => {
+            e.preventDefault();
+            handleForgotPassword()
+          }}
+          >
+          Forgot password
+        </LinkButton>
+      }
+
 
     </Form>
   );

@@ -18,6 +18,7 @@ import {
   useTracker
 } from 'meteor/react-meteor-data';
 
+import { MetaCollection } from '/imports/api/metaCollection';
 import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
@@ -34,6 +35,10 @@ import {
 } from '../redux/passwordsSlice';
 
 import {
+  setEncryptionData
+} from '../redux/encryptionSlice';
+
+import {
   setUsers
 } from '../redux/usersSlice';
 
@@ -48,6 +53,7 @@ import PasswordContainer from './passwords/passwordsContainer';
 import PasswordView from './passwords/view';
 import PasswordHistoryList from './passwords/passwordHistoryList';
 import EditUserContainer from './users/editUserContainer';
+import UsersList from './users/list';
 
 import {
   Content
@@ -69,6 +75,7 @@ import {
   listPasswordsInFolder,
   deletedFolders,
   editCurrentUser,
+  usersList,
   addPassword,
   editPassword,
   viewPassword,
@@ -86,12 +93,12 @@ export default function MainPage( props ) {
   const currentUser = useTracker( () => Meteor.user() );
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
 
-  const userId = useMemo( () => {
-    if ( currentUser ) {
-      return currentUser._id;
-    }
-    return null;
-  }, [ currentUser ] );
+  const userId = currentUser ? currentUser._id : null;
+
+  const encryptionData = useTracker(() => MetaCollection.find({}).fetch());
+  useEffect( () => {
+      dispatch( setEncryptionData( encryptionData[0] ) );
+  }, [ encryptionData ] );
 
   const folders = useTracker( () => FoldersCollection.find( {
     users: {
@@ -124,6 +131,7 @@ export default function MainPage( props ) {
       dispatch( setPasswords( passwords ) );
     }
   }, [ passwords ] );
+
 
   const users = useTracker( () => Meteor.users.find( {} ).fetch() );
   useEffect( () => {
@@ -160,6 +168,7 @@ export default function MainPage( props ) {
             deletedFolders,
             viewPreviousPassword,
             editCurrentUser,
+            usersList,
             addPassword,
             editPassword,
             viewPassword,
@@ -180,6 +189,7 @@ export default function MainPage( props ) {
             deletedFolders,
             viewPreviousPassword,
             editCurrentUser,
+            usersList,
             addPassword,
             editPassword,
             viewPassword,
@@ -207,6 +217,12 @@ export default function MainPage( props ) {
           currentUser &&
           <Content withSidebar={openSidebar} columns={layout === COLUMNS}>
             <div style={{height: "100%", position: "relative"}}>
+
+              <Route
+                exact
+                path={usersList}
+                component={UsersList}
+                />
 
               <Route
                 exact

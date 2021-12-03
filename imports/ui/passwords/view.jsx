@@ -70,6 +70,7 @@ export default function PasswordView( props ) {
     folderID
   } = match.params;
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
+  const encryptionData = useSelector( ( state ) => state.encryptionData.value );
 
   const dbUsers = useSelector( ( state ) => state.users.value );
 
@@ -78,9 +79,45 @@ export default function PasswordView( props ) {
   const folder = useSelector( ( state ) => state.folders.value ).find( f => f._id === folderID );
 
   const [ revealPassword, setRevealPassword ] = useState( false );
-  const toggleRevealPassword = () => {
+  const [ decryptedPassword, setDecryptedPassword ] = useState( "" );
+
+  async function toggleRevealPassword(){
     setRevealPassword( !revealPassword );
+    if (decryptedPassword.length === 0){
+      const decrypted = await decryptPassword(password.password);
+      setDecryptedPassword(decrypted);
+    }
   }
+
+    async function decryptPassword(text){
+      if (!encryptionData){
+        return [];
+      }
+
+      const symetricKey = await crypto.subtle.importKey(
+        "raw",
+          encryptionData.symetricKey,
+          encryptionData.algorithm,
+        true,
+        ["encrypt", "decrypt"]
+      );
+
+      let decryptedText = null;
+      await window.crypto.subtle.decrypt(
+        encryptionData.algorithm,
+        symetricKey,
+        text
+      )
+      .then(function(decrypted){
+        decryptedText = decrypted;
+      })
+      .catch(function(err){
+        console.error(err);
+      });
+      let dec = new TextDecoder();
+      const decryptedValue = dec.decode(decryptedText);
+      return decryptedValue;
+    }
 
   const restorePasswordVersion = () => {
     if ( window.confirm( "Are you sure you want to restore this version?" ) ) {
@@ -190,20 +227,20 @@ export default function PasswordView( props ) {
 
   const passwordScore = useMemo( () => {
     let score = 0;
-    if ( !password || !password.password || password.password.length === 0 )
+    if ( !password || !password.password || password.password.length === 0 || decryptedPassword.length === 0)
       return score;
 
     let letters = {};
-    for ( let i = 0; i < password.password.length; i++ ) {
-      letters[ password.password[ i ] ] = ( letters[ password.password[ i ] ] || 0 ) + 1;
-      score += 5.0 / letters[ password.password[ i ] ];
+    for ( let i = 0; i < decryptedPassword.length; i++ ) {
+      letters[ decryptedPassword[ i ] ] = ( letters[ decryptedPassword[ i ] ] || 0 ) + 1;
+      score += 5.0 / letters[ decryptedPassword[ i ] ];
     }
 
     let variations = {
-      digits: /\d/.test( password.password ),
-      lower: /[a-z]/.test( password.password ),
-      upper: /[A-Z]/.test( password.password ),
-      nonWords: /\W/.test( password.password ),
+      digits: /\d/.test( decryptedPassword ),
+      lower: /[a-z]/.test( decryptedPassword ),
+      upper: /[A-Z]/.test( decryptedPassword ),
+      nonWords: /\W/.test( decryptedPassword ),
     }
 
     let variationCount = 0;
@@ -457,7 +494,7 @@ export default function PasswordView( props ) {
             id="password"
             name="password"
             disabled={true}
-            value={password.password ? password.password : "No password"}
+            value={revealPassword  ? decryptedPassword : "decrypting_password"}
             />
           <LinkButton
             className="icon"

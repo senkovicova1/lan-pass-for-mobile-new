@@ -14,6 +14,7 @@ export const listDeletedPasswordsInFolder = "/folders/list/:folderID/deleted";
 export const deletedFolders = "/folders/deleted";
 
 export const editCurrentUser = "/user/edit/";
+export const usersList = "/users/list/";
 
 export const addPassword = "/folders/:folderID/password-add";
 export const editPassword = "/folders/:folderID/:passwordID/edit";

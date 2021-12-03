@@ -28,7 +28,7 @@ export const metadataSlice = createSlice( {
 
 export const {
   setAllMetadata,
-  setLayout
+  setLayout,
 } = metadataSlice.actions
 
 export default metadataSlice.reducer

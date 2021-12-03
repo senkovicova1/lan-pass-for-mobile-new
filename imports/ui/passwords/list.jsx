@@ -81,6 +81,7 @@ const {
   folderID,
   passwordID
 } = match.params;
+const encryptionData = useSelector( ( state ) => state.encryptionData.value );
 const folders = useSelector( ( state ) => state.folders.value );
 const folder = useMemo( () => {
   if ( folders.length > 0 ) {
@@ -106,6 +107,36 @@ const sortedPasswords = useMemo( () => {
       return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1 * multiplier : ( -1 ) * multiplier;
     } );
 }, [ searchedPasswords, sortBy, sortDirection ] );
+
+  async function decryptPassword(text){
+    if (!encryptionData){
+      return [];
+    }
+
+    const symetricKey = await crypto.subtle.importKey(
+      "raw",
+        encryptionData.symetricKey,
+        encryptionData.algorithm,
+      true,
+      ["encrypt", "decrypt"]
+    );
+
+    let decryptedText = null;
+    await window.crypto.subtle.decrypt(
+      encryptionData.algorithm,
+      symetricKey,
+      text
+    )
+    .then(function(decrypted){
+      decryptedText = decrypted;
+    })
+    .catch(function(err){
+      console.error(err);
+    });
+    let dec = new TextDecoder();
+    const decryptedValue = dec.decode(decryptedText);
+    return decryptedValue;
+  }
 
 const restoreFolder = () => {
   if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
@@ -175,9 +206,15 @@ const yellowMatch = ( string ) => {
   return <span> {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
 }
 
-const displayPassword = ( id, password ) => {
-  if ( revealedPasswords.includes( id ) ) {
-    return password;
+async function addRevealedPassword(password){
+  const decryptedPassword = await decryptPassword(password.password);
+  setRevealedPasswords([...revealedPasswords, {_id: password._id, decryptedPassword}]);
+}
+
+const displayPassword = ( id ) => {
+  const maybeRevealedPassword = revealedPasswords.find( password => password._id === id );
+  if ( maybeRevealedPassword ) {
+    return maybeRevealedPassword.decryptedPassword;
   }
   return '••••••••••••••••••••';
 }
@@ -255,12 +292,9 @@ const displayPassword = ( id, password ) => {
                     src={PlusIcon}
                     alt="Plus icon not found"
                     />
-
-                  {!/Mobi|Android/i.test(navigator.userAgent) &&
                     <span>
                       Password
                     </span>
-                  }
                 </BorderedLinkButton>
               </div>
               }
@@ -306,6 +340,27 @@ const displayPassword = ( id, password ) => {
                 </BorderedLinkButton>
               </div>
               }
+
+              {
+                active &&
+                userIsNotAdmin &&
+                <div className="command">
+                <BorderedLinkButton
+                  fit={true}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    leaveFolder();
+                  }}
+                  >
+                  <img
+                    className="icon"
+                    src={CloseIcon}
+                    alt="CloseIcon icon not found"
+                    />
+                  LEAVE THIS FOLDER
+                </BorderedLinkButton>
+              </div>
+              }
       </span>
 
       {
@@ -326,7 +381,7 @@ const displayPassword = ( id, password ) => {
                 {password.username ? `Username: ${yellowMatch(password.username)}` : "Username: No username"}
               </label>
               <label className="username">
-                {password.password ? `Username: ${displayPassword(password._id, password.password)}` : "Password: No password"}
+                {password.password ? `Username: ${displayPassword(password._id)}` : "Password: No password"}
               </label>
             </div>
 
@@ -337,9 +392,9 @@ const displayPassword = ( id, password ) => {
                 onClick={(e) => {
                   e.preventDefault();
                   if (revealedPasswords.includes(password._id)){
-                    setRevealedPasswords(revealedPasswords.filter(pass => pass !== password._id));
+                    setRevealedPasswords(revealedPasswords.filter(pass => pass._id !== password._id));
                   } else {
-                    setRevealedPasswords([...revealedPasswords, password._id]);
+                    addRevealedPassword(password);
                   }
                 }}
                 >
@@ -372,35 +427,22 @@ const displayPassword = ( id, password ) => {
         ))
       }
 
-                    {
-                      active &&
-                      <ItemContainer key={"del"}>
-                        <span
-                          style={{paddingLeft: "0px"}}
-                          onClick={() => history.push(`/folders/list/${folderID}/deleted`)}
-                          >
-                          <img
-                            className="icon folder"
-                            src={DeleteIcon}
-                            alt="Delete icon not found"
-                            />
-                          Deleted passwords
-                        </span>
-                      </ItemContainer>
-                    }
-
-                    {
-                      active &&
-                      userIsNotAdmin &&
-                      <ItemContainer key={"leave"}>
-                        <span
-                          style={{paddingLeft: "0px", color: "red"}}
-                          onClick={() => leaveFolder()}
-                          >
-                          LEAVE THIS FOLDER
-                        </span>
-                      </ItemContainer>
-                    }
+      {
+        active &&
+        <ItemContainer key={"del"}>
+          <span
+            style={{paddingLeft: "0px"}}
+            onClick={() => history.push(`/folders/list/${folderID}/deleted`)}
+            >
+            <img
+              className="icon folder"
+              src={DeleteIcon}
+              alt="Delete icon not found"
+              />
+            Deleted passwords
+          </span>
+        </ItemContainer>
+      }
 
     </List>
   );

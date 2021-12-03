@@ -7,7 +7,7 @@ import {
 } from 'meteor/accounts-base';
 
 import Loader from "/imports/ui/other/loadingScreen";
-import AddUser from '/imports/ui/users/userForm';
+import AddUser from '/imports/ui/users/form';
 
 import {
   listPasswordsInFolderStart
@@ -38,6 +38,9 @@ export default function SignInForm( props ) {
         name,
         surname,
         avatar,
+        rights: {
+          sysAdmin: false,
+        }
       }
     }, ( error ) => {
       setShowLoading( false );

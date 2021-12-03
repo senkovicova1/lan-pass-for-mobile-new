@@ -27,6 +27,7 @@ export default function AddPasswordContainer( props ) {
   } = props;
 
   const userId = Meteor.userId();
+  const encryptionData = useSelector( ( state ) => state.encryptionData.value );
   const folderID = match.params.folderID;
   const folder = useSelector( ( state ) => state.folders.value ).find( f => f._id === folderID );
 
@@ -41,11 +42,34 @@ export default function AddPasswordContainer( props ) {
 
   }, [ userId, folder ] );
 
-  const addNewPassword = ( title, folder, username, password, quality, note, expires, expireDate, createdDate ) => {
+  async function encryptPassword(text){
+
+    const symetricKey = await crypto.subtle.importKey(
+      "raw",
+        encryptionData.symetricKey,
+        encryptionData.algorithm,
+      true,
+      ["encrypt", "decrypt"]
+    );
+
+    let encoder = new TextEncoder();
+    let encryptedPassword = await crypto.subtle.encrypt(
+        encryptionData.algorithm,
+        symetricKey,
+        encoder.encode( text )
+    );
+
+    return new Uint8Array(encryptedPassword);
+  }
+
+  async function addNewPassword ( title, folder, username, password, originalPassword, quality, note, expires, expireDate, createdDate ){
+
+    const encryptedPassword = await encryptPassword(password);
+
     PasswordsCollection.insert( {
       title,
       username,
-      password,
+      password: encryptedPassword,
       quality,
       note,
       expires,

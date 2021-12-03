@@ -3,6 +3,19 @@ import React, {
   useEffect,
 } from 'react';
 
+import { useTracker } from 'meteor/react-meteor-data';
+
+import {
+  useSelector
+} from 'react-redux';
+
+import { MetaCollection } from '/imports/api/metaCollection';
+
+import {
+  PasswordsCollection
+} from '/imports/api/passwordsCollection';
+
+
 import {
   isEmail,
   uint8ArrayToImg
@@ -27,7 +40,7 @@ export default function UserForm( props ) {
 
   const {
     _id: userId,
-    profile,
+    user,
     onSubmit,
     onRemove,
     onCancel,
@@ -35,6 +48,10 @@ export default function UserForm( props ) {
     openLogIn,
     errorMessage
   } = props;
+
+  const currentUser = useTracker( () => Meteor.user() );
+  const folders = useSelector( ( state ) => state.folders.value );
+  const encryptionData = useSelector( ( state ) => state.encryptionData.value );
 
   const [ name, setName ] = useState( "" );
   const [ surname, setSurname ] = useState( "" );
@@ -44,27 +61,27 @@ export default function UserForm( props ) {
     buffer: null,
     img: null
   } );
-  const [ password1, setPassword1 ] = useState( '' );
-  const [ password2, setPassword2 ] = useState( '' );
+  // const [ password1, setPassword1 ] = useState( '' );
+  // const [ password2, setPassword2 ] = useState( '' );
 
   const [ errors, setErrors ] = useState( [] );
 
   useEffect( () => {
-    if ( profile?.name ) {
-      setName( profile.name );
+    if ( user?.name ) {
+      setName( user.name );
     } else {
       setName( "" );
     }
-    if ( profile?.surname ) {
-      setSurname( profile.surname );
+    if ( user?.surname ) {
+      setSurname( user.surname );
     } else {
       setSurname( "" );
     }
-    if ( profile?.avatar ) {
-      const img = uint8ArrayToImg( profile.avatar );
+    if ( user?.avatar ) {
+      const img = uint8ArrayToImg( user.avatar );
       setAvatar( {
         name: "",
-        buffer: profile.avatar,
+        buffer: user.avatar,
         img
       } );
     } else {
@@ -74,7 +91,68 @@ export default function UserForm( props ) {
         img: null
       } );
     }
-  }, [ profile ] );
+  }, [ user ] );
+
+  async function generateKey(){
+    return window.crypto.subtle.generateKey(
+      {
+      name: "AES-GCM",
+      length: 256
+      },
+        true,
+        ["encrypt", "decrypt"]
+    );
+  }
+
+  async function createMetadata(){
+    const iv = window.crypto.getRandomValues( new Uint8Array( 12 ) );
+    const algorithm = {
+      name: "AES-GCM",
+      iv
+    };
+    const symetricKey = await generateKey();
+
+    const exportedSymetricKey = await window.crypto.subtle.exportKey(
+      "raw",
+      symetricKey
+    );
+    const exportedKeyBuffer = new Uint8Array(exportedSymetricKey);
+
+    MetaCollection.insert( {
+      algorithm,
+      symetricKey: exportedKeyBuffer,
+    } );
+  }
+
+  const allPasswords = useTracker( () => PasswordsCollection.find( {} ).fetch() );
+
+  async function encryptPassword(password){
+
+    const symetricKey = await crypto.subtle.importKey(
+      "raw",
+        encryptionData.symetricKey,
+        encryptionData.algorithm,
+      true,
+      ["encrypt", "decrypt"]
+    );
+
+    let encoder = new TextEncoder();
+    let encryptedPassword = await crypto.subtle.encrypt(
+        encryptionData.algorithm,
+        symetricKey,
+        encoder.encode( password.password )
+    );
+
+    PasswordsCollection.update( password._id, {
+      $set: {
+        password: new Uint8Array(encryptedPassword),
+        originalPassword: password.password,
+      }
+    } );
+
+  }
+
+    const userCanManageUsers = currentUser && currentUser.profile.rights && currentUser.profile.rights.sysAdmin;
 
   return (
     <Form>
@@ -120,7 +198,7 @@ export default function UserForm( props ) {
       </section>
 
       {
-        !profile &&
+        !user &&
         <section>
           <label  htmlFor="email">Email<span style={{color: "red"}}>*</span></label>
           <Input
@@ -170,7 +248,9 @@ export default function UserForm( props ) {
 
 
       {
-        !profile &&
+        /*
+        false &&
+        !user &&
         <section>
           <label htmlFor="password1">Password<span style={{color: "red"}}>*</span></label>
           <Input
@@ -190,9 +270,12 @@ export default function UserForm( props ) {
             }}
             />
         </section>
+        */
       }
       {
-        !profile &&
+        /*
+        false &&
+        !user &&
         <section>
           <label htmlFor="password2">Repeat password<span style={{color: "red"}}>*</span></label>
           <Input
@@ -212,12 +295,48 @@ export default function UserForm( props ) {
             }}
             />
         </section>
+        */
       }
 
       {
         errorMessage &&
         <p>{errorMessage}</p>
       }
+          
+{
+  /*
+  userCanManageUsers &&
+        <section>
+        <BorderedLinkButton
+          onClick={(e) => {
+            e.preventDefault();
+            createMetadata();
+          }}
+          >
+            Create metadata
+        </BorderedLinkButton>
+
+        <button  onClick={() => {
+            MetaCollection.remove( {
+              _id: encryptionData._id
+            } );
+          }}
+          >
+          Delete meta
+        </button>
+
+        <BorderedLinkButton
+          onClick={(e) => {
+            e.preventDefault();
+            allPasswords.forEach((password, i) => {
+              encryptPassword(password);
+            });
+          }}
+          >
+            Encrypt data
+        </BorderedLinkButton>
+      </section>
+    */}
 
     </Card>
 
@@ -286,19 +405,15 @@ export default function UserForm( props ) {
             if (surname.length === 0){
               errors.push("surname");
             }
-            if (!profile && !isEmail(email)){
+            if (!user && !isEmail(email)){
               errors.push("email");
             }
-            if  ((!profile && password1 !== password2) || (!profile && password1.length < 7)){
-              errors.push("password");
-            }
-            if (name.length > 0 &&surname.length > 0 && (profile || isEmail(email)) && (profile || (password1 === password2 && password1.length >= 7)) ) {
+            if (name.length > 0 &&surname.length > 0 && (user || isEmail(email))  ) {
               onSubmit(
                 name,
                 surname,
                 avatar.buffer,
-                email,
-                password1
+                user.rights,
               );
             }
             setErrors(errors);

@@ -76,7 +76,6 @@ export const MobilePageHeader = styled.header `
       i{
         margin: 0px !important;
       }
-      margin-right: 1em;
     }
     button:last-of-type{
         margin: 0px !important;
@@ -164,9 +163,15 @@ export const PageHeader = styled.header `
 
 export const SearchSection = styled.section `
   display: inline-flex;
-  width: 400px !important;
   height: 36px;
-  margin-bottom: 1em;
+  @media all and (max-width: 1299px), @media handheld {
+    margin-bottom: 0em;
+    width: auto;
+  }
+  @media all and (min-width: 1300px) {
+    margin-bottom: 1em;
+    width: 400px !important;
+  }
   border: 1px solid #d6d6d6;
   border-radius: 10px;
   margin-right: 0.6em;
@@ -277,7 +282,7 @@ export const Sidebar = styled.section `
       margin-right: 10px;
     }
     img.icon{
-      filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(80%) contrast(101%);
+      filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(80%) contrast(101%) !important;
     }
 
     .last-icon{
@@ -342,7 +347,7 @@ export const LinkButton = styled.button `
   display: flex;
   align-items: center;
   i, img {
-    margin-right: ${(props) => props.searchButton ? "0.6em" : "0.3em" }
+    margin-right: ${(props) => props.searchButton ? "0.6em" : "0.3em" } !important;
   }
   img {
     ${(props) => props.searchButton && `
@@ -350,11 +355,18 @@ export const LinkButton = styled.button `
       `};
   }
 
-      img.basic-icon {
-          height: 1.5em;
-          width: 1.5em;
-          filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(90%) contrast(101%);
-      }
+  img.icon {
+      height: 1.5em;
+      width: 1.5em;
+      border-radius: 0px !important;
+      filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(90%) contrast(101%);
+  }
+  img.header-icon {
+      height: 1.5em;
+      width: 1.5em;
+      border-radius: 0px !important;
+      filter: invert(1);
+  }
 `;
 
 export const FullButton = styled.button `
@@ -369,6 +381,8 @@ export const FullButton = styled.button `
   align-items: center;
   padding: 0px 0.5em;
   i, img.icon {
+      height: 1em;
+      width: 1em;
     margin-right: 0.3em;
   }
   img.icon{
@@ -486,7 +500,12 @@ export const FloatingDangerButton = styled.button `
 `;
 
 export const List = styled.section `
-  width: ${(props) => props.columns ? 'inherit' : "1200px"};
+  @media all and (max-width: 1299px), @media handheld {
+    width: auto;
+  }
+  @media all and (min-width: 1300px) {
+    width: ${(props) => props.columns ? 'inherit' : "1200px"};
+  }
   padding: 0em ${inputOffset};
   margin: 0px auto !important;
 
@@ -498,7 +517,13 @@ export const List = styled.section `
   }
 
   .command{
-    display: inline-block;
+    @media all and (max-width: 1299px), @media handheld {
+      display: block;
+      margin-bottom: 1em;
+    }
+    @media all and (min-width: 1300px) {
+      display: inline-block;
+    }
   }
 
   .card-header{
@@ -600,7 +625,12 @@ export const ItemContainer = styled.section `
 // width: ${(props) => props.columns ? 'inherit' : "1200px"};
 export const Form = styled.form `
   padding: 1em ${inputOffset};
-    width: ${(props) => props.columns ? '-webkit-fill-available' : "1200px"};
+    @media all and (max-width: 1299px), @media handheld {
+      width: auto;
+    }
+    @media all and (min-width: 1300px) {
+      width: ${(props) => props.columns ? '-webkit-fill-available' : "1200px"};
+    }
     margin: 0px auto !important;
 
   h2{
@@ -823,7 +853,7 @@ export const Card = styled.div`
 `;
 
 export const CommandRow = styled.section `
-position: sticky;
+  position: sticky;
   bottom: 0px;
   width: 100%;
   height: 50px;

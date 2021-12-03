@@ -208,7 +208,7 @@ export default function MobileHeader( props ) {
           }}
           >
           <img
-            className="icon"
+            className="header-icon"
             src={MenuIcon}
             alt="Menu icon not found"
             />
@@ -229,7 +229,7 @@ export default function MobileHeader( props ) {
           }}
           >
           <img
-            className="icon"
+            className="header-icon"
             src={MenuIcon2}
             alt="MenuIcon2 icon not found"
             />
@@ -252,7 +252,7 @@ export default function MobileHeader( props ) {
           }
           {
             !avatar &&
-            <img className="icon" src={UserIcon} alt="assignedAvatar" />
+            <img className="header-icon" src={UserIcon} alt="assignedAvatar" />
           }
         </LinkButton>
       }
@@ -272,7 +272,7 @@ export default function MobileHeader( props ) {
           }}
           >
           <img
-            className="icon"
+            className="header-icon"
             src={SettingsIcon}
             alt="Settings icon not found"
             />
@@ -290,7 +290,7 @@ export default function MobileHeader( props ) {
           }}
           >
           <img
-            className="icon"
+            className="header-icon"
             src={LogoutIcon}
             alt="Logout icon not found"
             />

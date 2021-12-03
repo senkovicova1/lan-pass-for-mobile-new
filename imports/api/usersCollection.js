@@ -10,4 +10,8 @@ Meteor.users.allow( {
   update() {
     return true;
   },
+
+  remove() {
+    return true;
+  },
 } );
