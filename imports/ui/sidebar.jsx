@@ -9,8 +9,14 @@ import { NavLink } from 'react-router-dom';
 import moment from 'moment';
 
 import { useSelector } from 'react-redux';
-
-import { FolderIcon, DeleteIcon, PlusIcon, UserIcon, ExpandIcon } from  "/imports/other/styles/icons";
+import {
+  FolderIcon,
+  DeleteIcon,
+  PlusIcon,
+  SearchIcon,
+  UserIcon,
+  ExpandIcon
+} from "/imports/other/styles/icons";
 
 import {
   useTracker
@@ -73,6 +79,25 @@ export default function Menu( props ) {
 
   return (
     <Sidebar>
+      <NavLink
+        key={"search"}
+        className={folderID === "search" ? "active" : ""}
+        to={`${listPasswordsInFolderStart}search`}
+        onClick={() => {
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            closeSelf();
+          }
+        }}
+        >
+          <img
+            className="icon"
+            src={SearchIcon}
+            alt="SearchIcon icon not found"
+            />
+          <span>Global search</span>
+
+      </NavLink>
+
       {
         myActiveFolders.map(folder => (
             <NavLink
@@ -115,52 +140,24 @@ export default function Menu( props ) {
         Folder
       </NavLink>
 
-      <div className="imitation-navlink">
-        <LinkButton
-          onClick={() => {
-            setShowDeletedFolders(!showDeletedFolders);
-          }}
-          >
+      <NavLink
+        key={"deleted"}
+        className={myInactiveFolders.find(folder => folder._id === folderID) ? "active" : ""}
+        to={deletedFolders}
+        onClick={() => {
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            closeSelf();
+          }
+        }}
+        >
           <img
             className="icon"
             src={DeleteIcon}
-            alt=""
+            alt="DeleteIcon icon not found"
             />
-          Deleted
-          <img
-            className="icon last-icon"
-            src={ExpandIcon}
-            alt=""
-            />
-        </LinkButton>
-      </div>
+        <span>Deleted</span>
 
-      {
-        showDeletedFolders &&
-        myInactiveFolders.map(folder => (
-            <NavLink
-              key={folder.value}
-              className={folderID === folder.value ? "active" : ""}
-              to={`/folders/list/${folder.value}`}
-              onClick={() => {
-                if (/Mobi|Android/i.test(navigator.userAgent)) {
-                  closeSelf();
-                }
-              }}
-              >
-                <img
-                  className="icon"
-                  src={FolderIcon}
-                  alt="Folder icon not found"
-                  />
-              <span>{folder.label}</span>
-
-              <span className="rights">{getRights(folder)}</span>
-
-            </NavLink>
-          )
-        )
-      }
+      </NavLink>
 
       {
         userCanManageUsers &&

@@ -85,6 +85,7 @@ const password = useSelector( ( state ) => state.passwords.value ).find( p => p.
 const [ title, setTitle ] = useState( "" );
 const [ folder, setFolder ] = useState( null );
 const [ username, setUsername ] = useState( "" );
+const [ url, setUrl ] = useState( "" );
 const [ password1, setPassword1 ] = useState( "" );
 const [ password2, setPassword2 ] = useState( "" );
 const [ quality, setQuality ] = useState( 29 );
@@ -112,6 +113,7 @@ useEffect( () => {
     setUsername( password.username );
     setPassword1( password.password );
     setPassword2( password.password );
+    setUrl( password.url );
     setQuality( password.quality );
     setNote( password.note );
     setExpires( password.expires );
@@ -124,6 +126,7 @@ useEffect( () => {
     setUsername( "" );
     setPassword1( "" );
     setPassword2( "" );
+    setUrl( "" );
     setQuality( 29 );
     setNote( "" );
     setExpires( false );
@@ -336,7 +339,7 @@ const scoreTranslation = useCallback( () => {
       </section>
 
       <section>
-        <label htmlFor="username">Username</label>
+        <label htmlFor="username">Login</label>
         <Input
           type="text"
           id="username"
@@ -409,6 +412,17 @@ const scoreTranslation = useCallback( () => {
           >
           Generate password
         </FullButton>
+      </section>
+
+      <section>
+        <label htmlFor="url">URL</label>
+        <Input
+          type="text"
+          id="url"
+          name="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          />
       </section>
 
       <section>
@@ -488,6 +502,7 @@ const scoreTranslation = useCallback( () => {
                         password1,
                         password ? password.password : null,
                         quality,
+                        url,
                         note,
                         expires,
                         expireDate,

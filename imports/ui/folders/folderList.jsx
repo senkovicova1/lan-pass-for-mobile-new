@@ -29,8 +29,8 @@ import {
 } from "/imports/other/styles/icons";
 
 import {
-  FloatingButton,
-  FloatingDangerButton,
+  BorderedLinkButton,
+  Card,
   ItemContainer,
   List,
   LinkButton
@@ -47,28 +47,23 @@ export default function FolderList( props ) {
   const {
     match,
     history,
-    active,
-    search
   } = props;
 
   const folders = useSelector( ( state ) => state.folders.value );
   const passwords = useSelector( ( state ) => state.passwords.value );
   const user = useTracker( () => Meteor.user() );
+  const userId = Meteor.userId();
 
   const [ showClosed, setShowClosed ] = useState( false );
 
   const myFolders = useMemo( () => {
-    let newMyFolders = folders.filter( folder => ( active && !folder.deletedDate ) || ( !active && folder.deletedDate ) );
+    let newMyFolders = folders.filter( folder => folder.deletedDate );
     return newMyFolders;
   }, [ folders ] );
 
-  const mySearchedFolders = useMemo( () => {
-    return myFolders.filter( folder => folder.name.toLowerCase().includes( search.toLowerCase() ) );
-  }, [ search, myFolders ] )
-
   const permanentlyDelete = useCallback( () => {
     if ( window.confirm( "Are you sure you want to permanently remove these folders? Note: Only folders you have authorization to remove will be removed." ) ) {
-      const foldersToDelete = mySearchedFolders.filter( ( folder ) => folder.users.find( ( u ) => u._id === user._id ).level === 0 );
+      const foldersToDelete = myFolders.filter( ( folder ) => folder.users.find( ( u ) => u._id === user._id ).level === 0 );
       foldersToDelete.forEach( ( folder ) => {
         FoldersCollection.remove( {
           _id: folder._id
@@ -82,20 +77,57 @@ export default function FolderList( props ) {
         } );
       } );
     }
-  }, [ mySearchedFolders, user._id ] );
+  }, [ myFolders, user._id ] );
 
-  if (search){
-    return <PasswordList {...props} active={true} search={search}/>
+  const getRights = (folder) => {
+    const userLevel = folder.users.find(u => u._id === userId).level;
+    switch (userLevel) {
+      case 0:
+        return "R W A";
+        break;
+      case 1:
+        return "R W";
+        break;
+    case 2:
+      return "R";
+      break;
+      default:
+        return "R";
+    }
   }
 
   return (
-    <List>
+    <List  columns={false}>
+
+      <span className="command-bar" style={{marginBottom: "1em", marginTop: "1em"}}>
+
+            {
+              myFolders.length !== 0 &&
+              <div className="command">
+              <BorderedLinkButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  permanentlyDelete();
+                }}
+                >
+                <img
+                  className="icon"
+                  src={DeleteIcon}
+                  alt="Delete icon not found"
+                  />
+                DELETE FOREVER ALL DELETED FOLDERS
+              </BorderedLinkButton>
+            </div>
+            }
+
+          </span>
+
       {
-        mySearchedFolders.length === 0 &&
+        myFolders.length === 0 &&
         <span className="message">You have no folders here</span>
       }
       {
-        mySearchedFolders.map(folder =>
+        myFolders.map(folder =>
           <ItemContainer key={folder._id}>
             <span
               style={{paddingLeft: "0px"}}
@@ -108,61 +140,9 @@ export default function FolderList( props ) {
                 />
               {folder.name}
             </span>
+            <span style={{textAlign: "end"}}>{getRights(folder)}</span>
           </ItemContainer>
         )
-      }
-
-      {
-        active &&
-        <ItemContainer key={"del"}>
-          <span
-            style={{paddingLeft: "0px"}}
-            onClick={() => history.push(deletedFolders)}
-            >
-            <img
-              className="icon folder"
-              src={DeleteIcon}
-              alt="Delete icon not found"
-              />
-            Deleted folders
-          </span>
-        </ItemContainer>
-      }
-
-      {
-        !active &&
-        mySearchedFolders.length !== 0 &&
-        <FloatingDangerButton
-          font="red"
-          onClick={(e) => {
-            e.preventDefault();
-            permanentlyDelete();
-          }}
-          >
-          <img
-            className="icon"
-            src={DeleteIcon}
-            alt="Delete icon not found"
-            />
-          DELETE FOREVER ALL DELETED FOLDERS
-        </FloatingDangerButton>
-      }
-
-      {
-        active &&
-        !match.params.folderID &&
-        <FloatingButton
-          onClick={() => history.push(addFolder)}
-          >
-          <img
-            className="icon"
-            src={PlusIcon}
-            alt="Plus icon not found"
-            />
-          <span>
-            Folder
-          </span>
-        </FloatingButton>
       }
 
     </List>

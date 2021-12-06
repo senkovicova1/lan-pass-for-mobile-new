@@ -88,7 +88,7 @@ export default function EditPasswordContainer( props ) {
       return decryptedValue;
     }
 
-  async function editPassword( title, folder, username, password, originalPassword, quality, note, expires, expireDate, createdDate, updatedDate, passwordId ) {
+  async function editPassword( title, folder, username, password, originalPassword, quality, url, note, expires, expireDate, createdDate, updatedDate, passwordId ) {
     let previousDecryptedPassword = "";
     if (originalPassword){
       previousDecryptedPassword = await decryptPassword(originalPassword)
@@ -111,6 +111,7 @@ export default function EditPasswordContainer( props ) {
       username,
       password: newPassword,
       quality,
+      url,
       note,
       expires,
       expireDate,

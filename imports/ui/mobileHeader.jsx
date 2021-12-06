@@ -237,67 +237,6 @@ export default function MobileHeader( props ) {
       }
 
       {
-        currentUser &&
-        !match.params.passwordID &&
-        <LinkButton
-          font="white"
-          onClick={(e) => {
-            e.preventDefault();
-            history.push(editCurrentUser);
-          }}
-          >
-          {
-            avatar &&
-            <img className="avatar" src={avatar} alt="assignedAvatar" />
-          }
-          {
-            !avatar &&
-            <img className="header-icon" src={UserIcon} alt="assignedAvatar" />
-          }
-        </LinkButton>
-      }
-
-      {
-        folderID &&
-        currentUser &&
-        folderCanBeEdited &&
-        !location.pathname.includes("edit") &&
-        !location.pathname.includes("password") &&
-        !match.params.passwordID &&
-        <LinkButton
-          font="white"
-          onClick={(e) => {
-            e.preventDefault();
-            history.push(`${editFolderStart}${folderID}`);
-          }}
-          >
-          <img
-            className="header-icon"
-            src={SettingsIcon}
-            alt="Settings icon not found"
-            />
-        </LinkButton>
-      }
-
-      {
-        currentUser &&
-        <LinkButton
-          font="white"
-          onClick={(e) => {
-            e.preventDefault();
-            history.push(login);
-            logout();
-          }}
-          >
-          <img
-            className="header-icon"
-            src={LogoutIcon}
-            alt="Logout icon not found"
-            />
-        </LinkButton>
-      }
-
-      {
         openSidebar &&
         currentUser &&
         <Menu {...props} closeSelf={() => setOpenSidebar(false)}/>
@@ -374,6 +313,75 @@ export default function MobileHeader( props ) {
               />
             <label htmlFor="sort-by-name-asc">Date created (descending)</label>
           </span>
+
+          <h3 style={{marginTop: "0.6em"}}>Settings</h3>
+                {
+                  currentUser &&
+                  !match.params.passwordID &&
+                  <LinkButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      history.push(editCurrentUser);
+                    }}
+                    >
+                    {
+                      avatar &&
+                      <img className="avatar" src={avatar} alt="assignedAvatar" />
+                    }
+                    {
+                      !avatar &&
+                      <img className="icon" src={UserIcon} alt="assignedAvatar" />
+                    }
+                    <span>
+                      Profile
+                    </span>
+                  </LinkButton>
+                }
+
+                {
+                  folderID &&
+                  currentUser &&
+                  folderCanBeEdited &&
+                  !location.pathname.includes("edit") &&
+                  !location.pathname.includes("password") &&
+                  !match.params.passwordID &&
+                  <LinkButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      history.push(`${editFolderStart}${folderID}`);
+                    }}
+                    >
+                    <img
+                      className="icon"
+                      src={SettingsIcon}
+                      alt="Settings icon not found"
+                      />
+                      <span>
+                        Folder settings
+                      </span>
+                  </LinkButton>
+                }
+
+                {
+                  currentUser &&
+                  <LinkButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      history.push(login);
+                      logout();
+                    }}
+                    >
+                    <img
+                      className="icon"
+                      src={LogoutIcon}
+                      alt="Logout icon not found"
+                      />
+                      <span>
+                        Log out
+                      </span>
+                  </LinkButton>
+                }
+
         </Sort>
       }
 

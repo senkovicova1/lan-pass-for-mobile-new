@@ -62,7 +62,7 @@ export default function AddPasswordContainer( props ) {
     return new Uint8Array(encryptedPassword);
   }
 
-  async function addNewPassword ( title, folder, username, password, originalPassword, quality, note, expires, expireDate, createdDate ){
+  async function addNewPassword ( title, folder, username, password, originalPassword, quality, url, note, expires, expireDate, createdDate ){
 
     const encryptedPassword = await encryptPassword(password);
 
@@ -71,6 +71,7 @@ export default function AddPasswordContainer( props ) {
       username,
       password: encryptedPassword,
       quality,
+      url,
       note,
       expires,
       expireDate,

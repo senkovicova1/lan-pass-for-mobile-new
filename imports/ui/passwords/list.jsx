@@ -44,6 +44,7 @@ import {
 import {
   Card,
   BorderedLinkButton,
+  BorderedFullButton,
   SearchSection,
   Input,
   ItemContainer,
@@ -81,32 +82,52 @@ const {
   folderID,
   passwordID
 } = match.params;
+
+  const isGlobalSearch = folderID === "search";
+
 const encryptionData = useSelector( ( state ) => state.encryptionData.value );
 const folders = useSelector( ( state ) => state.folders.value );
 const folder = useMemo( () => {
-  if ( folders.length > 0 ) {
+  if ( folders.length > 0 && !isGlobalSearch ) {
     return folders.find( folder => folder._id === folderID );
   }
   return {};
 }, [ folders, folderID ] );
 
 const allPasswords = useSelector( ( state ) => state.passwords.value );
-const passwords = allPasswords.filter( password => password.folder === folderID && password.version === 0 && ( ( active && !password.deletedDate ) || ( !active && password.deletedDate ) ) );
+const passwords = allPasswords.filter( password => (password.folder === folderID || isGlobalSearch )&& password.version === 0 && ( ( active && !password.deletedDate ) || ( !active && password.deletedDate ) ) );
 
 const searchedPasswords = useMemo( () => {
+  if (isGlobalSearch){
+    return search.length ? passwords.filter( password =>
+      password.title?.toLowerCase().includes( search.toLowerCase() ) ||
+      password.username?.toLowerCase().includes( search.toLowerCase() ) ||
+      password.url?.toLowerCase().includes( search.toLowerCase() )
+    ) : [];
+  }
   return passwords.filter( password => password.title.toLowerCase().includes( search.toLowerCase() ) || password.username.toLowerCase().includes( search.toLowerCase() ) );
 }, [ passwords, search ] );
 
+const passwordsWithFolders = useMemo( () => {
+  if (isGlobalSearch){
+    return searchedPasswords.map(password => ({
+      ...password,
+      folder: folders.find(folder => folder._id === password.folder)
+    }));
+  }
+  return searchedPasswords;
+}, [ searchedPasswords, folders ] );
+
 const sortedPasswords = useMemo( () => {
   const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
-  return searchedPasswords
+  return passwordsWithFolders
     .sort( ( p1, p2 ) => {
       if ( sortBy === "date" ) {
         return p1.createdDate < p2.createdDate ? 1 * multiplier : ( -1 ) * multiplier;
       }
       return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1 * multiplier : ( -1 ) * multiplier;
     } );
-}, [ searchedPasswords, sortBy, sortDirection ] );
+}, [ passwordsWithFolders, sortBy, sortDirection ] );
 
   async function decryptPassword(text){
     if (!encryptionData){
@@ -197,13 +218,16 @@ if ( !folder ) {
   return ( <div></div> )
 }
 
-const yellowMatch = ( string ) => {
+const yellowMatch = ( string, title, emptyString ) => {
+  if (!string || string.length === 0){
+    return `${title}: ${emptyString}`;
+  }
   if ( search.length === 0 || !string.toLowerCase().includes( search.toLowerCase() ) ) {
-    return string;
+    return `${title ? title + ":" : "" } ${string}`;
   }
   let startIndex = string.toLowerCase().indexOf( search.toLowerCase() );
   let endIndex = startIndex + search.length;
-  return <span> {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
+  return <span>{title ? `${title}: ` : ""} {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
 }
 
 async function addRevealedPassword(password){
@@ -223,11 +247,6 @@ const displayPassword = ( id ) => {
     <List columns={columns}>
 
       {
-      active &&
-      <h2>{folder.name}</h2>
-    }
-
-      {
         !active &&
         <div className="card-header">
           <LinkButton onClick={(e) => {e.preventDefault();  history.goBack()}}>
@@ -241,7 +260,7 @@ const displayPassword = ( id ) => {
         </div>
       }
 
-      <span className="command-bar" style={{marginBottom: "0em"}}>
+      <span className="command-bar" style={active ? {marginBottom: "0em", marginTop: "1em"} : {marginBottom: "0em"}}>
         <div className="command">
             <SearchSection>
               <LinkButton
@@ -278,12 +297,13 @@ const displayPassword = ( id ) => {
           </div>
 
               {
+                !isGlobalSearch &&
                 active &&
                 match.params.folderID &&
                 !folder.deletedDate &&
                 canAddPasswords &&
                 <div className="command">
-                <BorderedLinkButton
+                <BorderedFullButton
                   fit={true}
                   onClick={() => history.push(`/folders/${match.params.folderID}/password-add`)}
                   >
@@ -295,11 +315,12 @@ const displayPassword = ( id ) => {
                     <span>
                       Password
                     </span>
-                </BorderedLinkButton>
+                </BorderedFullButton>
               </div>
               }
 
               {
+                !isGlobalSearch &&
                 folder.deletedDate &&
                 folderCanBeDeleted &&
                 <div className="command">
@@ -321,6 +342,7 @@ const displayPassword = ( id ) => {
               }
 
               {
+                !isGlobalSearch &&
                 folder.deletedDate &&
                 folderCanBeDeleted &&
                 <div className="command">
@@ -342,6 +364,7 @@ const displayPassword = ( id ) => {
               }
 
               {
+                !isGlobalSearch &&
                 active &&
                 userIsNotAdmin &&
                 <div className="command">
@@ -365,8 +388,15 @@ const displayPassword = ( id ) => {
 
       {
         sortedPasswords.length === 0 &&
-        <Card>
-        <span className="message">You have no {active ? "" : "deleted"} passwords.</span>
+        <Card style={{marginBottom: "1em"}}>
+          {
+            isGlobalSearch &&
+            <span className="message">No password match your search.</span>
+          }
+          {
+            !isGlobalSearch &&
+            <span className="message">You have no {active ? "" : "deleted"} passwords.</span>
+          }
       </Card>
       }
 
@@ -374,24 +404,37 @@ const displayPassword = ( id ) => {
         sortedPasswords.map((password) => (
           <PasswordContainer key={password._id} style={password._id === passwordID ? {backgroundColor: "#deeaf3"} : {}}>
             <div onClick={() => {}}>
-              <label className="title">
-                {yellowMatch(password.title)}
+              <label
+                className="title"
+                onClick={() => {
+                  history.push(`${viewPasswordStart}${folderID}/${password._id}`)
+                }}
+                >
+                {yellowMatch(password.title, "", "Untitled")}
               </label>
               <label className="username">
-                {password.username ? `Username: ${yellowMatch(password.username)}` : "Username: No username"}
+                  { yellowMatch(password.username, "Login", "No login") }
               </label>
               <label className="username">
-                {password.password ? `Username: ${displayPassword(password._id)}` : "Password: No password"}
+                {password.password ? `Password: ${displayPassword(password._id)}` : "Password: No password"}
+              </label>
+              <label className="username">
+                {yellowMatch(password.url, "URL", "No URL")}
+              </label>
+              <label className="username">
+                { `Folder: ${password.folder.name}`}
               </label>
             </div>
 
+            {
+              false &&
             <div>
               <div>
               <LinkButton
                 className="icon"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (revealedPasswords.includes(password._id)){
+                  if (revealedPasswords.find(pass => pass._id == password._id)){
                     setRevealedPasswords(revealedPasswords.filter(pass => pass._id !== password._id));
                   } else {
                     addRevealedPassword(password);
@@ -423,12 +466,14 @@ const displayPassword = ( id ) => {
               Edit
             </BorderedLinkButton>
             </div>
+          }
           </PasswordContainer>
         ))
       }
 
       {
         active &&
+        !isGlobalSearch &&
         <ItemContainer key={"del"}>
           <span
             style={{paddingLeft: "0px"}}

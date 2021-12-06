@@ -80,6 +80,11 @@ export default function PasswordView( props ) {
 
   const [ revealPassword, setRevealPassword ] = useState( false );
   const [ decryptedPassword, setDecryptedPassword ] = useState( "" );
+  const [ showCopyResponse, setShowCopyResponse ] = useState( [false, false, false, false, false] );
+
+  const [ copiedText, setCopiedText ] = useState( "" );
+
+  let timeout = null;
 
   async function toggleRevealPassword(){
     setRevealPassword( !revealPassword );
@@ -128,6 +133,7 @@ export default function PasswordView( props ) {
         username: password.username,
         password: password.password,
         quality: password.quality,
+        url: password.url,
         note: password.note,
         expires: password.expires,
         expireDate: password.expireDate,
@@ -344,6 +350,7 @@ export default function PasswordView( props ) {
         {
           password.version === 0 &&
           <span className="command-bar">
+            <div className="command">
                 <BorderedLinkButton
                   fit={true}
                   onClick={(e) => {
@@ -358,9 +365,11 @@ export default function PasswordView( props ) {
                     />
                   Back
                 </BorderedLinkButton>
+              </div>
 
               {
                 !password.deletedDate &&
+                  <div className="command">
                   <BorderedLinkButton
                     fit={true}
                     colour=""
@@ -368,10 +377,12 @@ export default function PasswordView( props ) {
                     >
                     Password History
                   </BorderedLinkButton>
+                </div>
               }
 
             {
               !password.deletedDate &&
+                <div className="command">
               <BorderedLinkButton
                 fit={true}
                 onClick={(e) => {
@@ -382,11 +393,13 @@ export default function PasswordView( props ) {
                 <img className="icon" src={DeleteIcon} alt="delete" />
                 Delete
               </BorderedLinkButton>
+            </div>
             }
 
               {
                 !folder.deletedDate &&
                 passwordCanBeEdited &&
+                  <div className="command">
                 <BorderedLinkButton
                   fit={true}
                   onClick={() => history.push(`${location.pathname}/edit`)}
@@ -396,15 +409,14 @@ export default function PasswordView( props ) {
                     alt=""
                     className="icon"
                     />
-                  {
-                    !/Mobi|Android/i.test(navigator.userAgent) &&
                     <span>Edit</span>
-                  }
                 </BorderedLinkButton>
+              </div>
               }
 
               {
                 passwordCanBeRestored &&
+                  <div className="command">
                 <BorderedLinkButton
                   fit={true}
                   onClick={(e) => {
@@ -419,6 +431,7 @@ export default function PasswordView( props ) {
                     />
                   Restore
                 </BorderedLinkButton>
+              </div>
               }
       </span>
     }
@@ -437,7 +450,23 @@ export default function PasswordView( props ) {
             />
           <LinkButton onClick={(e) => {
               e.preventDefault();
-              navigator.clipboard.writeText(password.title ? password.title : "Untitled");
+              let newCopyResponses = [...showCopyResponse];
+              newCopyResponses[0] = true;
+              setShowCopyResponse(newCopyResponses);
+              timeout = setTimeout(() => {
+                let newCopyResponses = [...showCopyResponse];
+                newCopyResponses[0] = false;
+                setShowCopyResponse(newCopyResponses);
+              }, 2000);
+
+              if (/Mobi|Android/i.test(navigator.userAgent)){
+                var copyText = document.getElementById("title");
+                copyText.select();
+            //    setCopiedText(copyText);
+                document.execCommand("copy");
+              } else {
+                navigator.clipboard.writeText(password.title ? password.title : "Untitled");
+              }
             }}
             >
             <img
@@ -445,6 +474,12 @@ export default function PasswordView( props ) {
               alt=""
               className="icon"
               />
+             {
+                showCopyResponse[0] &&
+                <span>
+                  Copied!
+                </span>
+              }
           </LinkButton>
         </div>
       </section>
@@ -462,19 +497,34 @@ export default function PasswordView( props ) {
       </section>
 
       <section>
-        <label htmlFor="username">Username</label>
+        <label htmlFor="username">Login</label>
         <div>
           <ViewInput
             type="text"
             id="username"
             name="username"
             disabled={true}
-            value={password.username ? password.username : "No username"}
+            value={password.username ? password.username : "No login"}
             />
           <LinkButton
             onClick={(e) => {
               e.preventDefault();
-              navigator.clipboard.writeText(password.username ? password.username : "No username");
+              let newCopyResponses = [...showCopyResponse];
+              newCopyResponses[1] = true;
+              setShowCopyResponse(newCopyResponses);
+              timeout = setTimeout(() => {
+                let newCopyResponses = [...showCopyResponse];
+                newCopyResponses[1] = false;
+                setShowCopyResponse(newCopyResponses);
+              }, 2000);
+
+              if (/Mobi|Android/i.test(navigator.userAgent)){
+                var copyText = document.getElementById("title");
+                copyText.select();
+                document.execCommand("copy");
+              } else {
+                navigator.clipboard.writeText(password.username ? password.username : "No login");
+              }
             }}
             >
             <img
@@ -482,6 +532,12 @@ export default function PasswordView( props ) {
               alt=""
               className="icon"
               />
+             {
+                showCopyResponse[1] &&
+                <span>
+                  Copied!
+                </span>
+              }
           </LinkButton>
         </div>
       </section>
@@ -508,7 +564,22 @@ export default function PasswordView( props ) {
           <LinkButton
             onClick={(e) => {
               e.preventDefault();
-              navigator.clipboard.writeText(password.password ? password.password : "No password");
+              let newCopyResponses = [...showCopyResponse];
+              newCopyResponses[2] = true;
+              setShowCopyResponse(newCopyResponses);
+              timeout = setTimeout(() => {
+                let newCopyResponses = [...showCopyResponse];
+                newCopyResponses[2] = false;
+                setShowCopyResponse(newCopyResponses);
+              }, 2000);
+
+              if (/Mobi|Android/i.test(navigator.userAgent)){
+                var copyText = document.getElementById("title");
+                copyText.select();
+                document.execCommand("copy");
+              } else {
+                navigator.clipboard.writeText(password.password ? password.password : "No password");
+              }
             }}
             >
             <img
@@ -516,6 +587,12 @@ export default function PasswordView( props ) {
               alt=""
               className="icon"
               />
+            {
+              showCopyResponse[2] &&
+              <span>
+                Copied!
+              </span>
+            }
           </LinkButton>
         </div>
       </section>
@@ -539,6 +616,53 @@ export default function PasswordView( props ) {
       </section>
 
       <section>
+        <label htmlFor="url">URL</label>
+        <div>
+        <ViewInput
+          type="text"
+          id="url"
+          name="url"
+          placeholder="url"
+          disabled={true}
+          value={password.url ? password.url : "No url"}
+          />
+        <LinkButton
+              onClick={(e) => {
+                e.preventDefault();
+                let newCopyResponses = [...showCopyResponse];
+                newCopyResponses[3] = true;
+                setShowCopyResponse(newCopyResponses);
+                timeout = setTimeout(() => {
+                  let newCopyResponses = [...showCopyResponse];
+                  newCopyResponses[3] = false;
+                  setShowCopyResponse(newCopyResponses);
+                }, 2000);
+
+                if (/Mobi|Android/i.test(navigator.userAgent)){
+                  var copyText = document.getElementById("title");
+                  copyText.select();
+                  document.execCommand("copy");
+                } else {
+                  navigator.clipboard.writeText(password.url ? password.url : "No URL");
+                }
+              }}
+              >
+              <img
+            src={CopyIcon}
+            alt=""
+            className="icon"
+            />
+          {
+            showCopyResponse[3] &&
+            <span>
+              Copied!
+            </span>
+          }
+        </LinkButton>
+      </div>
+      </section>
+
+      <section>
         <label htmlFor="note">Note</label>
         <div>
           <ViewInput
@@ -550,7 +674,22 @@ export default function PasswordView( props ) {
           <LinkButton
             onClick={(e) => {
               e.preventDefault();
-              navigator.clipboard.writeText(password.note ? password.note : "No note");
+              let newCopyResponses = [...showCopyResponse];
+              newCopyResponses[4] = true;
+              setShowCopyResponse(newCopyResponses);
+              timeout = setTimeout(() => {
+                let newCopyResponses = [...showCopyResponse];
+                newCopyResponses[4] = false;
+                setShowCopyResponse(newCopyResponses);
+              }, 2000);
+
+              if (/Mobi|Android/i.test(navigator.userAgent)){
+                var copyText = document.getElementById("title");
+                copyText.select();
+                document.execCommand("copy");
+              } else {
+                navigator.clipboard.writeText(password.note ? password.note : "No note");
+              }
             }}
             >
             <img
@@ -558,6 +697,12 @@ export default function PasswordView( props ) {
               alt=""
               className="icon"
               />
+              {
+                showCopyResponse[4] &&
+                <span>
+                  Copied!
+                </span>
+              }
           </LinkButton>
         </div>
 

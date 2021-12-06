@@ -8,7 +8,7 @@ const lightBlueColour = "#deeaf3";
 
 //numeric values
 const contentOffset = "calc((100vw - 800px)/2)";
-const sidebarWidthWeb = "250px";
+const sidebarWidthWeb = "270px";
 const sidebarWidthMobile = "300px";
 const inputOffset = "15px";
 
@@ -166,7 +166,7 @@ export const SearchSection = styled.section `
   height: 36px;
   @media all and (max-width: 1299px), @media handheld {
     margin-bottom: 0em;
-    width: auto;
+    width: 300px !important;
   }
   @media all and (min-width: 1300px) {
     margin-bottom: 1em;
@@ -525,6 +525,11 @@ export const List = styled.section `
       display: inline-block;
     }
   }
+  .command>button{
+    @media all and (max-width: 1299px), @media handheld {
+      width: 300px;
+    }
+  }
 
   .card-header{
     padding: 0px;
@@ -590,10 +595,17 @@ export const ItemContainer = styled.section `
     cursor: pointer;
   }
 
-  margin: 0em ${inputOffset};
-  height: 3em;
+  background: white;
+  border-radius: 0.5em;
+  border: 1px solid #d6d6d6;
+  padding: ${(props) => props.noPadding ? "0em" : "1em"};
+  margin-bottom: 1em;
+
   display: flex;
   align-items: center;
+
+  margin-bottom: 1em;
+  height: 3em;
   color: ${basicBlueColour};
 
   input[type=checkbox]{
@@ -899,17 +911,17 @@ export const PasswordContainer = styled.div`
   label.title {
   display: block;
   color: ${basicBlueColour};
+  cursor: pointer;
   }
 
   label.username {
-  color: ${basicBlueColour};
+  color: black;
   display: flex;
   align-items: center;
   font-weight: 400;
   font-size: 0.9em;
     img {
-      filter: invert(0%) sepia(0%) saturate(17%) hue-rotate(322deg) brightness(102%) contrast(104%);
-      margin-right: 0.3em;
+      filter: invert(0);
     }
   }
 
