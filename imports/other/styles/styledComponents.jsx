@@ -105,15 +105,14 @@ export const MobilePageHeader = styled.header `
 
 export const PageHeader = styled.header `
   display: flex;
-  justify-content: space-between;
   align-items: center;
   position: relative;
   height: 50px;
   background-color: ${basicBlueColour};
   padding: 0px ${inputOffset};
 
-  section.header-section{
-    width: 300px;
+  .header-section-left, .header-section-center, .header-section-right{
+    width: auto;
     align-items: center;
     display: flex;
 
@@ -121,32 +120,74 @@ export const PageHeader = styled.header `
      text-overflow: ellipsis;
      white-space: nowrap;
 
-  button{
-    margin-right: 1em;
-  }
-  button:last-of-type{
-    margin: 0px !important;
+    button{
+      margin-right: 1em;
+    }
+    button:last-of-type{
+      margin: 0px !important;
+    }
+
+    h1 {
+       overflow: hidden;
+       text-overflow: ellipsis;
+       white-space: nowrap;
+      height: 32px;
+      padding-left: 0em;
+      display: inline;
+      font-size: 1.5em;
+      color: white;
+      margin-bottom: 0em;
+      margin-left: ${inputOffset};
+    }
+
+    img.icon {
+      filter: invert(1);
+      height: 1.5em;
+      width: 1.5em;
+      margin-right: 0px;
+    }
   }
 
-  h1 {
-     overflow: hidden;
-     text-overflow: ellipsis;
-     white-space: nowrap;
-    height: 32px;
-    padding-left: 0em;
-    display: inline;
-    font-size: 1.5em;
-    color: white;
-    margin-bottom: 0em;
-    margin-left: 1em;
+  .header-section-right{
+    margin-left: auto;
   }
 
-  img.icon {
-    filter: invert(1);
-    height: 1.5em;
-    width: 1.5em;
-    margin-right: 0px;
-  }
+  .header-section-left{
+    @media all and (max-width: 1299px), @media handheld {
+      width: auto;
+      margin-right: 0px;
+    }
+    @media all and (min-width: 1300px) {
+      width: auto;
+      ${(props) =>
+        props.openSidebar &&
+        !props.columns &&
+        `
+        margin-right: calc(50vw - 40px - 10px - 600px + ${sidebarWidthWeb} / 2);
+        `
+      }
+      ${(props) =>
+        !props.openSidebar &&
+        !props.columns &&
+        `
+        margin-right: calc(50vw - 40px - 10px - 600px);
+        `
+      }
+      ${(props) =>
+        props.openSidebar &&
+        props.columns &&
+        `
+        margin-right: calc(${sidebarWidthWeb} - 40px);
+        `
+      }
+      ${(props) =>
+        !props.openSidebar &&
+        props.columns &&
+        `
+        margin-right: 0;
+        `
+      }
+    }
   }
 
   div.search-section{
@@ -166,7 +207,7 @@ export const SearchSection = styled.section `
   height: 36px;
   @media all and (max-width: 1299px), @media handheld {
     margin-bottom: 0em;
-    width: 300px !important;
+    width: 100% !important;
   }
   @media all and (min-width: 1300px) {
     margin-bottom: 1em;
@@ -236,7 +277,7 @@ export const Content = styled.main `
     ${(props) =>
       props.withSidebar &&
       `
-        padding-left: 250px;
+        padding-left: ${sidebarWidthWeb};
         padding-right: 0px;
         margin: 0px;
         overflow-y: auto;
@@ -417,6 +458,11 @@ export const BorderedLinkButton = styled.button `
       width: 1.5em !important;
       filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(90%) contrast(101%);
   }
+  img.icon.red {
+      height: 1em;
+      width: 1.5em !important;
+      filter: invert(8%) sepia(100%) saturate(6779%) hue-rotate(1deg) brightness(108%) contrast(115%);
+  }
 `;
 
 export const BorderedFullButton = styled.button `
@@ -527,7 +573,7 @@ export const List = styled.section `
   }
   .command>button{
     @media all and (max-width: 1299px), @media handheld {
-      width: 300px;
+    width: 100% !important;
     }
   }
 
@@ -653,9 +699,27 @@ export const Form = styled.form `
   }
 
   .command-bar{
-    display: flex;
+    @media all and (max-width: 1299px), @media handheld {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    @media all and (min-width: 1300px) {
+      display: flex;
+      align-items: center;
+    }
     padding: 0px;
     margin-bottom: 1em;
+  }
+
+  .command{
+    button{
+      @media all and (max-width: 1299px), @media handheld {
+        margin: 0px;
+      }
+      @media all and (min-width: 1300px) {
+      }
+    }
   }
 
   section {
@@ -874,10 +938,10 @@ export const CommandRow = styled.section `
 
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
 
   button{
-    margin: 0px 0.3em;
+    margin: 0px;
   }
 `;
 
@@ -887,11 +951,13 @@ export const PasswordContainer = styled.div`
   border: 1px solid #d6d6d6;
   padding: ${(props) => props.noPadding ? "0em" : "1em"};
   margin-bottom: 1em;
+  cursor: pointer;
 
   display: flex;
   align-items: center;
 
   div:first-of-type {
+    cursor: pointer;
     align-items: flex-start;
     display: inline-block;
     margin-right: auto;
@@ -909,13 +975,14 @@ export const PasswordContainer = styled.div`
   }
 
   label.title {
+  cursor: pointer;
   display: block;
   color: ${basicBlueColour};
-  cursor: pointer;
   }
 
   label.username {
-  color: black;
+  cursor: pointer;
+  color: ${basicBlueColour};
   display: flex;
   align-items: center;
   font-weight: 400;

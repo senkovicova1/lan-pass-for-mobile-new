@@ -1,5 +1,6 @@
 import React from 'react';
 
+import "react-datetime/css/react-datetime.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Navigation from './navigation';

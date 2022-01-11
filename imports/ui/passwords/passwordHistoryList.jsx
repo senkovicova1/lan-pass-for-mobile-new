@@ -5,16 +5,19 @@ import React, {
 } from 'react';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
-
-import moment from 'moment';
 
 import Select from 'react-select';
 
 import {
   useTracker
 } from 'meteor/react-meteor-data';
+
+import {
+  setUsedPassword
+} from '/imports/redux/metadataSlice';
 
 import {
   selectStyle
@@ -43,7 +46,11 @@ import {
   viewPasswordStart,
 } from "/imports/other/navigationLinks";
 
+const { DateTime } = require("luxon");
+
 export default function PasswordHistoryList( props ) {
+
+  const dispatch = useDispatch();
 
   const {
     match,
@@ -56,7 +63,8 @@ export default function PasswordHistoryList( props ) {
 
   const dbUsers = useSelector( ( state ) => state.users.value );
 
-  const folderID = match.params.folderID;
+  const {passwordID, folderID} = match.params;
+
   const folders = useSelector( ( state ) => state.folders.value );
   const folder = useMemo( () => {
     if ( folders.length > 0 ) {
@@ -65,13 +73,22 @@ export default function PasswordHistoryList( props ) {
     return {};
   }, [ folders, folderID ] );
 
-  const passwordId = match.params.passwordID;
-  const passwords = useSelector( ( state ) => state.passwords.value ).filter( password => [ password.passwordId, password._id ].includes( passwordId ) );
+  const passwords = useTracker( () => PasswordsCollection.find( {
+    $or: [
+      {_id: passwordID},
+      {passwordId: passwordID}
+    ]
+  }, {
+    sort: {
+      version: -1
+    }
+  } ).fetch() );
   const usedVersion = passwords.find( pass => pass.version === 0 );
   const previousVersions = passwords.filter( pass => pass.version > 0 ).sort( ( p1, p2 ) => p1 > p2 ? 1 : -1 ).map( pass => ( {
     ...pass,
     editedBy: dbUsers.find( user => user._id === pass.editedBy )
   } ) );
+
 
   const restorePassword = ( password ) => {
     if ( window.confirm( "Are you sure you want to restore this version?" ) ) {
@@ -88,7 +105,7 @@ export default function PasswordHistoryList( props ) {
         folder: password.folder,
         createdDate: password.createdDate,
         version: 0,
-        updatedDate: moment().unix(),
+        updatedDate: parseInt(DateTime.now().toSeconds()),
         passwordId,
       } );
 
@@ -131,20 +148,20 @@ export default function PasswordHistoryList( props ) {
       <h2>Previous versions</h2>
 
       <div className="command-bar">
-              <BorderedLinkButton
-                left
-                onClick={(e) => {
-                  e.preventDefault();
-                  history.goBack();
-                }}
-                >
-                <img
-                  src={BackIcon}
-                  alt=""
-                  className="icon"
-                  />
-                Back
-              </BorderedLinkButton>
+          <BorderedLinkButton
+            left
+            onClick={(e) => {
+              e.preventDefault();
+              history.goBack();
+            }}
+            >
+            <img
+              src={BackIcon}
+              alt=""
+              className="icon"
+              />
+            Back
+          </BorderedLinkButton>
       </div>
 
       {
@@ -158,14 +175,20 @@ export default function PasswordHistoryList( props ) {
         previousVersions.map((password) => (
           <PasswordContainer key={password._id}>
             <img
-              onClick={() => history.push(`${viewPasswordStart}${folderID}/version/${password._id}`)}
+              onClick={() => {
+                dispatch(setUsedPassword(password));
+                history.push(`${viewPasswordStart}${folderID}/version/${password._id}`);
+              }}
               src={HourglassIcon}
               alt=""
               className="icon start"
               />
-            <div  onClick={() => history.push(`${viewPasswordStart}${folderID}/version/${password._id}`)}>
+            <div  onClick={() => {
+                dispatch(setUsedPassword(password));
+                history.push(`${viewPasswordStart}${folderID}/version/${password._id}`);
+              }}>
               <label className="title">
-                {`Version from ${moment.unix(password.updatedDate).format("D.M.YYYY HH:mm:ss")}`}
+                {`Version from ${DateTime.fromSeconds(password.updatedDate).toFormat("dd.LL.y HH:mm")}`}
               </label>
               <label className="username">
                 {`Changed password ${password.editedBy ? password.editedBy.label : ""}`}

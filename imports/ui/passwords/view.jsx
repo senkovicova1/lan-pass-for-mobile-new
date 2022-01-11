@@ -7,7 +7,9 @@ import React, {
 
 import Select from 'react-select';
 
-import moment from 'moment';
+import {
+  useTracker
+} from 'meteor/react-meteor-data';
 
 import {
   useSelector
@@ -33,9 +35,10 @@ import {
 
 import {
   Card,
-  BorderedLinkButton,
+  BorderedFullButton,
   PasswordContainer,
   Form,
+  ItemContainer,
   ViewInput,
   ViewTextarea,
   ButtonCol,
@@ -52,8 +55,11 @@ import {
 
 import {
   listAllPasswords,
-  listPasswordsInFolderStart
+  listPasswordsInFolderStart,
+  listDeletedPasswordsInFolder
 } from "/imports/other/navigationLinks";
+
+const { DateTime } = require("luxon");
 
 export default function PasswordView( props ) {
 
@@ -75,8 +81,16 @@ export default function PasswordView( props ) {
   const dbUsers = useSelector( ( state ) => state.users.value );
 
   const passwords = useSelector( ( state ) => state.passwords.value );
-  const password = passwords.find( p => p._id === passwordID );
-  const folder = useSelector( ( state ) => state.folders.value ).find( f => f._id === folderID );
+  const folders = useSelector( ( state ) => state.folders.value );
+  let folder = useSelector( ( state ) => state.metadata.value ).selectedFolder;
+
+  if (!folder && folders.length > 0){
+    folder = folders.find(f => f._id === folderID);
+  }
+
+  const usedPassword = useSelector( ( state ) => state.metadata.value ).usedPassword;
+
+  const password = useTracker( () => PasswordsCollection.findOne( {_id: passwordID} ) );
 
   const [ revealPassword, setRevealPassword ] = useState( false );
   const [ decryptedPassword, setDecryptedPassword ] = useState( "" );
@@ -140,7 +154,7 @@ export default function PasswordView( props ) {
         folder: password.folder,
         createdDate: password.createdDate,
         version: 0,
-        updatedDate: moment().unix(),
+        updatedDate: parseInt(DateTime.now().toSeconds()),
         passwordId,
       } );
 
@@ -197,7 +211,7 @@ export default function PasswordView( props ) {
     if ( window.confirm( message ) ) {
       if ( passwordToRemove.version === 0 && !passwordToRemove.deletedDate ) {
         let data = {
-          deletedDate: moment().unix(),
+          deletedDate: parseInt(DateTime.now().toSeconds()),
         };
         PasswordsCollection.update( passwordToRemove._id, {
           $set: {
@@ -283,17 +297,9 @@ export default function PasswordView( props ) {
     return <span style={{color: result.colour}}>{result.mark}</span>
   }, [ passwordScore ] );
 
-  if ( !password ) {
+  if ( !password || !folder) {
     return <div></div>;
   }
-
-  const usedPassword = passwords.find( pass => {
-    if ( password.passwordId ) {
-      return [ pass.passwordId, pass._id ].includes( password.passwordId ) && pass.version === 0;
-    }
-    return pass.passwordId === password._id;
-  } );
-
 
   const passwordCanBeEdited = folder.users.find( user => user._id === userId ).level <= 1 && password.version === 0 && !password.deletedDate;
   const passwordCanBeRestored = folder.users.find( user => user._id === userId ).level <= 1 && password.version === 0 && password.deletedDate;
@@ -320,7 +326,7 @@ export default function PasswordView( props ) {
             />
           <div>
             <label className="title">
-              {`Version from ${moment.unix(password.updatedDate).format("D.M.YYYY HH:mm:ss")}`}
+              {`Version from ${DateTime.fromSeconds(password.updatedDate).toFormat("dd.LL.y HH:mm")}`}
             </label>
             <label className="username">
               {`Changed password ${editedBy ? editedBy.label : ""}`}
@@ -351,11 +357,17 @@ export default function PasswordView( props ) {
           password.version === 0 &&
           <span className="command-bar">
             <div className="command">
-                <BorderedLinkButton
+                <BorderedFullButton
                   fit={true}
                   onClick={(e) => {
                     e.preventDefault();
-                    history.goBack();
+                    if (folder && !password.deletedDate){
+                      history.push(`${listPasswordsInFolderStart}${folder._id}`);
+                    } else if (folder && password.deletedDate){
+                      history.push(`/folders/list/${folder._id}/deleted`);
+                    } else {
+                      history.goBack();
+                    }
                   }}
                   >
                   <img
@@ -364,35 +376,24 @@ export default function PasswordView( props ) {
                     className="icon"
                     />
                   Back
-                </BorderedLinkButton>
+                </BorderedFullButton>
               </div>
-
-              {
-                !password.deletedDate &&
-                  <div className="command">
-                  <BorderedLinkButton
-                    fit={true}
-                    colour=""
-                    onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId ? password.passwordId : password._id}/history`)}
-                    >
-                    Password History
-                  </BorderedLinkButton>
-                </div>
-              }
 
             {
               !password.deletedDate &&
                 <div className="command">
-              <BorderedLinkButton
+              <BorderedFullButton
                 fit={true}
+                colour="red"
+                font="red"
                 onClick={(e) => {
                   e.preventDefault();
                   removePassword();
                 }}
                 >
-                <img className="icon" src={DeleteIcon} alt="delete" />
+                <img className="icon red" src={DeleteIcon} alt="delete" />
                 Delete
-              </BorderedLinkButton>
+              </BorderedFullButton>
             </div>
             }
 
@@ -400,7 +401,7 @@ export default function PasswordView( props ) {
                 !folder.deletedDate &&
                 passwordCanBeEdited &&
                   <div className="command">
-                <BorderedLinkButton
+                <BorderedFullButton
                   fit={true}
                   onClick={() => history.push(`${location.pathname}/edit`)}
                   >
@@ -410,14 +411,14 @@ export default function PasswordView( props ) {
                     className="icon"
                     />
                     <span>Edit</span>
-                </BorderedLinkButton>
+                </BorderedFullButton>
               </div>
               }
 
               {
                 passwordCanBeRestored &&
                   <div className="command">
-                <BorderedLinkButton
+                <BorderedFullButton
                   fit={true}
                   onClick={(e) => {
                     e.preventDefault();
@@ -430,13 +431,13 @@ export default function PasswordView( props ) {
                     className="icon"
                     />
                   Restore
-                </BorderedLinkButton>
+                </BorderedFullButton>
               </div>
               }
       </span>
     }
 
-      <Card>
+      <Card style={{marginBottom: "1em"}}>
       <section>
         <label htmlFor="title">Title</label>
         <div>
@@ -448,6 +449,8 @@ export default function PasswordView( props ) {
             disabled={true}
             value={password.title ? password.title : "Untitled"}
             />
+            {
+              !/Mobi|Android/i.test(navigator.userAgent) &&
           <LinkButton onClick={(e) => {
               e.preventDefault();
               let newCopyResponses = [...showCopyResponse];
@@ -481,6 +484,7 @@ export default function PasswordView( props ) {
                 </span>
               }
           </LinkButton>
+        }
         </div>
       </section>
 
@@ -506,6 +510,8 @@ export default function PasswordView( props ) {
             disabled={true}
             value={password.username ? password.username : "No login"}
             />
+          {
+              !/Mobi|Android/i.test(navigator.userAgent) &&
           <LinkButton
             onClick={(e) => {
               e.preventDefault();
@@ -539,6 +545,7 @@ export default function PasswordView( props ) {
                 </span>
               }
           </LinkButton>
+        }
         </div>
       </section>
 
@@ -561,6 +568,8 @@ export default function PasswordView( props ) {
             >
             <img className="icon" src={EyeIcon} alt="reveal pass" />
           </LinkButton>
+          {
+            !/Mobi|Android/i.test(navigator.userAgent) &&
           <LinkButton
             onClick={(e) => {
               e.preventDefault();
@@ -594,9 +603,12 @@ export default function PasswordView( props ) {
               </span>
             }
           </LinkButton>
+        }
         </div>
       </section>
 
+      {
+        decryptedPassword &&
       <section>
         <div style={{display: "flex", justifyContent: "space-between"}}>
           <label htmlFor="repeat-password">Password strength </label>
@@ -614,6 +626,7 @@ export default function PasswordView( props ) {
           value={passwordScore}
           />
       </section>
+    }
 
       <section>
         <label htmlFor="url">URL</label>
@@ -626,6 +639,8 @@ export default function PasswordView( props ) {
           disabled={true}
           value={password.url ? password.url : "No url"}
           />
+          {
+            !/Mobi|Android/i.test(navigator.userAgent) &&
         <LinkButton
               onClick={(e) => {
                 e.preventDefault();
@@ -659,6 +674,7 @@ export default function PasswordView( props ) {
             </span>
           }
         </LinkButton>
+      }
       </div>
       </section>
 
@@ -671,6 +687,8 @@ export default function PasswordView( props ) {
             disabled={true}
             value={password.note ? password.note : "No note"}
             />
+          {
+            !/Mobi|Android/i.test(navigator.userAgent) &&
           <LinkButton
             onClick={(e) => {
               e.preventDefault();
@@ -704,13 +722,14 @@ export default function PasswordView( props ) {
                 </span>
               }
           </LinkButton>
+        }
         </div>
 
       </section>
 
       <section>
         <label htmlFor="expires">Expires</label>
-        <div style={{alignItems: "center"}}>
+        <div style={{alignItems: "center", marginLeft: "7px", marginTop: "7px"}}>
           <ViewInput
             disabled={true}
             type="checkbox"
@@ -718,13 +737,11 @@ export default function PasswordView( props ) {
             name="expires"
             checked={password.expires}
             />
-          {password.expires &&
-            <ViewInput
-              disabled={true}
-              type="datetime-local"
-              placeholder="Deadline"
-              value={password.expireDate ? moment.unix(password.expireDate).add((new Date).getTimezoneOffset(), 'minutes').format("yyyy-MM-DD hh:mm").replace(" ", "T") : ""}
-              />
+          {
+            password.expires &&
+            <span>
+              {password.expireDate ? DateTime.fromSeconds(password.expireDate).toFormat("dd.LL.y HH:mm") : "Expiry date not set"}
+            </span>
           }
           {!password.expires &&
             <ViewInput
@@ -738,25 +755,35 @@ export default function PasswordView( props ) {
 
       <section>
         <label htmlFor="expires">Created</label>
-        <ViewInput
-          disabled={true}
-          type="datetime-local"
-          placeholder="Deadline"
-          value={moment.unix(password.createdDate).add((new Date).getTimezoneOffset(), 'minutes').format("yyyy-MM-DD hh:mm").replace(" ", "T")}
-          />
+        <div style={{alignItems: "center", marginLeft: "7px", marginTop: "7px"}}>
+            <span>
+              {password.createdDate ? DateTime.fromSeconds(password.createdDate).toFormat("dd.LL.y HH:mm") : ""}
+            </span>
+        </div>
       </section>
 
       <section>
         <label htmlFor="expires">Last updated</label>
-        <ViewInput
-          disabled={true}
-          type="datetime-local"
-          placeholder="Deadline"
-          value={moment.unix(password.updatedDate).add((new Date).getTimezoneOffset(), 'minutes').format("yyyy-MM-DD hh:mm").replace(" ", "T")}
-          />
+          <div style={{alignItems: "center", marginLeft: "7px", marginTop: "7px"}}>
+            <span>
+              {password.updatedDate ? DateTime.fromSeconds(password.updatedDate).toFormat("dd.LL.y HH:mm") : ""}
+            </span>
+          </div>
       </section>
 
     </Card>
+
+    {
+      !password.deletedDate &&
+    <ItemContainer key={"history"}>
+      <span
+        style={{paddingLeft: "0px"}}
+        onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId ? password.passwordId : password._id}/history`)}
+        >
+          Password History
+      </span>
+    </ItemContainer>
+    }
     </Form>
   );
 };

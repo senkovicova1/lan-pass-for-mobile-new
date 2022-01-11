@@ -4,8 +4,6 @@ import React, {
   useState,
 } from 'react';
 
-import moment from 'moment';
-
 import {
   useSelector
 } from 'react-redux';
@@ -24,6 +22,8 @@ import FolderForm from '/imports/ui/folders/folderForm';
 import {
   listPasswordsInFolderStart,
 } from "/imports/other/navigationLinks";
+
+const { DateTime } = require("luxon");
 
 export default function EditFolderContainer( props ) {
 
@@ -72,7 +72,7 @@ export default function EditFolderContainer( props ) {
   const removeFolder = ( folderId ) => {
     if ( window.confirm( "Are you sure you want to remove this folder? Note: Folder will be moved to the \"Deleted fodlers\" section." ) ) {
       let data = {
-        deletedDate: moment().unix(),
+        deletedDate: parseInt(DateTime.now().toSeconds()),
       };
       FoldersCollection.update( folderID, {
         $set: {

@@ -15,8 +15,6 @@ import {
 
 import Select from 'react-select';
 
-import moment from 'moment';
-
 import PasswordGenerator from './passwordGenerator';
 
 import {
@@ -30,6 +28,7 @@ import {
 import {
   EyeIcon,
   BackIcon,
+  CloseIcon,
   DeleteIcon,
   PencilIcon
 } from "/imports/other/styles/icons";
@@ -60,8 +59,11 @@ const SYMBOLS = "/*-+><.,?!@#$%^*()[]{}";
 const UPPER_CASE = "ABCDEFGHTIJKLMNOPQRSTUVWXYZ";
 const LOWER_CASE = "abcdefghtijklmnopqrstuvwxyz";
 
+const { DateTime } = require("luxon");
+
 export default function PasswordForm( props ) {
 const {
+  password,
   match,
   history,
   onSubmit,
@@ -80,7 +82,6 @@ const folders = useMemo( () => {
 
 const passwordID = match.params.passwordID;
 const passwords = useSelector( ( state ) => state.passwords.value );
-const password = useSelector( ( state ) => state.passwords.value ).find( p => p._id === passwordID );
 
 const [ title, setTitle ] = useState( "" );
 const [ folder, setFolder ] = useState( null );
@@ -143,7 +144,7 @@ const removePassword = () => {
   if ( window.confirm( message ) ) {
     if ( passwordToRemove.version === 0 && !passwordToRemove.deletedDate ) {
       let data = {
-        deletedDate: moment().unix(),
+        deletedDate: parseInt(DateTime.now().toSeconds()),
       };
       PasswordsCollection.update( passwordToRemove._id, {
         $set: {
@@ -311,6 +312,13 @@ const scoreTranslation = useCallback( () => {
     }
   }
 
+  const getOffset = () => {
+      let jan = new Date( 2009, 0, 1, 2, 0, 0 );
+      let jul = new Date( 2009, 6, 1, 2, 0, 0 );
+      let offset = ( jan.getTime() % 24 * 60 * 60 * 1000 ) >  ( jul.getTime() % 24 * 60 * 60 * 1000 )  ?  jan.getTimezoneOffset() : jul.getTimezoneOffset();
+      return offset;
+  }
+
   return (
     <Form autocomplete="off">
 
@@ -449,16 +457,18 @@ const scoreTranslation = useCallback( () => {
             disabled={!expires}
             type="datetime-local"
             placeholder="Deadline"
-            value={expireDate ? moment.unix(expireDate).add((new Date).getTimezoneOffset(), 'minutes').format("yyyy-MM-DD hh:mm").replace(" ", "T") : ""}
-            min={moment.unix().add((new Date).getTimezoneOffset(), 'minutes').format("yyyy-MM-DD hh:mm").replace(" ", "T")}
-            onChange={(e) => setExpireDate(e.target.valueAsNumber/1000)}
+            value={
+              expireDate ? DateTime.fromSeconds(expireDate).toFormat("y-LL-dd HH:mm").replace(" ", "T") : ""
+            }
+            min={DateTime.now()}
+            onChange={(e) => setExpireDate(DateTime.fromMillis(e.target.valueAsNumber).plus({minutes: getOffset()}).toSeconds())}
             />
         </div>
       </section>
     </Card>
 
                 <CommandRow>
-                  <BorderedLinkButton
+                  <BorderedFullButton
                     fit={true}
                     onClick={(e) => {
                       e.preventDefault();
@@ -466,14 +476,16 @@ const scoreTranslation = useCallback( () => {
                     }}
                     >
                     <img
-                      src={BackIcon}
+                      src={CloseIcon}
                       alt=""
                       className="icon"
                       />
                     Cancel
-                  </BorderedLinkButton>
-                  <BorderedLinkButton
+                  </BorderedFullButton>
+                  <BorderedFullButton
                     fit={true}
+                    font="red"
+                    colour="red"
                     onClick={(e) => {
                       e.preventDefault();
                       removePassword();
@@ -482,10 +494,10 @@ const scoreTranslation = useCallback( () => {
                     <img
                       src={DeleteIcon}
                       alt=""
-                      className="icon"
+                      className="icon red"
                       />
                     Delete
-                  </BorderedLinkButton>
+                  </BorderedFullButton>
                   {
                     folder &&
                     folder.users &&
@@ -506,8 +518,8 @@ const scoreTranslation = useCallback( () => {
                         note,
                         expires,
                         expireDate,
-                        password ? password.createdDate : moment().unix(),
-                        moment().unix(),
+                        password ? password.createdDate : parseInt(DateTime.now().toSeconds()),
+                        parseInt(DateTime.now().toSeconds()),
                         password ? (password.passwordId ? password.passwordId : password._id) : null
                       );}}
                       >

@@ -6,7 +6,9 @@ import {
   useSelector
 } from 'react-redux';
 
-import moment from 'moment';
+import {
+  useTracker
+} from 'meteor/react-meteor-data';
 
 import {
   PasswordsCollection
@@ -24,9 +26,11 @@ export default function EditPasswordContainer( props ) {
 
   const userId = Meteor.userId();
   const encryptionData = useSelector( ( state ) => state.encryptionData.value );
-  const folderID = match.params.folderID;
+  const {folderID, passwordID} = match.params;
   const folder = useSelector( ( state ) => state.folders.value ).find( f => f._id === folderID );
   const passwords = useSelector( ( state ) => state.passwords.value );
+
+    const password = useTracker( () => PasswordsCollection.findOne( {_id: passwordID} ) );
 
   useEffect( () => {
     if ( folder ) {
@@ -88,72 +92,84 @@ export default function EditPasswordContainer( props ) {
       return decryptedValue;
     }
 
-  async function editPassword( title, folder, username, password, originalPassword, quality, url, note, expires, expireDate, createdDate, updatedDate, passwordId ) {
+  async function editPassword( title, folder, username, password1, originalPassword, quality, url, note, expires, expireDate, createdDate, updatedDate, passwordId ) {
     let previousDecryptedPassword = "";
     if (originalPassword){
-      previousDecryptedPassword = await decryptPassword(originalPassword)
+      previousDecryptedPassword = await decryptPassword(originalPassword);
     }
-    let decryptedPassword = password;
-    if (typeof password !== "string"){
-      previousDecryptedPassword = await decryptPassword(password)
+    let newDecryptedPassword = password1;
+    if (typeof password1 !== "string"){
+      newDecryptedPassword = await decryptPassword(password1);
     }
-    let newPassword = decryptedPassword;
+    let newPassword = "";
 
-    if (decryptedPassword === previousDecryptedPassword){
+    if (newDecryptedPassword === previousDecryptedPassword){
       newPassword = originalPassword;
     } else {
-      newPassword = await encryptPassword(newPassword);
+      newPassword = await encryptPassword(newDecryptedPassword);
     }
 
-    PasswordsCollection.insert( {
-      title,
-      folder,
-      username,
-      password: newPassword,
-      quality,
-      url,
-      note,
-      expires,
-      expireDate,
-      folder,
-      createdDate,
-      version: 0,
-      updatedDate,
-      passwordId,
-    }, ( error, _id ) => {
-      if ( error ) {
-        console.log( error );
-      } else {
-        history.push( `/folders/${folderID}/${_id}` );
-      }
-    } );
+    if (
+      title === password.title &&
+      folder === password.folder &&
+      username === password.username &&
+      newDecryptedPassword === previousDecryptedPassword &&
+      url === password.url &&
+      note === password.note &&
+      expires === password.expires &&
+      expireDate === password.expireDate
+    ) {
+      history.push( `/folders/${folderID}/${passwordID}` );
+    } else {
 
-    const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordId ) );
+      const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordId ) );
 
-    passwordsToUpdate.forEach( ( pass, index ) => {
-      if ( pass.version >= 20 ) {
-        PasswordsCollection.remove( {
-          _id: pass._id
-        } );
-      } else {
-        if ( pass.version === 0 ) {
-          PasswordsCollection.update( pass._id, {
-            $inc: {
-              version: 1
-            },
-            $set: {
-              editedBy: userId
-            }
+      passwordsToUpdate.forEach( ( pass, index ) => {
+        if ( pass.version >= 20 ) {
+          PasswordsCollection.remove( {
+            _id: pass._id
           } );
         } else {
-          PasswordsCollection.update( pass._id, {
-            $inc: {
-              version: 1
-            }
-          } );
+            PasswordsCollection.update( pass._id,
+              (pass.version === 1 ? {
+              $inc: {
+                version: 1
+              },
+              $set: {
+                editedBy: userId
+              }
+            } : {
+              $inc: {
+                version: 1
+              }
+            })
+          );
         }
-      }
-    } );
+      } );
+
+      PasswordsCollection.insert( {
+        title,
+        folder,
+        username,
+        password: newPassword,
+        quality,
+        url,
+        note,
+        expires,
+        expireDate,
+        folder,
+        createdDate,
+        version: 0,
+        updatedDate,
+        passwordId,
+      }, ( error, _id ) => {
+        if ( error ) {
+          console.log( error );
+        } else {
+          history.push( `/folders/${folderID}/${_id}` );
+        }
+      } );
+    }
 
   }
 
@@ -164,6 +180,7 @@ export default function EditPasswordContainer( props ) {
   return (
     <PasswordForm
       {...props}
+      password={password}
       revealPassword={revealPassword}
       onSubmit={editPassword}
       onCancel={close}

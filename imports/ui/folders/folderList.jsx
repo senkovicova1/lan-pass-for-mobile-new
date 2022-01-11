@@ -5,12 +5,17 @@ import React, {
 } from 'react';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
 
 import {
   useTracker
 } from 'meteor/react-meteor-data';
+
+import {
+  setFolder
+} from '/imports/redux/metadataSlice';
 
 import {
   FoldersCollection
@@ -44,22 +49,31 @@ import {
 
 export default function FolderList( props ) {
 
+  const dispatch = useDispatch();
+
   const {
     match,
     history,
   } = props;
 
-  const folders = useSelector( ( state ) => state.folders.value );
   const passwords = useSelector( ( state ) => state.passwords.value );
   const user = useTracker( () => Meteor.user() );
   const userId = Meteor.userId();
 
   const [ showClosed, setShowClosed ] = useState( false );
 
-  const myFolders = useMemo( () => {
-    let newMyFolders = folders.filter( folder => folder.deletedDate );
-    return newMyFolders;
-  }, [ folders ] );
+  const myFolders = useTracker( () => FoldersCollection.find( {
+    users: {
+      $elemMatch: {
+        _id: userId
+      }
+    },
+    deletedDate: {
+    $gte: 0
+  }
+  }, {
+    sort: {name: 1}
+  } ).fetch() );
 
   const permanentlyDelete = useCallback( () => {
     if ( window.confirm( "Are you sure you want to permanently remove these folders? Note: Only folders you have authorization to remove will be removed." ) ) {
@@ -131,7 +145,9 @@ export default function FolderList( props ) {
           <ItemContainer key={folder._id}>
             <span
               style={{paddingLeft: "0px"}}
-              onClick={() => history.push(`${listPasswordsInFolderStart}${folder._id}`)}
+              onClick={() =>{
+                dispatch(setFolder(folder)); history.push(`${listPasswordsInFolderStart}${folder._id}`)
+              }}
               >
               <img
                 className="icon folder"

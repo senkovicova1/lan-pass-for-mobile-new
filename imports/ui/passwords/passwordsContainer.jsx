@@ -1,8 +1,21 @@
-import React from 'react';
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+}  from 'react';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
+
+import {
+  useTracker
+} from 'meteor/react-meteor-data';
+
+import {
+  PasswordsCollection
+} from '/imports/api/passwordsCollection';
 
 import AddPassword from '/imports/ui/passwords/addContainer';
 
@@ -13,6 +26,10 @@ import PasswordList from '/imports/ui/passwords/list';
 import PasswordView from '/imports/ui/passwords/view';
 
 import PasswordHistoryList from '/imports/ui/passwords/passwordHistoryList';
+
+import {
+  setPasswords
+} from '/imports/redux/passwordsSlice';
 
 import {
   Card,
@@ -34,20 +51,68 @@ import {
 
 export default function PasswordsContainer( props ) {
 
+  const dispatch = useDispatch();
+
   const {
     match,
     history,
-    setSearch,
-    search,
-    sortBy,
-    sortDirection,
   } = props;
 
   const {
-    passwordID
+    passwordID,
+    folderID
   } = match.params;
+
+  const isGlobalSearch = folderID === "search";
+  const folders = useSelector( ( state ) => state.folders.value );
   const userId = Meteor.userId();
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
+
+  const folder = useSelector( ( state ) => state.metadata.value ).selectedFolder;
+
+  const getFilter = () => {
+
+    let result = {};
+    if (isGlobalSearch){
+      result.folder = {
+        $in: folders.map( folder => folder._id )
+      }
+    } else {
+      result.folder = folderID;
+    }
+    result.version = 0;
+
+    if (match.path === listDeletedPasswordsInFolder) {
+      result.deletedDate = {
+        $gte: 0,
+      }
+    } else if (match.path === listPasswordsInFolder){
+      result.deletedDate = null;
+    }
+
+    return result;
+  }
+
+    const passwords = useTracker( () => PasswordsCollection.find(
+      getFilter(),
+      {
+      fields: {
+        title: 1,
+        username: 1,
+        password: 1,
+        url: 1,
+        folder: 1,
+        passwordId: 1
+      },
+      sort: {
+        title: 1,
+        username: 1
+      }
+    } ).fetch() );
+
+    useEffect( () => {
+      dispatch( setPasswords( passwords ) );
+    }, [ passwords ] );
 
   if ( window.innerWidth <= 820 || layout === PLAIN ) {
     if ( passwordID === "password-add" ) {

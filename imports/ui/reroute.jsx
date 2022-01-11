@@ -4,14 +4,22 @@ import React, {
 } from 'react';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
+
+import {
+  setFolder
+} from '/imports/redux/metadataSlice';
 
 import {
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
 export default function Reroute( props ) {
+
+  const dispatch = useDispatch();
+
 const {
   match,
   history
@@ -22,22 +30,15 @@ const {
 
 const folders = useSelector( ( state ) => state.folders.value );
 
-const myFolders = useMemo( () => {
-  return folders.filter( folder => !folder.deletedDate ).map( folder => ( {
-    ...folder,
-    label: folder.name,
-    value: folder._id
-  } ) );
-}, [ folders ] );
-
 useEffect( () => {
   if ( match.path === "/" || match.path === "/folders" ) {
-    if ( myFolders.length > 0 ) {
-      const newFolder = myFolders[ 0 ];
+    if ( folders.length > 0 ) {
+      const newFolder = folders[0];
+      dispatch(setFolder(newFolder));
       history.push( `/folders/list/${newFolder._id}` );
     }
   }
-}, [ match.path, folderID, myFolders ] );
+}, [ match.path, folderID, folders ] );
 
   return (
     <div style={{display: "none"}}></div>

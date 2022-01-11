@@ -1,7 +1,6 @@
 import React, {
   useEffect,
   useState,
-  useMemo,
 } from 'react';
 
 import {
@@ -18,42 +17,46 @@ import {
   useTracker
 } from 'meteor/react-meteor-data';
 
-import { MetaCollection } from '/imports/api/metaCollection';
+import {
+  MetaCollection
+} from '/imports/api/metaCollection';
+
 import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
+
 import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
 
 import {
   setFolders
-} from '../redux/foldersSlice';
+} from '/imports/redux/foldersSlice';
 
 import {
   setPasswords
-} from '../redux/passwordsSlice';
+} from '/imports/redux/passwordsSlice';
 
 import {
   setEncryptionData
-} from '../redux/encryptionSlice';
+} from '/imports/redux/encryptionSlice';
 
 import {
   setUsers
-} from '../redux/usersSlice';
+} from '/imports/redux/usersSlice';
 
-import Reroute from './reroute';
-import Header from './header';
-import Login from './login';
-import FolderList from './folders/folderList';
-import FolderAdd from './folders/addFolderContainer';
-import FolderEdit from './folders/editFolderContainer';
-import PasswordList from './passwords/list';
-import PasswordContainer from './passwords/passwordsContainer';
-import PasswordView from './passwords/view';
-import PasswordHistoryList from './passwords/passwordHistoryList';
-import EditUserContainer from './users/editUserContainer';
-import UsersList from './users/list';
+import Reroute from '/imports/ui/reroute';
+import Header from '/imports/ui/header';
+import Login from '/imports/ui/login';
+import FolderList from '/imports/ui/folders/folderList';
+import FolderAdd from '/imports/ui/folders/addFolderContainer';
+import FolderEdit from '/imports/ui/folders/editFolderContainer';
+import PasswordList from '/imports/ui/passwords/list';
+import PasswordContainer from '/imports/ui/passwords/passwordsContainer';
+import PasswordView from '/imports/ui/passwords/view';
+import PasswordHistoryList from '/imports/ui/passwords/passwordHistoryList';
+import EditUserContainer from '/imports/ui/users/editUserContainer';
+import UsersList from '/imports/ui/users/list';
 
 import {
   Content
@@ -90,23 +93,28 @@ export default function MainPage( props ) {
 
   console.log( "All our amazing icons are from FlatIcon (https://www.flaticon.com/). Thank you to all creators whose icons we could use: PixelPerfect (https://www.flaticon.com/authors/pixel-perfect), Dmitri13 (https://www.flaticon.com/authors/dmitri13), Phatplus (https://www.flaticon.com/authors/phatplus), Kiranshastry (https://www.flaticon.com/authors/kiranshastry), Those Icons (https://www.flaticon.com/authors/those-icons), Google (https://www.flaticon.com/authors/google), Dave Gandy (https://www.flaticon.com/authors/dave-gandy), Tomas Knop (https://www.flaticon.com/authors/tomas-knop), Gregor Cresnar (https://www.flaticon.com/authors/gregor-cresnar), Freepik (https://www.flaticon.com/authors/freepik)" );
 
+  const [ openSidebar, setOpenSidebar ] = useState( false );
+
   const currentUser = useTracker( () => Meteor.user() );
+  const userId = currentUser ? currentUser._id : null;
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
 
-  const userId = currentUser ? currentUser._id : null;
-
   const encryptionData = useTracker(() => MetaCollection.find({}).fetch());
-  useEffect( () => {
-      dispatch( setEncryptionData( encryptionData[0] ) );
-  }, [ encryptionData ] );
-
   const folders = useTracker( () => FoldersCollection.find( {
     users: {
       $elemMatch: {
         _id: userId
       }
-    }
+    },
+    deletedDate: null
+  }, {
+    sort: {name: 1}
   } ).fetch() );
+  const users = useTracker( () => Meteor.users.find( {} ).fetch() );
+
+  useEffect( () => {
+      dispatch( setEncryptionData( encryptionData[0] ) );
+  }, [ encryptionData ] );
 
   useEffect( () => {
     if ( folders.length > 0 ) {
@@ -114,26 +122,12 @@ export default function MainPage( props ) {
         ...folder,
         label: folder.name,
         value: folder._id
-      } ) ).sort( ( f1, f2 ) => f1.name > f2.name ? 1 : -1 ) ) );
+      } ) )));
     } else {
       dispatch( setFolders( [] ) );
     }
   }, [ folders ] );
 
-  const savedFolderIds = folders.map( folder => folder._id );
-  const passwords = useTracker( () => PasswordsCollection.find( {
-    folder: {
-      $in: savedFolderIds
-    }
-  } ).fetch() );
-  useEffect( () => {
-    if ( passwords.length > 0 ) {
-      dispatch( setPasswords( passwords ) );
-    }
-  }, [ passwords ] );
-
-
-  const users = useTracker( () => Meteor.users.find( {} ).fetch() );
   useEffect( () => {
     dispatch(
       setUsers(
@@ -147,11 +141,6 @@ export default function MainPage( props ) {
       )
     );
   }, [ users ] );
-
-  const [ search, setSearch ] = useState( "" );
-  const [ openSidebar, setOpenSidebar ] = useState( false );
-  const [ sortBy, setSortBy ] = useState( "name" );
-  const [ sortDirection, setSortDirection ] = useState( "asc" );
 
   return (
     <div style={{height: "100vh"}}>
@@ -200,10 +189,6 @@ export default function MainPage( props ) {
             <Header
               {...props}
               setParentOpenSidebar={setOpenSidebar}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              sortDirection={sortDirection}
-              setSortDirection={setSortDirection}
               />
           )}
           />
@@ -242,10 +227,6 @@ export default function MainPage( props ) {
                 render={(props) => (
                   <PasswordContainer
                     {...props}
-                    setSearch={setSearch}
-                    search={search}
-                    sortBy={sortBy}
-                    sortDirection={sortDirection}
                     />
                 )}
                 />

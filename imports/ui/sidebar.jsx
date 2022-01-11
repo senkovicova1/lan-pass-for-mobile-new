@@ -6,9 +6,15 @@ import React, {
 
 import { NavLink } from 'react-router-dom';
 
-import moment from 'moment';
+import {
+  useSelector,
+  useDispatch
+} from 'react-redux';
 
-import { useSelector } from 'react-redux';
+import {
+  setFolder
+} from '/imports/redux/metadataSlice';
+
 import {
   FolderIcon,
   DeleteIcon,
@@ -33,6 +39,8 @@ import {
 
 export default function Menu( props ) {
 
+  const dispatch = useDispatch();
+
   const {
     match,
     location,
@@ -43,20 +51,6 @@ export default function Menu( props ) {
   const userId = Meteor.userId();
   const user = useTracker( () => Meteor.user() );
   const folders = useSelector((state) => state.folders.value);
-
-  const [ showDeletedFolders, setShowDeletedFolders ] = useState( false );
-
-  const myFolders = useMemo(() => {
-    return folders.map(folder => ({...folder, label: folder.name, value: folder._id}));
-  }, [userId, folders]);
-
-  const myActiveFolders = useMemo(() => {
-    return [...myFolders.filter(folder => !folder.deletedDate)];
-  }, [myFolders]);
-
-  const myInactiveFolders = useMemo(() => {
-    return [...myFolders.filter(folder => folder.deletedDate)];
-  }, [myFolders]);
 
   const getRights = (folder) => {
     const userLevel = folder.users.find(u => u._id === userId).level;
@@ -84,6 +78,7 @@ export default function Menu( props ) {
         className={folderID === "search" ? "active" : ""}
         to={`${listPasswordsInFolderStart}search`}
         onClick={() => {
+          dispatch(setFolder({}));
           if (/Mobi|Android/i.test(navigator.userAgent)) {
             closeSelf();
           }
@@ -99,12 +94,13 @@ export default function Menu( props ) {
       </NavLink>
 
       {
-        myActiveFolders.map(folder => (
+        folders.map(folder => (
             <NavLink
               key={folder.value}
               className={folderID === folder.value ? "active" : ""}
               to={`${listPasswordsInFolderStart}${folder.value}`}
               onClick={() => {
+                dispatch(setFolder(folder));
                 if (/Mobi|Android/i.test(navigator.userAgent)) {
                   closeSelf();
                 }
@@ -142,7 +138,7 @@ export default function Menu( props ) {
 
       <NavLink
         key={"deleted"}
-        className={myInactiveFolders.find(folder => folder._id === folderID) ? "active" : ""}
+        className={!location.pathname.includes("add") && !location.pathname.includes("user") && folderID !== "search" && !folders.find(folder => folder._id === folderID) ? "active" : ""}
         to={deletedFolders}
         onClick={() => {
           if (/Mobi|Android/i.test(navigator.userAgent)) {
