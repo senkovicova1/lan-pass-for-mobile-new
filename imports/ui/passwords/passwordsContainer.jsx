@@ -102,7 +102,8 @@ export default function PasswordsContainer( props ) {
         password: 1,
         url: 1,
         folder: 1,
-        passwordId: 1
+        passwordId: 1,
+        note: 1
       },
       sort: {
         title: 1,

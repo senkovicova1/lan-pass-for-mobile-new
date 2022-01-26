@@ -10,10 +10,24 @@ import {
 } from 'react-redux';
 
 import {
+  Modal,
+  ModalBody
+} from 'reactstrap';
+
+import { CSVLink, CSVDownload } from "react-csv";
+
+import {
   useTracker
 } from 'meteor/react-meteor-data';
 
 import Select from 'react-select';
+
+import ImportPasswords from './import';
+import ExportPasswords from './export';
+
+import {
+  setSearch
+} from '/imports/redux/metadataSlice';
 
 import {
   FoldersCollection
@@ -44,6 +58,7 @@ import {
   Card,
   BorderedLinkButton,
   BorderedFullButton,
+  Form,
   SearchSection,
   Input,
   ItemContainer,
@@ -89,6 +104,9 @@ const {
   sortBy,
   sortDirection
 } = useSelector( ( state ) => state.metadata.value );
+
+const [ showImportDialog, setShowImportDialog ] = useState(false);
+const [ showExportDialog, setShowExportDialog ] = useState(false);
 
 const folders = useSelector( ( state ) => state.folders.value );
 let folder = useSelector( ( state ) => state.metadata.value ).selectedFolder;
@@ -222,7 +240,7 @@ const sortedPasswords = useMemo( () => {
         </div>
       }
 
-      <span className="command-bar" style={active ? {marginBottom: "0em", marginTop: "1em"} : {marginBottom: "0em"}}>
+      <span className="command-bar" style={{marginBottom: "1em", marginTop: "1em"}}>
         <div className="command">
             <SearchSection>
               <LinkButton
@@ -346,6 +364,32 @@ const sortedPasswords = useMemo( () => {
                 </BorderedLinkButton>
               </div>
               }
+
+              <div className="command">
+              <BorderedLinkButton
+                fit={true}
+                onClick={() => {
+                  setShowImportDialog(true);
+                }}
+                >
+                  <span>
+                    Import
+                  </span>
+              </BorderedLinkButton>
+            </div>
+
+            <div className="command">
+            <BorderedLinkButton
+              fit={true}
+              onClick={() => {
+                setShowExportDialog(true);
+              }}
+              >
+                <span>
+                  Export
+                </span>
+            </BorderedLinkButton>
+          </div>
       </span>
 
       {
@@ -413,6 +457,25 @@ const sortedPasswords = useMemo( () => {
           </span>
         </ItemContainer>
       }
+
+         <Modal isOpen={showImportDialog} toggle={() => setShowImportDialog(false)}>
+           <ModalBody>
+             <ImportPasswords
+               {...props}
+               close={() => setShowImportDialog(false)}
+               />
+           </ModalBody>
+         </Modal>
+
+                <Modal isOpen={showExportDialog} toggle={() => setShowExportDialog(false)}>
+                  <ModalBody>
+                    <ExportPasswords
+                      {...props}
+                      passwords={sortedPasswords}
+                      close={() => setShowExportDialog(false)}
+                      />
+                  </ModalBody>
+                </Modal>
 
     </List>
   );

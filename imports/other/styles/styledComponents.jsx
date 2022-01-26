@@ -111,6 +111,10 @@ export const PageHeader = styled.header `
   background-color: ${basicBlueColour};
   padding: 0px ${inputOffset};
 
+  h1{
+    color: white;
+  }
+
   .header-section-left, .header-section-center, .header-section-right{
     width: auto;
     align-items: center;
@@ -210,7 +214,6 @@ export const SearchSection = styled.section `
     width: 100% !important;
   }
   @media all and (min-width: 1300px) {
-    margin-bottom: 1em;
     width: 400px !important;
   }
   border: 1px solid #d6d6d6;
@@ -449,6 +452,10 @@ export const BorderedLinkButton = styled.button `
   line-height: 1em;
   align-items: center;
 
+  span{
+    width: -webkit-fill-available;
+  }
+
   i, img {
     margin-right: 0em !important;
   }
@@ -481,6 +488,10 @@ export const BorderedFullButton = styled.button `
   display: flex;
   align-items: center;
 
+  span{
+    width: -webkit-fill-available;
+  }
+
   i, img {
     margin-right: 0em !important;
   }
@@ -489,6 +500,36 @@ export const BorderedFullButton = styled.button `
       height: 1em;
       width: 1.5em !important;
       filter: invert(1);
+  }
+`;
+
+export const CircledButton = styled.button `
+  color: ${(props) => props.font ? props.font : basicBlueColour};
+  border: 1px solid #0078d4;
+  border-radius: 2em;
+  margin-left: ${(props) => props.left ? "auto" : ""};
+
+  width: 2em;
+  height: 2em;
+  background-color: transparent !important;
+  outline: none !important;
+
+  display: flex;
+  align-items: center;
+  padding: 0px;
+
+  position: absolute;
+    top: 1em;
+    right: 1em;
+
+ .icon {
+    filter: invert(32%) sepia(81%) saturate(4601%) hue-rotate(210deg) brightness(90%) contrast(101%);
+
+      width: 1.4em;
+      height: 1.4em;
+    margin: 0px;
+    margin-left: auto;
+    margin-right: auto;
   }
 `;
 
@@ -556,7 +597,7 @@ export const List = styled.section `
   margin: 0px auto !important;
 
   .command-bar{
-    display: block;
+    display: flex;
     align-items: center;
     padding: 0px;
     margin-bottom: 1em;
@@ -691,6 +732,14 @@ export const Form = styled.form `
     }
     margin: 0px auto !important;
 
+    h1{
+      margin: 0px;
+      font-weight: 400;
+      line-height: 40px;
+      width: -webkit-fill-available;
+      font-size: 1.5em;
+    }
+
   h2{
     margin: 0px;
     font-weight: 500;
@@ -700,7 +749,7 @@ export const Form = styled.form `
 
   .command-bar{
     @media all and (max-width: 1299px), @media handheld {
-      display: flex;
+      display: block;
       justify-content: space-between;
       align-items: center;
     }

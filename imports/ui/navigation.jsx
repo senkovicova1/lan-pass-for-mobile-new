@@ -213,7 +213,7 @@ export default function MainPage( props ) {
                 exact
                 path={deletedFolders}
                 render={(props) => (
-                  <FolderList {...props} active={false} search={search} />
+                  <FolderList {...props} active={false}/>
                 )}
                 />
 

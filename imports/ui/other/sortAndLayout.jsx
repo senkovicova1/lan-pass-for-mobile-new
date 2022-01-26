@@ -9,6 +9,19 @@ import {
 } from 'react-redux';
 
 import {
+  useTracker
+} from 'meteor/react-meteor-data';
+
+import {
+  setFolders
+} from '/imports/redux/foldersSlice';
+
+import {
+  LogoutIcon,
+  SettingsIcon,
+} from "/imports/other/styles/icons";
+
+import {
   setLayout,
   setSortBy,
   setSortDirection
@@ -20,8 +33,19 @@ import {
 } from "/imports/other/constants";
 
 import {
+  uint8ArrayToImg
+} from '/imports/other/helperFunctions';
+
+import {
   Sort,
+  LinkButton
 } from '/imports/other/styles/styledComponents';
+
+import {
+  editCurrentUser,
+  editFolderStart,
+  login
+} from "/imports/other/navigationLinks";
 
 const sortByOptions = [
   {
@@ -50,14 +74,37 @@ export default function SortAndLayout( props ) {
   const dispatch = useDispatch();
 
   const {
+    match,
+    history,
     setOpenSort,
   } = props;
+
+    const {
+      folderID,
+    } = match.params;
 
   const {
     layout,
     sortBy,
     sortDirection,
   } = useSelector( ( state ) => state.metadata.value );
+  const folders = useSelector( ( state ) => state.folders.value );
+
+  const currentUser = useTracker( () => Meteor.user() );
+
+  const logout = () => {
+    dispatch( setFolders( [] ) );
+    Meteor.logout();
+  }
+
+  const avatar = useMemo( () => {
+    if ( !currentUser || !currentUser.profile.avatar ) {
+      return null;
+    }
+    return uint8ArrayToImg( currentUser.profile.avatar );
+  }, [ currentUser ] );
+
+    const folderCanBeEdited = folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level === 0;
 
   return (
     <Sort id="sort-menu" name="sort-menu">
@@ -133,6 +180,81 @@ export default function SortAndLayout( props ) {
             <label id={`sort-menu-${item.value}-label`} htmlFor={`${item.value}-order`}>{item.label}</label>
           </span>
         ))
+      }
+
+      {
+        window.innerWidth < 800 &&
+        <h3 style={{marginTop: "0.6em"}}>Settings</h3>
+        }
+
+      {
+        window.innerWidth < 800 &&
+        currentUser &&
+        !match.params.passwordID &&
+        <LinkButton
+          onClick={(e) => {
+            e.preventDefault();
+            history.push(editCurrentUser);
+          }}
+          >
+          {
+            avatar &&
+            <img className="avatar" src={avatar} alt="assignedAvatar" />
+          }
+          {
+            !avatar &&
+            <img className="icon" src={UserIcon} alt="assignedAvatar" />
+          }
+          <span>
+            Profile
+          </span>
+        </LinkButton>
+      }
+
+      {
+        window.innerWidth < 800 &&
+        folderID &&
+        currentUser &&
+        folderCanBeEdited &&
+        !location.pathname.includes("edit") &&
+        !location.pathname.includes("password") &&
+        !match.params.passwordID &&
+        <LinkButton
+          onClick={(e) => {
+            e.preventDefault();
+            history.push(`${editFolderStart}${folderID}`);
+          }}
+          >
+          <img
+            className="icon"
+            src={SettingsIcon}
+            alt="Settings icon not found"
+            />
+            <span>
+              Folder settings
+            </span>
+        </LinkButton>
+      }
+
+      {
+        window.innerWidth < 800 &&
+        currentUser &&
+        <LinkButton
+          onClick={(e) => {
+            e.preventDefault();
+            history.push(login);
+            logout();
+          }}
+          >
+          <img
+            className="icon"
+            src={LogoutIcon}
+            alt="Logout icon not found"
+            />
+            <span>
+              Log out
+            </span>
+        </LinkButton>
       }
     </Sort>
   );

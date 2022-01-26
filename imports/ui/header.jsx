@@ -149,7 +149,7 @@ export default function Header( props ) {
           }}
           >
           <img
-            className="icon"
+          className="header-icon"
             src={MenuIcon}
             alt="Menu icon not found"
             />
@@ -179,7 +179,7 @@ export default function Header( props ) {
           >
           <img
             id="sort-menu-icon"
-            className="icon"
+            className="header-icon"
             src={MenuIcon2}
             alt="MenuIcon2 icon not found"
             />
@@ -192,19 +192,11 @@ export default function Header( props ) {
   return (
     <PageHeader openSidebar={openSidebar} columns={layout === COLUMNS}>
 
-      {
-        window.innerWidth >= 800 &&
         <section className="header-section-left">
           {
             menuBtnComponent()
           }
         </section>
-      }
-
-      {
-        window.innerWidth < 800 &&
-          menuBtnComponent()
-      }
 
       {
         window.innerWidth >= 800 &&
@@ -292,7 +284,11 @@ export default function Header( props ) {
 
       {
         window.innerWidth < 800 &&
-          sortAndLayoutBtnComponent()
+        <section className="header-section-right" style={{justifyContent: "flex-end"}}>
+          {
+            sortAndLayoutBtnComponent()
+          }
+        </section>
       }
 
         {
