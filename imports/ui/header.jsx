@@ -10,6 +10,10 @@ import {
 } from 'react-redux';
 
 import {
+  FoldersCollection
+} from '/imports/api/foldersCollection';
+
+import {
   setFolders
 } from '../redux/foldersSlice';
 
@@ -25,6 +29,7 @@ import {
   MenuIcon,
   MenuIcon2,
   SettingsIcon,
+  UserIcon
 } from "/imports/other/styles/icons";
 
 import {
@@ -54,6 +59,7 @@ export default function Header( props ) {
 
   const {
     match,
+    location,
     history,
     setParentOpenSidebar,
   } = props;
@@ -71,8 +77,27 @@ export default function Header( props ) {
   const [ openSidebar, setOpenSidebar ] = useState( true );
   const [ openSort, setOpenSort ] = useState( false );
 
+  const { folder, folderLoading } = useTracker(() => {
+    const noDataAvailable = { folder: null, folderLoading: true };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+
+    const handler = Meteor.subscribe('folders');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const folder = FoldersCollection.findOne( {
+      _id: folderID
+    } );
+
+    return {folder, folderLoading: false};
+  });
+
   useEffect( () => {
-    if ( window.innerWidth >= 800 ) {
+    if ( window.innerWidth >= 800) {
       setParentOpenSidebar( true );
       setOpenSidebar( true );
     } else {
@@ -91,14 +116,13 @@ export default function Header( props ) {
     } else if ( location.pathname.includes( "history" ) ) {
       setTitle( "Password history" );
     } else {
-      let folder = folders.find( folder => folder._id === folderID );
       if ( folder ) {
-        setTitle( folder.name );
+        setTitle( `${folder.deletedDate ? "Deleted / " : "" }${folder.name}` );
       } else {
         setTitle( "LanPass" );
       }
     }
-  }, [ folderID, location.pathname, folders ] );
+  }, [ folderID, location.pathname, folder ] );
 
   useEffect(() => {
     document.addEventListener( "click", ( evt ) => {
@@ -135,7 +159,7 @@ export default function Header( props ) {
     return uint8ArrayToImg( currentUser.profile.avatar );
   }, [ currentUser ] );
 
-    const folderCanBeEdited = folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level === 0;
+    const folderCanBeEdited = folder?.users.find( user => user._id === currentUser._id ).level === 0;
 
   const menuBtnComponent = () => {
     if (currentUser){
@@ -194,15 +218,38 @@ export default function Header( props ) {
 
         <section className="header-section-left">
           {
+          !location.pathname.includes("sharing") &&
             menuBtnComponent()
           }
         </section>
 
       {
         window.innerWidth >= 800 &&
-        <section className="header-section-center">
+        <section
+          className="header-section-center"
+          style={location.pathname.includes("sharing") ? {width: "1000px",  justifyContent: "space-between", paddingRight: "15px"} : {}}>
           {
             titleComponent()
+          }
+          {
+            location.pathname.includes("sharing") &&
+            <LinkButton
+              font="white"
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentUser) {
+                  if (folders.length > 0){
+                    props.history.push(`/folders/list/${folders[0]._id}`);
+                  } else {
+                    props.history.push("/folders/add");
+                  }
+                } else {
+                  props.history.push(login);
+                }
+              }}
+              >
+              Login
+            </LinkButton>
           }
         </section>
       }
@@ -213,6 +260,7 @@ export default function Header( props ) {
       }
 
       {
+      !location.pathname.includes("sharing") &&
         window.innerWidth >= 800 &&
         <section className="header-section-right" style={{justifyContent: "flex-end"}}>
           {
@@ -283,6 +331,7 @@ export default function Header( props ) {
       }
 
       {
+      !location.pathname.includes("sharing") &&
         window.innerWidth < 800 &&
         <section className="header-section-right" style={{justifyContent: "flex-end"}}>
           {
@@ -294,21 +343,16 @@ export default function Header( props ) {
         {
           openSidebar &&
           currentUser &&
+          !location.pathname.includes("sharing") &&
           <Menu {...props} closeSelf={() => setOpenSidebar(false)}/>
         }
 
         {
+        !location.pathname.includes("sharing") &&
           openSort &&
           <SortAndLayout {...props} setOpenSort={setOpenSort} />
         }
 
     </PageHeader>
   )
-
-  if ( window.innerWidth >= 800 ) {
-    return (
-      <WebHeader {...props}/>
-    );
-  }
-  return ( <MobileHeader {...props}/> );
 };

@@ -6,6 +6,7 @@ import React, {
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
 
@@ -15,10 +16,25 @@ import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
 
+import {
+  FoldersCollection
+} from '/imports/api/foldersCollection';
+
+import {
+  PreviousPasswordsCollection
+} from '/imports/api/previousPasswordsCollection';
+
+import {
+  setCurrentUserData
+} from '/imports/redux/currentUserSlice';
 
 import {
   isEmail,
-  uint8ArrayToImg
+  uint8ArrayToImg,
+  str2ab,
+  ab2str,
+  generateKey,
+  generateKeyPairForUser
 } from '/imports/other/helperFunctions';
 
 import {
@@ -38,6 +54,8 @@ import {
 
 export default function UserForm( props ) {
 
+  const dispatch = useDispatch();
+
   const {
     _id: userId,
     user,
@@ -50,8 +68,8 @@ export default function UserForm( props ) {
   } = props;
 
   const currentUser = useTracker( () => Meteor.user() );
-  const folders = useSelector( ( state ) => state.folders.value );
   const encryptionData = useSelector( ( state ) => state.encryptionData.value );
+  const {privateKey} = useSelector( ( state ) => state.currentUserData.value );
 
   const [ name, setName ] = useState( "" );
   const [ surname, setSurname ] = useState( "" );
@@ -61,10 +79,77 @@ export default function UserForm( props ) {
     buffer: null,
     img: null
   } );
-  // const [ password1, setPassword1 ] = useState( '' );
-  // const [ password2, setPassword2 ] = useState( '' );
+  const [ key, setKey ] = useState( "" );
+
+  const [ generatedPrivateKey, setGeneratedPrivateKey ] = useState( "" );
 
   const [ errors, setErrors ] = useState( [] );
+
+  const { myFolders, foldersLoading } = useTracker(() => {
+    const noDataAvailable = { myFolders: [], foldersLoading: true };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+    const handler = Meteor.subscribe('folders');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const myFolders = FoldersCollection.find({
+      users: {
+        $elemMatch: {
+          _id: userId
+        }
+      },
+    }, {
+      sort: {name: 1}
+    }).fetch();
+
+    return { myFolders, foldersLoading: false };
+  });
+
+  const { passwords, passwordsLoading } = useTracker(() => {
+    const noDataAvailable = { passwords: [], passwordsLoading: true};
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+    const handler = Meteor.subscribe('passwords');
+
+    if (!handler.ready() || myFolders.length === 0) {
+      return noDataAvailable;
+    }
+
+    const passwords = PasswordsCollection.find(
+       {
+         folder: {
+           $in: myFolders.map( folder => folder._id )
+         }
+       }).fetch();
+
+    return { passwords, passwordsLoading: false };
+  });
+
+  const { previousVersions, prevPasswordsLoading } = useTracker(() => {
+    const noDataAvailable = { previousVersions: [], prevPasswordsLoading: false };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+    const handler = Meteor.subscribe('previousPasswords');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const previousVersions = PreviousPasswordsCollection.find(
+       {
+         folder: {
+           $in: myFolders.map( folder => folder._id )
+         }
+       }).fetch()
+
+    return { previousVersions, prevPasswordsLoading: false };
+  });
 
   useEffect( () => {
     if ( user?.name ) {
@@ -93,40 +178,295 @@ export default function UserForm( props ) {
     }
   }, [ user ] );
 
-  async function generateKey(){
-    return window.crypto.subtle.generateKey(
-      {
-      name: "AES-GCM",
-      length: 256
-      },
+  const encryptStringWithXORtoHex = (text, key) => {
+    let c = "";
+    let usedKey = key;
+
+    while (usedKey.length < text.length) {
+         usedKey += usedKey;
+    }
+
+    for (var i = 0; i < text.length; i++) {
+      let value1 = text[i].charCodeAt(0);
+      let value2 = usedKey[i].charCodeAt(0);
+
+      let xorValue = value1 ^ value2;
+
+      let xorValueAsHexString = xorValue.toString("16");
+
+      if (xorValueAsHexString.length < 2) {
+          xorValueAsHexString = "0" + xorValueAsHexString;
+      }
+
+      c += xorValueAsHexString;
+    }
+
+    return c;
+  }
+
+  const decryptStringWithXORtoHex = (text) => {
+    let c = "";
+    let usedKey = key;
+
+    while (usedKey.length < (text.length/2)) {
+         usedKey += usedKey;
+    }
+
+    for (var j = 0; j < text.length; j = j+2) {
+      let hexValueString = text.substring(j, j+2);
+
+      let value1 = parseInt(hexValueString, 16);
+      let value2 = usedKey.charCodeAt(j/2);
+
+      let xorValue = value1 ^ value2;
+      c += String.fromCharCode(xorValue) + "";
+    }
+
+    return c;
+  }
+
+
+  async function handleEncryption(){
+    if (ley.length > 20 || key.length < 10){
+      return;
+    }
+    const keyPair = await generateKeyPairForUser();
+
+    const exportedPublicKey = await window.crypto.subtle.exportKey(
+      "spki",
+      keyPair.publicKey
+    );
+    const exportedPublicAsString = ab2str(exportedPublicKey);
+    //save this to DB
+    const exportedPublicAsBase64 = window.btoa(exportedPublicAsString);
+
+    const exportedPrivateKey = await window.crypto.subtle.exportKey(
+      "pkcs8",
+      keyPair.privateKey
+    );
+    const exportedPrivateAsString = ab2str(exportedPrivateKey);
+    //encrypt with key and save to db
+    const exportedPrivateAsBase64 = window.btoa(exportedPrivateAsString);
+
+    const encryptedEPAsB64 = encryptStringWithXORtoHex(exportedPrivateAsBase64);
+
+    Meteor.users.update(userId, {
+      $set: {
+        "profile.publicKey": exportedPublicAsBase64,
+        "profile.privateKey": encryptedEPAsB64,
+      }
+    }, (error) => {
+      if (error){
+        console.log(error);
+      }
+    });
+
+    let updatedFolders = [];
+
+    const publicKey = await window.crypto.subtle.importKey(
+      "spki",
+      str2ab(window.atob(exportedPublicAsBase64)),
+        {
+          name: "RSA-OAEP",
+          hash: "SHA-256"
+        },
+      true,
+      ["encrypt"]
+    );
+
+    let enc = new TextEncoder();
+
+    for (var i = 0; i < myFolders.length; i++) {
+      updatedFolders.push(myFolders[i]);
+      const iv = window.crypto.getRandomValues( new Uint8Array( 12 ) );
+      const algorithm = {
+        name: "AES-GCM",
+        iv
+      };
+      const symetricKey = await generateKey();
+      const exportedSymetricKey = await window.crypto.subtle.exportKey(
+        "raw",
+        symetricKey
+      );
+      const exportedSKBuffer = new Uint8Array(exportedSymetricKey);
+      const string = btoa(exportedSKBuffer);
+
+      updatedFolders[i].symetricKey = string;
+      updatedFolders[i].key = {};
+
+      const encryptedSymetricKey = await window.crypto.subtle.encrypt(
+          {
+            name: "RSA-OAEP"
+          },
+          publicKey,
+          enc.encode( string )
+        );
+
+      updatedFolders[i].key[userId] = window.btoa(ab2str(encryptedSymetricKey));
+      updatedFolders[i].algorithm = algorithm;
+    }
+
+    let updatedPasswords = [];
+
+    for (var i = 0; i < passwords.length; i++) {
+      updatedPasswords.push(passwords[i]);
+
+      const decryptedPass = await decryptPassword(passwords[i].password, encryptionData);
+
+      const folder = updatedFolders.find(f => f._id === passwords[i].folder);
+
+      const folderDecryptedKey = await window.crypto.subtle.decrypt(
+        {
+          name: "RSA-OAEP",
+          modulusLength: 4096,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: "SHA-256"
+        },
+          keyPair.privateKey,
+          str2ab(window.atob(folder.key[userId])),
+        );
+
+        let dec = new TextDecoder();
+        const decodedFolderDecryptedKey = dec.decode(folderDecryptedKey);
+
+      const importedFolderKey = await crypto.subtle.importKey(
+        "raw",
+          new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+          folder.algorithm,
         true,
         ["encrypt", "decrypt"]
+      );
+
+      let encoder = new TextEncoder();
+      const encryptedPass = await crypto.subtle.encrypt(
+          folder.algorithm,
+          importedFolderKey,
+          encoder.encode( decryptedPass )
+      );
+
+      updatedPasswords[i].oldPassword = decryptedPass;
+      updatedPasswords[i].password = window.btoa(ab2str(encryptedPass));
+
+      const a = await decryptPassword(
+        encryptedPass,
+        {
+      symetricKey: new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+       algorithm: folder.algorithm
+    },
+    folder,
+    passwords[i]
     );
+    }
+
+
+        let updatedPreviousPasswords = [];
+
+        for (var i = 0; i < previousVersions.length; i++) {
+          updatedPreviousPasswords.push(previousVersions[i]);
+
+          const decryptedPass = await decryptPassword(previousVersions[i].password, encryptionData);
+
+          const folder = updatedFolders.find(f => f._id === previousVersions[i].folder);
+
+          const folderDecryptedKey = await window.crypto.subtle.decrypt(
+            {
+              name: "RSA-OAEP",
+              modulusLength: 4096,
+              publicExponent: new Uint8Array([1, 0, 1]),
+              hash: "SHA-256"
+            },
+              keyPair.privateKey,
+              str2ab(window.atob(folder.key[userId])),
+            );
+
+            let dec = new TextDecoder();
+            const decodedFolderDecryptedKey = dec.decode(folderDecryptedKey);
+
+          const importedFolderKey = await crypto.subtle.importKey(
+            "raw",
+              new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+              folder.algorithm,
+            true,
+            ["encrypt", "decrypt"]
+          );
+
+          let encoder = new TextEncoder();
+          const encryptedPass = await crypto.subtle.encrypt(
+              folder.algorithm,
+              importedFolderKey,
+              encoder.encode( decryptedPass )
+          );
+
+          updatedPreviousPasswords[i].oldPassword = decryptedPass;
+          updatedPreviousPasswords[i].password = window.btoa(ab2str(encryptedPass));
+
+          const a = await decryptPassword(
+            encryptedPass,
+            {
+          symetricKey: new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+           algorithm: folder.algorithm
+        },
+        );
+        }
+
+    for (var i = 0; i < updatedFolders.length; i++) {
+
+            Meteor.call(
+              'folders.setKey',
+              updatedFolders[i]._id,
+              {...updatedFolders[i].key},
+              updatedFolders[i].algorithm,
+              (err, response) => {
+              if (err) {
+                console.log(updatedFolders[i], err);
+              }
+            }
+            );
+
+    }
+
+    for (var i = 0; i < updatedPasswords.length; i++) {
+
+            Meteor.call(
+              'passwords.update',
+              updatedPasswords[i]._id,
+              {
+                password: updatedPasswords[i].password,
+            //    oldPassword: updatedPasswords[i].oldPassword
+              },
+              (err, response) => {
+              if (err) {
+                console.log(updatedPasswords[i], err);
+              }
+            }
+            );
+
+    }
+
+    for (var i = 0; i < updatedPreviousPasswords.length; i++) {
+
+            Meteor.call(
+              'previousPasswords.update',
+              updatedPreviousPasswords[i]._id,
+              {
+                password: updatedPreviousPasswords[i].password,
+      //      oldPassword: updatedPreviousPasswords[i].oldPassword
+              },
+              (err, response) => {
+              if (err) {
+                console.log(updatedPreviousPasswords[i], err);
+              }
+            }
+            );
+
+    }
+
   }
 
-  async function createMetadata(){
-    const iv = window.crypto.getRandomValues( new Uint8Array( 12 ) );
-    const algorithm = {
-      name: "AES-GCM",
-      iv
-    };
-    const symetricKey = await generateKey();
-
-    const exportedSymetricKey = await window.crypto.subtle.exportKey(
-      "raw",
-      symetricKey
-    );
-    const exportedKeyBuffer = new Uint8Array(exportedSymetricKey);
-
-    MetaCollection.insert( {
-      algorithm,
-      symetricKey: exportedKeyBuffer,
-    } );
-  }
-
-  const allPasswords = useTracker( () => PasswordsCollection.find( {} ).fetch() );
-
-  async function encryptPassword(password){
+  async function decryptPassword(text, encryptionData){
+    if (!encryptionData){
+      return "";
+    }
 
     const symetricKey = await crypto.subtle.importKey(
       "raw",
@@ -136,24 +476,39 @@ export default function UserForm( props ) {
       ["encrypt", "decrypt"]
     );
 
-    let encoder = new TextEncoder();
-    let encryptedPassword = await crypto.subtle.encrypt(
+    try {
+
+      let decryptedText = null;
+      await window.crypto.subtle.decrypt(
         encryptionData.algorithm,
         symetricKey,
-        encoder.encode( password.password )
-    );
+        text
+      )
+      .then(function(decrypted){
+        decryptedText = decrypted;
+      })
+      .catch(function(err){
+        console.error(err);
+      });
+      let dec = new TextDecoder();
+      const decryptedValue = dec.decode(decryptedText);
+      return decryptedValue;
 
-    PasswordsCollection.update( password._id, {
-      $set: {
-        password: new Uint8Array(encryptedPassword),
-        originalPassword: password.password,
+    } catch (e) {
+      if (e instanceof TypeError) {
+      } else {
+        console.log(e);
       }
-    } );
+    }
 
   }
 
-    const userCanManageUsers = currentUser && currentUser.profile.rights && currentUser.profile.rights.sysAdmin;
+  if (myFolders.length === 0){
+    return <div>NO</div>
+  }
 
+    const userCanManageUsers = currentUser && currentUser.profile.rights && currentUser.profile.rights.sysAdmin;
+    
   return (
     <Form>
 
@@ -246,76 +601,50 @@ export default function UserForm( props ) {
         </div>
       </section>
 
-
-      {
-        /*
-        false &&
-        !user &&
-        <section>
-          <label htmlFor="password1">Password<span style={{color: "red"}}>*</span></label>
-          <Input
-            error={errors.includes("password") && true}
-            type="password"
-            placeholder="Password"
-            id="password1"
-            name="password1"
-            type="password"
-            value={password1}
-            required
-            onChange={e => {
-              setPassword1(e.target.value);
-              if (e.target.value === password2 && password2.length >= 7){
-                setErrors(errors.filter(e => e !== "password"));
-              }
-            }}
-            />
-        </section>
-        */
-      }
-      {
-        /*
-        false &&
-        !user &&
-        <section>
-          <label htmlFor="password2">Repeat password<span style={{color: "red"}}>*</span></label>
-          <Input
-            error={errors.includes("password") && true}
-            type="password"
-            placeholder="Repeat password"
-            id="password2"
-            name="password2"
-            type="password"
-            value={password2}
-            required
-            onChange={e => {
-              setPassword2(e.target.value);
-              if (e.target.value === password1 && password1.length >= 7){
-                setErrors(errors.filter(e => e !== "password"));
-              }
-            }}
-            />
-        </section>
-        */
-      }
+      <section>
+        <label htmlFor="key">Key (10-20 characters, A-Z, a-z, 0-9)</label>
+        <Input
+          error={errors.includes("key") && true}
+          id="key"
+          name="key"
+          placeholder="Enter key"
+          type="text"
+          value={key}
+          onChange={(e) => {
+            setKey(e.target.value);
+            if (e.target.value.length >= 10 || e.target.value.length <= 20){
+              setErrors(errors.filter(e => e !== "key"));
+            }
+          }}
+          />
+      </section>
 
       {
         errorMessage &&
         <p>{errorMessage}</p>
       }
-          
-{
-  /*
-  userCanManageUsers &&
-        <section>
-        <BorderedLinkButton
-          onClick={(e) => {
-            e.preventDefault();
-            createMetadata();
-          }}
-          >
-            Create metadata
-        </BorderedLinkButton>
 
+      {
+        user &&
+        !user.publicKey &&
+      <section>
+      <BorderedLinkButton
+        onClick={(e) => {
+          e.preventDefault();
+          handleEncryption();
+        }}
+        >
+          Generate key pair
+      </BorderedLinkButton>
+
+    </section>
+  }
+
+      {
+
+  userCanManageUsers &&
+  name === "Anabeth" &&
+        <section>
         <button  onClick={() => {
             MetaCollection.remove( {
               _id: encryptionData._id
@@ -325,18 +654,8 @@ export default function UserForm( props ) {
           Delete meta
         </button>
 
-        <BorderedLinkButton
-          onClick={(e) => {
-            e.preventDefault();
-            allPasswords.forEach((password, i) => {
-              encryptPassword(password);
-            });
-          }}
-          >
-            Encrypt data
-        </BorderedLinkButton>
       </section>
-    */}
+    }
 
     </Card>
 
@@ -344,7 +663,7 @@ export default function UserForm( props ) {
         {
           onCancel &&
           <BorderedLinkButton
-            colour="grey"
+            font="red"
             onClick={(e) => {
               e.preventDefault();
               onCancel()
@@ -353,7 +672,7 @@ export default function UserForm( props ) {
               <img
                 src={BackIcon}
                 alt=""
-                className="icon start"
+                className="icon red"
                 />
             Back
           </BorderedLinkButton>
@@ -361,7 +680,7 @@ export default function UserForm( props ) {
         {
           openLogIn &&
           <BorderedLinkButton
-            colour="grey"
+            font="grey"
             onClick={(e) => {
               e.preventDefault();
               openLogIn()
@@ -373,25 +692,6 @@ export default function UserForm( props ) {
                 className="icon start"
                 />
             Cancel
-          </BorderedLinkButton>
-        }
-        {
-          onRemove &&
-          false &&
-          <BorderedLinkButton
-            colour="red"
-            onClick={(e) => {
-              e.preventDefault();
-              onRemove(userId);
-              onCancel();
-            }}
-            >
-              <img
-                src={DeleteIcon}
-                alt=""
-                className="icon start"
-                />
-            Delete
           </BorderedLinkButton>
         }
         <BorderedFullButton
@@ -408,7 +708,7 @@ export default function UserForm( props ) {
             if (!user && !isEmail(email)){
               errors.push("email");
             }
-            if (name.length > 0 &&surname.length > 0 && (user || isEmail(email))  ) {
+            if (name.length > 0 && surname.length > 0 && (user || isEmail(email)) ) {
               onSubmit(
                 name,
                 surname,

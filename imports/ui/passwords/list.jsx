@@ -16,10 +16,6 @@ import {
 
 import { CSVLink, CSVDownload } from "react-csv";
 
-import {
-  useTracker
-} from 'meteor/react-meteor-data';
-
 import Select from 'react-select';
 
 import ImportPasswords from './import';
@@ -28,14 +24,6 @@ import ExportPasswords from './export';
 import {
   setSearch
 } from '/imports/redux/metadataSlice';
-
-import {
-  FoldersCollection
-} from '/imports/api/foldersCollection';
-
-import {
-  PasswordsCollection
-} from '/imports/api/passwordsCollection';
 
 import {
   BackIcon,
@@ -88,6 +76,7 @@ export default function PasswordList( props ) {
     location,
     active,
     columns,
+    passwords
   } = props;
 
 const userId = Meteor.userId();
@@ -114,8 +103,6 @@ let folder = useSelector( ( state ) => state.metadata.value ).selectedFolder;
 if (!folder && folders.length > 0){
   folder = folders.find(f => f._id === folderID);
 }
-
-const passwords = useSelector( ( state ) => state.passwords.value );
 
 const searchedPasswords = useMemo( () => {
   if (isGlobalSearch){
@@ -151,49 +138,67 @@ const sortedPasswords = useMemo( () => {
 
   const restoreFolder = () => {
     if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
-      let data = {
-        deletedDate: null,
-      };
-      FoldersCollection.update( folderID, {
-        $set: {
-          ...data
-        }
-      } );
-      history.push( `${listPasswordsInFolderStart}folderID` );
+
+          Meteor.call(
+            'folders.restoreFolder',
+            folderID,
+            (err, response) => {
+            if (err) {
+            } else if (response) {
+              history.push( `${listPasswordsInFolderStart}${folderID}` );
+            }
+          }
+          );
+
     }
   };
 
   const permanentlyDeleteFolder = () => {
     if ( window.confirm( "Are you sure you want to permanently remove this folder and all passwords in it?" ) ) {
-      FoldersCollection.remove( {
-        _id: folderID
-      } );
+
+        Meteor.call(
+          'folders.permanentlyDeleteFolder',
+          folderID
+        );
+
       const passwordsToRemove = passwords.filter( pass => pass.folder === folderID );
       passwordsToRemove.forEach( ( pass, index ) => {
-        PasswordsCollection.remove( {
-          _id: pass._id
-        } );
+
+        Meteor.call(
+          'passwords.remove',
+          pass._id
+        );
+
       } );
+
       history.goBack();
     }
   };
 
   const leaveFolder = () => {
     if ( folder && window.confirm( "Are you sure you want to remove yourself from this folder?" ) ) {
-      let data = {
-        users: folder.users.filter( u => u._id !== userId ),
-      };
-      FoldersCollection.update( folderID, {
-        $set: {
-          ...data
-        }
-      } );
-      history.push( `` );
+
+          Meteor.call(
+            'folders.changeUsers',
+            folderID,
+            folder.users.filter( u => u._id !== userId ),
+            (err, response) => {
+            if (err) {
+            } else if (response) {
+              history.push( `` );
+            }
+          }
+          );
+
     }
   };
 
   const folderCanBeDeleted = useMemo( () => {
     return folder?.users?.find( ( user ) => user._id === userId ).level === 0;
+  }, [ folder ] );
+
+  const folderIsDeleted = useMemo( () => {
+    return folder?.deletedDate;
   }, [ folder ] );
 
   const userIsNotAdmin = useMemo( () => {
@@ -217,7 +222,7 @@ const sortedPasswords = useMemo( () => {
     }
     let startIndex = string.toLowerCase().indexOf( search.toLowerCase() );
     let endIndex = startIndex + search.length;
-    return <span>{title ? `${title}: ` : ""} {string.substring( 0, startIndex - 1 )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
+    return <span>{title ? `${title}: ` : ""} {string.substring( 0, startIndex  )} <span style={{ backgroundColor: "yellow" }}> {string.substring( startIndex, endIndex )} </span> {string.substring(endIndex )} </span>;
   }
 
   return (
@@ -300,28 +305,31 @@ const sortedPasswords = useMemo( () => {
               }
 
               {
+                active &&
                 !isGlobalSearch &&
                 folder.deletedDate &&
                 folderCanBeDeleted &&
                 <div className="command">
                 <BorderedLinkButton
                   fit={true}
+                  font="red"
                   onClick={(e) => {
                     e.preventDefault();
                     permanentlyDeleteFolder();
                   }}
                   >
                   <img
-                    className="icon"
+                    className="icon red"
                     src={DeleteIcon}
                     alt="Delete icon not found"
                     />
-                  DELETE FOLDER FOREVER
+                  DELETE FOREVER
                 </BorderedLinkButton>
               </div>
               }
 
               {
+                active &&
                 !isGlobalSearch &&
                 folder.deletedDate &&
                 folderCanBeDeleted &&
@@ -338,7 +346,7 @@ const sortedPasswords = useMemo( () => {
                     src={RestoreIcon}
                     alt="RestoreIcon icon not found"
                     />
-                  Restore
+                  Restore folder
                 </BorderedLinkButton>
               </div>
               }
@@ -365,7 +373,10 @@ const sortedPasswords = useMemo( () => {
               </div>
               }
 
-              <div className="command">
+{
+  active &&
+  !folderIsDeleted &&
+  <div className="command">
               <BorderedLinkButton
                 fit={true}
                 onClick={() => {
@@ -377,6 +388,7 @@ const sortedPasswords = useMemo( () => {
                   </span>
               </BorderedLinkButton>
             </div>
+          }
 
             <div className="command">
             <BorderedLinkButton

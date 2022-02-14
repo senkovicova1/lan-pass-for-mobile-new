@@ -3,7 +3,7 @@ import React from 'react';
 import {
   check
 } from 'meteor/check';
-/*
+
 import {
   Accounts
 } from 'meteor/accounts-base';
@@ -11,4 +11,3 @@ import {
 Meteor.publish( 'users', function publishUsers() {
   return Meteor.users.find( {} );
 } );
-*/

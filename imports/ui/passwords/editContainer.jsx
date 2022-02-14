@@ -1,8 +1,10 @@
 import React, {
-  useEffect
+  useEffect,
+  useState
 } from 'react';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
 
@@ -14,9 +16,33 @@ import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
 
+import {
+  setCurrentUserData
+} from '/imports/redux/currentUserSlice';
+
 import PasswordForm from './form';
 
+import {
+  SendIcon
+} from "/imports/other/styles/icons";
+
+import {
+  Card,
+  Form,
+  Input,
+  LinkButton,
+} from "/imports/other/styles/styledComponents";
+
+import {
+  str2ab,
+  ab2str
+} from '/imports/other/helperFunctions';
+
+const { DateTime } = require("luxon");
+
 export default function EditPasswordContainer( props ) {
+
+  const dispatch = useDispatch();
 
   const {
     match,
@@ -25,12 +51,15 @@ export default function EditPasswordContainer( props ) {
   } = props;
 
   const userId = Meteor.userId();
-  const encryptionData = useSelector( ( state ) => state.encryptionData.value );
+    const currentUser = useTracker( () => Meteor.user() );
+  const { secretKey } = useSelector( ( state ) => state.currentUserData.value );
   const {folderID, passwordID} = match.params;
   const folder = useSelector( ( state ) => state.folders.value ).find( f => f._id === folderID );
   const passwords = useSelector( ( state ) => state.passwords.value );
 
     const password = useTracker( () => PasswordsCollection.findOne( {_id: passwordID} ) );
+
+    const [enteredSecretKey, setEnteredSecretKey] = useState("");
 
   useEffect( () => {
     if ( folder ) {
@@ -43,43 +72,125 @@ export default function EditPasswordContainer( props ) {
 
   }, [ userId, folder ] );
 
+      const decryptStringWithXORtoHex = (text, key) => {
+        let c = "";
+        let usedKey = key;
+
+        while (usedKey.length < (text.length/2)) {
+             usedKey += usedKey;
+        }
+
+        for (var j = 0; j < text.length; j = j+2) {
+          let hexValueString = text.substring(j, j+2);
+
+          let value1 = parseInt(hexValueString, 16);
+          let value2 = usedKey.charCodeAt(j/2);
+
+          let xorValue = value1 ^ value2;
+          c += String.fromCharCode(xorValue) + "";
+        }
+
+        return c;
+      }
+
   async function encryptPassword(text){
 
-    const symetricKey = await crypto.subtle.importKey(
+    if (!folder.algorithm || !folder.key[userId]){
+      return "";
+    }
+
+    const privateKey = decryptStringWithXORtoHex(currentUser.profile.privateKey, secretKey);
+
+
+    const importedPrivateKey = await window.crypto.subtle.importKey(
+      "pkcs8",
+      str2ab(window.atob(privateKey)),
+        {
+          name: "RSA-OAEP",
+          hash: "SHA-256"
+        },
+      true,
+      ["decrypt"]
+    );
+
+    const folderDecryptedKey = await window.crypto.subtle.decrypt(
+      {
+        name: "RSA-OAEP",
+        modulusLength: 4096,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: "SHA-256"
+      },
+        importedPrivateKey,
+        str2ab(window.atob(folder.key[userId])),
+      );
+
+      let dec = new TextDecoder();
+      const decodedFolderDecryptedKey = dec.decode(folderDecryptedKey);
+
+    const importedFolderKey = await crypto.subtle.importKey(
       "raw",
-        encryptionData.symetricKey,
-        encryptionData.algorithm,
+        new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+        folder.algorithm,
       true,
       ["encrypt", "decrypt"]
     );
 
     let encoder = new TextEncoder();
     let encryptedPassword = await crypto.subtle.encrypt(
-        encryptionData.algorithm,
-        symetricKey,
+        folder.algorithm,
+        importedFolderKey,
         encoder.encode( text )
     );
 
-    return new Uint8Array(encryptedPassword);
+    return window.btoa(ab2str(encryptedPassword));
   }
 
     async function decryptPassword(text){
-      if (!encryptionData){
-        return [];
+      if (!folder.algorithm || !folder.key[userId]){
+        return "";
       }
-      const symetricKey = await crypto.subtle.importKey(
+
+      const privateKey = decryptStringWithXORtoHex(currentUser.profile.privateKey, secretKey);
+
+
+      const importedPrivateKey = await window.crypto.subtle.importKey(
+        "pkcs8",
+        str2ab(window.atob(privateKey)),
+          {
+            name: "RSA-OAEP",
+            hash: "SHA-256"
+          },
+        true,
+        ["decrypt"]
+      );
+
+      const folderDecryptedKey = await window.crypto.subtle.decrypt(
+        {
+          name: "RSA-OAEP",
+          modulusLength: 4096,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: "SHA-256"
+        },
+          importedPrivateKey,
+          str2ab(window.atob(folder.key[userId])),
+        );
+
+        let dec = new TextDecoder();
+        const decodedFolderDecryptedKey = dec.decode(folderDecryptedKey);
+
+      const importedFolderKey = await crypto.subtle.importKey(
         "raw",
-          encryptionData.symetricKey,
-          encryptionData.algorithm,
+          new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+          folder.algorithm,
         true,
         ["encrypt", "decrypt"]
       );
 
       let decryptedText = null;
       await window.crypto.subtle.decrypt(
-        encryptionData.algorithm,
-        symetricKey,
-        text
+        folder.algorithm,
+        importedFolderKey,
+        str2ab(window.atob(text)),
       )
       .then(function(decrypted){
         decryptedText = decrypted;
@@ -87,18 +198,17 @@ export default function EditPasswordContainer( props ) {
       .catch(function(err){
         console.error(err);
       });
-      let dec = new TextDecoder();
       const decryptedValue = dec.decode(decryptedText);
       return decryptedValue;
     }
 
-  async function editPassword( title, folder, username, password1, originalPassword, quality, url, note, expires, expireDate, createdDate, updatedDate, passwordId ) {
+  async function editPassword( title, folder, username, password1, originalPassword, passwordWasDecrypted, url, note, expires, expireDate, createdDate, updatedDate, originalPasswordId ) {
     let previousDecryptedPassword = "";
     if (originalPassword){
       previousDecryptedPassword = await decryptPassword(originalPassword);
     }
     let newDecryptedPassword = password1;
-    if (typeof password1 !== "string"){
+    if (!passwordWasDecrypted){
       newDecryptedPassword = await decryptPassword(password1);
     }
     let newPassword = "";
@@ -122,59 +232,82 @@ export default function EditPasswordContainer( props ) {
       history.push( `/folders/${folderID}/${passwordID}` );
     } else {
 
-      const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordId ) );
-
-      passwordsToUpdate.forEach( ( pass, index ) => {
-        if ( pass.version >= 20 ) {
-          PasswordsCollection.remove( {
-            _id: pass._id
-          } );
-        } else {
-            PasswordsCollection.update( pass._id,
-              (pass.version === 1 ? {
-              $inc: {
-                version: 1
-              },
-              $set: {
-                editedBy: userId
-              }
-            } : {
-              $inc: {
-                version: 1
-              }
-            })
-          );
+      Meteor.call(
+        'passwords.handlePasswordUpdate',
+        {
+          title,
+          folder,
+          username,
+          password: newPassword,
+          url,
+          note,
+          expires,
+          expireDate,
+          createdDate,
+          updatedBy: userId,
+          updatedDate,
+          originalPasswordId
+        },
+        {
+          ...password,
+          updatedBy: userId,
+        },
+        (err, response) => {
+        if (err) {
+          console.log(err);
+        } else if (response) {
+          history.push( `/folders/${folderID}/${response}` );
         }
-      } );
+      }
+      );
 
-      PasswordsCollection.insert( {
-        title,
-        folder,
-        username,
-        password: newPassword,
-        quality,
-        url,
-        note,
-        expires,
-        expireDate,
-        folder,
-        createdDate,
-        version: 0,
-        updatedDate,
-        passwordId,
-      }, ( error, _id ) => {
-        if ( error ) {
-          console.log( error );
-        } else {
-          history.push( `/folders/${folderID}/${_id}` );
-        }
-      } );
     }
 
   }
 
   const close = () => {
     history.push( `/folders/list/${folderID}` );
+  }
+
+  // TODO: spravti zvlast komponentu
+  if (secretKey.length === 0){
+    return (
+
+    <Form>
+
+      <Card>
+
+      <section>
+        <label htmlFor="secretKey">Secret key</label>
+        <span>Please enter your secret key in order to decrypt the password. (Your key will be remembered until you close the window.)</span>
+        <div>
+          <Input
+            type="text"
+            id="secretKey"
+            name="secretKey"
+            value={enteredSecretKey}
+            onChange={(e) => {
+              setEnteredSecretKey(e.target.value);
+            }}
+            />
+          <LinkButton
+            className="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              if (enteredSecretKey.length > 0) {
+                  dispatch( setCurrentUserData( { secretKey: enteredSecretKey } ));
+              }
+            }}
+            >
+            <img className="icon" src={SendIcon} alt="Send" />
+          </LinkButton>
+        </div>
+      </section>
+
+    </Card>
+
+  </Form>
+)
   }
 
   return (

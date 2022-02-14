@@ -27,6 +27,8 @@ import PasswordView from '/imports/ui/passwords/view';
 
 import PasswordHistoryList from '/imports/ui/passwords/passwordHistoryList';
 
+import Loader from '/imports/ui/other/loadingScreen';
+
 import {
   setPasswords
 } from '/imports/redux/passwordsSlice';
@@ -80,7 +82,6 @@ export default function PasswordsContainer( props ) {
     } else {
       result.folder = folderID;
     }
-    result.version = 0;
 
     if (match.path === listDeletedPasswordsInFolder) {
       result.deletedDate = {
@@ -93,8 +94,19 @@ export default function PasswordsContainer( props ) {
     return result;
   }
 
-    const passwords = useTracker( () => PasswordsCollection.find(
-      getFilter(),
+  const { passwords, passwordsLoading } = useTracker(() => {
+    const noDataAvailable = { passwords: [], passwordsLoading: true};
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+    const handler = Meteor.subscribe('passwords');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const passwords = PasswordsCollection.find(
+       getFilter(),
       {
       fields: {
         title: 1,
@@ -109,11 +121,14 @@ export default function PasswordsContainer( props ) {
         title: 1,
         username: 1
       }
-    } ).fetch() );
+    } ).fetch();
 
-    useEffect( () => {
-      dispatch( setPasswords( passwords ) );
-    }, [ passwords ] );
+    return { passwords, passwordsLoading: false };
+  });
+
+  if (passwordsLoading){
+    return ( <Loader />)
+  }
 
   if ( window.innerWidth <= 820 || layout === PLAIN ) {
     if ( passwordID === "password-add" ) {
@@ -121,19 +136,19 @@ export default function PasswordsContainer( props ) {
     }
     switch ( match.path ) {
       case listDeletedPasswordsInFolder:
-        return <PasswordList {...props} active={false}/>;
+        return <PasswordList {...props} active={false} passwords={passwords}/>;
       case listPasswordsInFolder:
-        return <PasswordList {...props} active={true}/>;
+        return <PasswordList {...props} active={true} passwords={passwords}/>;
       case viewPassword:
-        return <PasswordView {...props} />;
+        return <PasswordView {...props} passwords={passwords} />;
       case editPassword:
-        return <EditPassword {...props} />;
+        return <EditPassword {...props} passwords={passwords} />;
       case viewPreviousPassword:
-        return <PasswordView {...props} />;
+        return <PasswordView {...props} passwords={passwords} />;
       case passwordHistory:
-        return <PasswordHistoryList {...props} />
+        return <PasswordHistoryList {...props} passwords={passwords} />
       default:
-        return <PasswordList {...props} />;
+        return <PasswordList {...props} passwords={passwords}/>;
     }
   }
 
@@ -142,33 +157,33 @@ export default function PasswordsContainer( props ) {
       <div style={{width: "600px"}}>
         {
           match.path.includes("deleted") &&
-          <PasswordList {...props} columns={true} active={false}/>
+          <PasswordList {...props} columns={true} active={false} passwords={passwords}/>
         }
         {
           !match.path.includes("deleted") &&
-          <PasswordList {...props} columns={true} active={true}/>
+          <PasswordList {...props} columns={true} active={true} passwords={passwords}/>
         }
       </div>
       <div style={{width: "-webkit-fill-available", backgroundColor: "transparent", height: "-webkit-fill-available", borderLeft: "0px solid #d6d6d6"}}>
         {
           passwordID &&
           (match.path === viewPassword || match.path === viewPreviousPassword) &&
-          <PasswordView {...props} columns={true} />
+          <PasswordView {...props} columns={true} passwords={passwords} />
         }
         {
           passwordID &&
           match.path === editPassword &&
-          <EditPassword {...props} columns={true} />
+          <EditPassword {...props} columns={true} passwords={passwords} />
         }
         {
           passwordID &&
           passwordID === "password-add" &&
-          <AddPassword {...props} columns={true} />
+          <AddPassword {...props} columns={true} passwords={passwords} />
         }
 
         {
           passwordID && match.path.includes("history") &&
-          <PasswordHistoryList {...props} columns={true} />
+          <PasswordHistoryList {...props} columns={true} passwords={passwords} />
         }
         {
           !passwordID &&

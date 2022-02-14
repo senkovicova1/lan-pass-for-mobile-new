@@ -18,12 +18,12 @@ import {
 } from '/imports/redux/metadataSlice';
 
 import {
-  FoldersCollection
-} from '/imports/api/foldersCollection';
+  MetaCollection
+} from '/imports/api/metaCollection';
 
 import {
-  PasswordsCollection
-} from '/imports/api/passwordsCollection';
+  FoldersCollection
+} from '/imports/api/foldersCollection';
 
 import PasswordList from '/imports/ui/passwords/list';
 
@@ -57,38 +57,59 @@ export default function FolderList( props ) {
   } = props;
 
   const passwords = useSelector( ( state ) => state.passwords.value );
+  const folders = useSelector( ( state ) => state.passwords.value );
   const user = useTracker( () => Meteor.user() );
   const userId = Meteor.userId();
 
   const [ showClosed, setShowClosed ] = useState( false );
 
-  const myFolders = useTracker( () => FoldersCollection.find( {
-    users: {
-      $elemMatch: {
-        _id: userId
+    const { myFolders } = useTracker(() => {
+      const noDataAvailable = { myFolders: [] };
+      if (!Meteor.user()) {
+        return noDataAvailable;
       }
-    },
-    deletedDate: {
-    $gte: 0
-  }
-  }, {
-    sort: {name: 1}
-  } ).fetch() );
+      const handler = Meteor.subscribe('folders');
+
+      if (!handler.ready()) {
+        return noDataAvailable;
+      }
+
+      const myFolders = FoldersCollection.find({
+        users: {
+          $elemMatch: {
+            _id: userId
+          }
+        },
+        deletedDate: {
+        $gte: 0
+      }
+      }, {
+        sort: {name: 1}
+      }).fetch();
+
+      return { myFolders };
+    });
 
   const permanentlyDelete = useCallback( () => {
     if ( window.confirm( "Are you sure you want to permanently remove these folders? Note: Only folders you have authorization to remove will be removed." ) ) {
       const foldersToDelete = myFolders.filter( ( folder ) => folder.users.find( ( u ) => u._id === user._id ).level === 0 );
       foldersToDelete.forEach( ( folder ) => {
-        FoldersCollection.remove( {
-          _id: folder._id
-        } );
+
+              Meteor.call(
+                'folders.permanentlyDeleteFolder',
+                folderID
+              );
+
       } );
       const fodlersIds = foldersToDelete.map( folder => folder._id );
       const passWordsToDelete = passwords.filter( pass => fodlersIds.includes( pass.folder ) );
       passWordsToDelete.forEach( ( pass ) => {
-        PasswordsCollection.remove( {
-          _id: pass._id
-        } );
+
+              Meteor.call(
+                'passwords.remove',
+                pass._id
+              );
+
       } );
     }
   }, [ myFolders, user._id ] );
@@ -113,26 +134,8 @@ export default function FolderList( props ) {
   return (
     <List  columns={false}>
 
-      <span className="command-bar" style={{marginBottom: "1em", marginTop: "1em"}}>
+      <span className="command-bar" style={{marginBottom: "1em"}}>
 
-            {
-              myFolders.length !== 0 &&
-              <div className="command">
-              <BorderedLinkButton
-                onClick={(e) => {
-                  e.preventDefault();
-                  permanentlyDelete();
-                }}
-                >
-                <img
-                  className="icon"
-                  src={DeleteIcon}
-                  alt="Delete icon not found"
-                  />
-                DELETE FOREVER ALL DELETED FOLDERS
-              </BorderedLinkButton>
-            </div>
-            }
 
           </span>
 

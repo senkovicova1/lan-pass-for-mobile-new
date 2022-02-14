@@ -95,7 +95,7 @@ export default function GeneratorSettings( props ) {
         <ModalBody>
           <h1 style={{fontSize: "2em"}}>Generator settings</h1>
 
-          <Form>
+          <Form columns={true}>
 
             <section>
               <label htmlFor="length">Length</label>
@@ -158,7 +158,15 @@ export default function GeneratorSettings( props ) {
             </section>
 
             <ButtonCol>
-              <FullButton colour="grey" onClick={(e) => {e.preventDefault(); setSettingsOpen(false)}}>Cancel</FullButton>
+              <FullButton
+                colour="grey"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSettingsOpen(false)
+                }}
+                >
+                Cancel
+              </FullButton>
               <FullButton
                 colour=""
                 disabled={length.length <= 0 || !(upperCase || lowerCase || includeSymbols || includeNumbers)}

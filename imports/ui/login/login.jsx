@@ -10,6 +10,14 @@ import {
   Accounts
 } from 'meteor/accounts-base';
 
+import {
+  useDispatch,
+} from 'react-redux';
+
+import {
+  setCurrentUserData
+} from '/imports/redux/currentUserSlice';
+
 import Loader from "/imports/ui/other/loadingScreen";
 
 import {
@@ -25,12 +33,15 @@ import {
 
 export default function LoginForm( props ) {
 
+  const dispatch = useDispatch();
+
   const {
     history,
   } = props;
 
   const [ email, setEmail ] = useState( '' );
   const [ password, setPassword ] = useState( '' );
+  const [ secretKey, setSecretKey ] = useState( '' );
   const [ errorMessage, setErrorMessage ] = useState( '' );
   const [ showLoading, setShowLoading ] = useState( false );
 
@@ -38,6 +49,9 @@ export default function LoginForm( props ) {
     setShowLoading( true );
     setErrorMessage( "" );
     event.preventDefault();
+    if (secretKey.length > 0) {
+        dispatch( setCurrentUserData( {secretKey} ) );
+    }
     Meteor.loginWithPassword( email, password, ( error ) => {
       setShowLoading( false );
       if ( error ) {
@@ -87,6 +101,17 @@ export default function LoginForm( props ) {
           id="password"
           required
           onChange={e => setPassword(e.target.value)}
+          />
+      </section>
+
+      <section>
+        <label htmlFor="key">Private key</label>
+        <Input
+          type="text"
+          placeholder="Key"
+          name="key"
+          id="key"
+          onChange={e => setSecretKey(e.target.value)}
           />
       </section>
 

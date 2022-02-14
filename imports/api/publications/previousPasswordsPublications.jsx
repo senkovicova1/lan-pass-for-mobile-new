@@ -1,10 +1,9 @@
 import React from 'react';
-/*
-import {
-  RepeatsCollection
-} from '/imports/api/repeatsCollection';
 
-Meteor.publish('repeats', function publishRepeats() {
-  return RepeatsCollection.find( {} );
+import {
+  PreviousPasswordsCollection
+} from '/imports/api/previousPasswordsCollection';
+
+Meteor.publish('previousPasswords', function publishPreviousPasswords() {
+  return PreviousPasswordsCollection.find( {} );
 });
-*/

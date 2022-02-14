@@ -26,10 +26,6 @@ import {
 } from '/imports/api/foldersCollection';
 
 import {
-  PasswordsCollection
-} from '/imports/api/passwordsCollection';
-
-import {
   setFolders
 } from '/imports/redux/foldersSlice';
 
@@ -48,6 +44,7 @@ import {
 import Reroute from '/imports/ui/reroute';
 import Header from '/imports/ui/header';
 import Login from '/imports/ui/login';
+import EmailVerification from '/imports/ui/passwords/sharing/emailVerification';
 import FolderList from '/imports/ui/folders/folderList';
 import FolderAdd from '/imports/ui/folders/addFolderContainer';
 import FolderEdit from '/imports/ui/folders/editFolderContainer';
@@ -72,6 +69,7 @@ import {
 } from '/imports/other/helperFunctions';
 
 import {
+  sharingPassword,
   login,
   addFolder,
   editFolder,
@@ -99,8 +97,34 @@ export default function MainPage( props ) {
   const userId = currentUser ? currentUser._id : null;
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
 
-  const encryptionData = useTracker(() => MetaCollection.find({}).fetch());
-  const folders = useTracker( () => FoldersCollection.find( {
+  // TODO: remove encryption data
+  const { encryptionData } = useTracker(() => {
+    const noDataAvailable = { encryptionData: {} };
+
+    const handler = Meteor.subscribe('metadata');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const encryptionData = MetaCollection.find({}).fetch();
+
+    return { encryptionData };
+  });
+
+  const { folders, foldersLoading } = useTracker(() => {
+    const noDataAvailable = { folders: [], foldersLoading: true };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+
+    const handler = Meteor.subscribe('folders');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const folders = FoldersCollection.find( {
     users: {
       $elemMatch: {
         _id: userId
@@ -109,8 +133,10 @@ export default function MainPage( props ) {
     deletedDate: null
   }, {
     sort: {name: 1}
-  } ).fetch() );
-  const users = useTracker( () => Meteor.users.find( {} ).fetch() );
+  }).fetch();
+
+    return {folders, foldersLoading: false};
+  });
 
   useEffect( () => {
       dispatch( setEncryptionData( encryptionData[0] ) );
@@ -127,20 +153,6 @@ export default function MainPage( props ) {
       dispatch( setFolders( [] ) );
     }
   }, [ folders ] );
-
-  useEffect( () => {
-    dispatch(
-      setUsers(
-        users.map( user => ( {
-          _id: user._id,
-          ...user.profile,
-          label: `${user.profile.name} ${user.profile.surname}`,
-          value: user._id,
-          img: uint8ArrayToImg( user.profile.avatar )
-        } ) )
-      )
-    );
-  }, [ users ] );
 
   return (
     <div style={{height: "100vh"}}>
@@ -171,6 +183,7 @@ export default function MainPage( props ) {
           exact
           path={[
             "/",
+            sharingPassword,
             login,
             addFolder,
             editFolder,
@@ -195,13 +208,16 @@ export default function MainPage( props ) {
         {
           !currentUser &&
           <Content withSidebar={false}>
-            <Route path={["/", login]} component={Login} />
+            <Route exact path={[sharingPassword]} component={EmailVerification} />
+            <Route exact path={["/", login]} component={Login} />
           </Content>
         }
         {
           currentUser &&
           <Content withSidebar={openSidebar} columns={layout === COLUMNS}>
             <div style={{height: "100%", position: "relative"}}>
+
+              <Route exact path={sharingPassword} component={EmailVerification} />
 
               <Route
                 exact

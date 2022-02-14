@@ -1,3 +1,4 @@
+export const sharingPassword = "/sharing/:sharingID"
 
 export const login = "/login";
 

@@ -6,6 +6,7 @@ import usersReducer from './usersSlice';
 import passwordsReducer from './passwordsSlice';
 import metadataReducer from './metadataSlice';
 import encryptionDataReducer from './encryptionSlice';
+import currentUserDataReducer from './currentUserSlice';
 
 export default configureStore( {
   reducer: {
@@ -14,5 +15,6 @@ export default configureStore( {
     passwords: passwordsReducer,
     metadata: metadataReducer,
     encryptionData: encryptionDataReducer,
+    currentUserData: currentUserDataReducer
   },
 } )

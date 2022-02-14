@@ -34,6 +34,7 @@ export default function UserForm( props ) {
   const {
     _id: userId,
     user,
+    privateKey,
     onSubmit,
     onRemove,
     onCancel,
@@ -53,6 +54,7 @@ export default function UserForm( props ) {
   const [ password1, setPassword1 ] = useState( '' );
   const [ password2, setPassword2 ] = useState( '' );
   const [ rights, setRights ] = useState({});
+  const [ key, setKey ] = useState( "" );
 
   const [ errors, setErrors ] = useState( [] );
 
@@ -178,6 +180,27 @@ export default function UserForm( props ) {
         </div>
       </section>
 
+      {
+        !user &&
+        <section>
+          <label htmlFor="key">Key (10-20 characters, A-Z, a-z, 0-9)</label>
+          <Input
+            error={errors.includes("key") && true}
+            id="key"
+            name="key"
+            placeholder="Enter key"
+            type="text"
+            value={key}
+            onChange={(e) => {
+              setKey(e.target.value);
+              if (e.target.value.length >= 10 || e.target.value.length <= 20){
+                setErrors(errors.filter(e => e !== "key"));
+              }
+            }}
+            />
+        </section>
+      }
+
 
       {
         !user &&
@@ -253,6 +276,13 @@ export default function UserForm( props ) {
       </table>
 
       {
+        privateKey &&
+        <section>
+          <label htmlFor="privateKey">Please make sure to remember the key you entered above, it will be used to decrpypt your passwords.</label>
+        </section>
+      }
+
+      {
         errorMessage &&
         <p>{errorMessage}</p>
       }
@@ -321,10 +351,13 @@ export default function UserForm( props ) {
             if (!user && !isEmail(email)){
               errors.push("email");
             }
+            if (key.length < 10 || key.length > 20){
+              errors.push("key");
+            }
             if  ((!user && password1 !== password2) || (!user && password1.length < 7)){
               errors.push("password");
             }
-            if (name.length > 0 &&surname.length > 0 && (user || isEmail(email)) && (user || (password1 === password2 && password1.length >= 7)) ) {
+            if (name.length > 0 &&surname.length > 0 && (user || isEmail(email)) && (user || (password1 === password2 && password1.length >= 7))  && (!user && key.length >= 10 && key.length <= 20)) {
               onSubmit(
                 name,
                 surname,
@@ -332,6 +365,7 @@ export default function UserForm( props ) {
                 rights,
                 email,
                 password1,
+                key
               );
             }
             setErrors(errors);

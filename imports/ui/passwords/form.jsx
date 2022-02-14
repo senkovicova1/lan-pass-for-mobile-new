@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
 
@@ -22,6 +23,10 @@ import {
 } from '/imports/api/passwordsCollection';
 
 import {
+  setCurrentUserData
+} from '/imports/redux/currentUserSlice';
+
+import {
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
@@ -30,7 +35,8 @@ import {
   BackIcon,
   CloseIcon,
   DeleteIcon,
-  PencilIcon
+  PencilIcon,
+  SendIcon,
 } from "/imports/other/styles/icons";
 
 import {
@@ -54,6 +60,10 @@ import {
   Textarea,
 } from "/imports/other/styles/styledComponents";
 
+import {
+  str2ab,
+} from '/imports/other/helperFunctions';
+
 const NUMBERS = "0123456789";
 const SYMBOLS = "/*-+><.,?!@#$%^*()[]{}";
 const UPPER_CASE = "ABCDEFGHTIJKLMNOPQRSTUVWXYZ";
@@ -62,17 +72,21 @@ const LOWER_CASE = "abcdefghtijklmnopqrstuvwxyz";
 const { DateTime } = require("luxon");
 
 export default function PasswordForm( props ) {
+
+  const dispatch = useDispatch();
+
 const {
   password,
   match,
+  location,
   history,
   onSubmit,
   onCancel,
 } = props;
 
 const userId = Meteor.userId();
-const user = useTracker( () => Meteor.user() );
-const encryptionData = useSelector( ( state ) => state.encryptionData.value );
+const currentUser = useTracker( () => Meteor.user() );
+const { secretKey } = useSelector( ( state ) => state.currentUserData.value );
 
 const folderID = match.params.folderID;
 const allFolders = useSelector( ( state ) => state.folders.value );
@@ -96,14 +110,7 @@ const [ expireDate, setExpireDate ] = useState( "" );
 
 const [ revealPassword, setRevealPassword ] = useState( false );
 
-async function toggleRevealPassword(){
-  setRevealPassword( !revealPassword );
-  if (passwordID && typeof password1 !== "string"){
-    const decryptedPassword = await decryptPassword(password1);
-    setPassword1(decryptedPassword);
-    setPassword2(decryptedPassword);
-  }
-};
+const [ passwordWasDecrypted, setPasswordWasDecrypted ] = useState( false );
 
 useEffect( () => {
   if ( password ) {
@@ -138,41 +145,40 @@ useEffect( () => {
 const removePassword = () => {
   const passwordToRemove = password;
   let message = "Are you sure you want to remove this password? Note: Password will be moved to the \"Deleted passwords\" section.";
-  if ( passwordToRemove.version > 0 ) {
+  if ( passwordToRemove.version ) {
     message = "Are you sure you want to remove this version? ";
   }
+  if ( !passwordToRemove.version && passwordToRemove.deletedDate) {
+    message = "Are you sure you want to permanently remove this password? ";
+  }
   if ( window.confirm( message ) ) {
-    if ( passwordToRemove.version === 0 && !passwordToRemove.deletedDate ) {
+    if ( !passwordToRemove.version && !passwordToRemove.deletedDate ) {
       let data = {
         deletedDate: parseInt(DateTime.now().toSeconds()),
       };
-      PasswordsCollection.update( passwordToRemove._id, {
-        $set: {
-          ...data
-        }
-      } );
-    } else if ( passwordToRemove.version === 0 ) {
-      PasswordsCollection.remove( {
-        _id: passwordToRemove._id
-      } );
-      const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordToRemove.passwordId ) );
-      passwordsToUpdate.forEach( ( pass, index ) => {
-        PasswordsCollection.remove( {
-          _id: pass._id
-        } );
-      } );
+        Meteor.call(
+          'passwords.update',
+          passwordToRemove._id,
+          data,
+        );
+
+    } else if ( !passwordToRemove.version ) {
+
+        Meteor.call(
+          'passwords.remove',
+          passwordToRemove._id,
+          passwordToRemove.originalPasswordId ? passwordToRemove.originalPasswordId : passwordToRemove._id
+        );
+
     } else {
-      PasswordsCollection.remove( {
-        _id: passwordToRemove._id
-      } );
-      const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordToRemove.passwordId ) && pass.version > passwordToRemove.version );
-      passwordsToUpdate.forEach( ( pass, index ) => {
-        PasswordsCollection.update( pass._id, {
-          $inc: {
-            version: -1
-          }
-        } );
-      } );
+
+        Meteor.call(
+          'previousPasswords.remove',
+          passwordToRemove._id,
+          passwordToRemove.originalPasswordId ? passwordToRemove.originalPasswordId : passwordToRemove._id,
+          passwordToRemove.version
+        );
+
     }
     history.push( `${listPasswordsInFolderStart}${folderID}` );
   }
@@ -186,7 +192,7 @@ const generatePassword = useCallback( () => {
     includeNumbers: true,
     includeSymbols: true,
   }
-  let settings = user.profile.passwordSettings || defaultSettings;
+  let settings = currentUser.profile.passwordSettings || defaultSettings;
   let characters = "";
   if ( settings.upperCase ) {
     characters += UPPER_CASE;
@@ -206,7 +212,7 @@ const generatePassword = useCallback( () => {
   }
   setPassword1( newPassword );
   setPassword2( newPassword );
-}, [ user?.profile.passwordSettings ] )
+}, [ currentUser?.profile.passwordSettings ] )
 
 const passwordScore = useMemo( () => {
   let score = 0;
@@ -235,7 +241,6 @@ const passwordScore = useMemo( () => {
   return parseInt( score );
 }, [ password1 ] );
 
-
 const scoreTranslation = useCallback( () => {
   let result = {
     mark: "Very weak",
@@ -260,56 +265,114 @@ const scoreTranslation = useCallback( () => {
   return <span style={{color: result.colour, width: "40%", textAlign: "end"}}>{result.mark}</span>
 }, [ passwordScore ] );
 
+  async function toggleRevealPassword(){
+    setRevealPassword( !revealPassword );
+    if (passwordID && !passwordWasDecrypted){
+      const decryptedPassword = await decryptPassword(password1);
+      setPasswordWasDecrypted(true);
+      setPassword1(decryptedPassword);
+      setPassword2(decryptedPassword);
+    }
+  };
 
-  async function decryptPassword(text){
-    if (!encryptionData){
-      return [];
+    const toggleMissingPrivateKey = () => {
+      setErrorMessage("Please enter your private key in order to decrypt the password. (Your key will be remembered until you close the window.)")
     }
 
-    const symetricKey = await crypto.subtle.importKey(
-      "raw",
-        encryptionData.symetricKey,
-        encryptionData.algorithm,
-      true,
-      ["encrypt", "decrypt"]
+        const decryptStringWithXORtoHex = (text, key) => {
+          let c = "";
+          let usedKey = key;
+
+          while (usedKey.length < (text.length/2)) {
+               usedKey += usedKey;
+          }
+
+          for (var j = 0; j < text.length; j = j+2) {
+            let hexValueString = text.substring(j, j+2);
+
+            let value1 = parseInt(hexValueString, 16);
+            let value2 = usedKey.charCodeAt(j/2);
+
+            let xorValue = value1 ^ value2;
+            c += String.fromCharCode(xorValue) + "";
+          }
+
+          return c;
+        }
+
+async function decryptPassword(text){
+  if (!folder.algorithm || !folder.key[currentUser._id]){
+    return "";
+  }
+
+  const privateKey = decryptStringWithXORtoHex(currentUser.profile.privateKey, secretKey);
+
+
+  const importedPrivateKey = await window.crypto.subtle.importKey(
+    "pkcs8",
+    str2ab(window.atob(privateKey)),
+      {
+        name: "RSA-OAEP",
+        hash: "SHA-256"
+      },
+    true,
+    ["decrypt"]
+  );
+
+  const folderDecryptedKey = await window.crypto.subtle.decrypt(
+    {
+      name: "RSA-OAEP",
+      modulusLength: 4096,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: "SHA-256"
+    },
+      importedPrivateKey,
+      str2ab(window.atob(folder.key[userId])),
     );
 
-    let decryptedText = null;
-    await window.crypto.subtle.decrypt(
-      encryptionData.algorithm,
-      symetricKey,
-      text
-    )
-    .then(function(decrypted){
-      decryptedText = decrypted;
-    })
-    .catch(function(err){
-      console.error(err);
-    });
     let dec = new TextDecoder();
-    const decryptedValue = dec.decode(decryptedText);
-    return decryptedValue;
-  }
+    const decodedFolderDecryptedKey = dec.decode(folderDecryptedKey);
+
+  const importedFolderKey = await crypto.subtle.importKey(
+    "raw",
+      new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+      folder.algorithm,
+    true,
+    ["encrypt", "decrypt"]
+  );
+
+  let decryptedText = null;
+  await window.crypto.subtle.decrypt(
+    folder.algorithm,
+    importedFolderKey,
+    str2ab(window.atob(text)),
+  )
+  .then(function(decrypted){
+    decryptedText = decrypted;
+  })
+  .catch(function(err){
+    console.error(err);
+  });
+  const decryptedValue = dec.decode(decryptedText);
+  return decryptedValue;
+}
+
 
   let password1Value = "";
-  if (typeof password1 === "string"){
+  if (passwordWasDecrypted){
+    password1Value = password1;
+  } else if (revealPassword) {
     password1Value = password1;
   } else {
-    if (revealPassword){
-      password1Value = "";
-    } else {
-      password1Value = "decrypting_password";
-    }
+    password1Value = "decrypting_password";
   }
   let password2Value = "";
-  if (typeof password2 === "string"){
+  if (passwordWasDecrypted){
+    password2Value = password2;
+  }  else if (revealPassword) {
     password2Value = password2;
   } else {
-    if (revealPassword){
-      password2Value = "";
-    } else {
-      password2Value = "decrypting_password";
-    }
+    password2Value = "decrypting_password";
   }
 
   const getOffset = () => {
@@ -320,11 +383,26 @@ const scoreTranslation = useCallback( () => {
   }
 
   return (
-    <Form autocomplete="off">
+    <Form autoComplete="off">
 
       <Card>
+
+        <Input
+          style={{position: "fixed", top: "50000px"}}
+          type="email"
+          id="mail_hidden"
+          name="mail_hidden"
+          />
+
+          <Input
+            style={{position: "fixed", top: "50000px"}}
+            type="password"
+            id="pass"
+            name="pass"
+            />
+
       <section>
-        <label htmlFor="title">Title</label>
+        <label htmlFor="title">Title <span style={{color: "red"}}>*</span></label>
         <Input
           type="text"
           id="title"
@@ -350,6 +428,7 @@ const scoreTranslation = useCallback( () => {
         <label htmlFor="username">Login</label>
         <Input
           type="text"
+           autoComplete="off"
           id="username"
           name="username"
           value={username}
@@ -363,6 +442,7 @@ const scoreTranslation = useCallback( () => {
           <Input
             type={revealPassword ? "text" : "password"}
             autocomplete="new-password"
+             autoComplete="off"
             id="first-password"
             name="first-password"
             value={password1Value}
@@ -372,7 +452,12 @@ const scoreTranslation = useCallback( () => {
             className="icon"
             onClick={(e) => {
               e.preventDefault();
+              if (location.pathname.includes("add")){
+                setRevealPassword(true);
+              } else {
+
               toggleRevealPassword();
+            }
             }}
             >
             <img className="icon" src={EyeIcon} alt="reveal pass" />
@@ -385,12 +470,15 @@ const scoreTranslation = useCallback( () => {
         <Input
           type={revealPassword ? "text" : "password"}
           autocomplete="new-password"
+           autoComplete="off"
           id="repeat-password"
           name="repeat-password"
           value={password2Value}
           onChange={(e) => setPassword2(e.target.value)}
           />
       </section>
+      {
+        password1Value !== "decrypting_password" &&
       <section>
         <div style={{display: "flex", justifyContent: "space-between"}}>
           <label htmlFor="repeat-password">Password strength </label>
@@ -408,6 +496,7 @@ const scoreTranslation = useCallback( () => {
           value={passwordScore}
           />
       </section>
+    }
 
       <section style={{display: "flex"}}>
         <PasswordGenerator />
@@ -468,7 +557,8 @@ const scoreTranslation = useCallback( () => {
     </Card>
 
                 <CommandRow>
-                  <BorderedFullButton
+                  <BorderedLinkButton
+                    font="red"
                     fit={true}
                     onClick={(e) => {
                       e.preventDefault();
@@ -478,10 +568,12 @@ const scoreTranslation = useCallback( () => {
                     <img
                       src={CloseIcon}
                       alt=""
-                      className="icon"
+                      className="icon red"
                       />
                     Cancel
-                  </BorderedFullButton>
+                  </BorderedLinkButton>
+                  {
+                    password &&
                   <BorderedFullButton
                     fit={true}
                     font="red"
@@ -498,29 +590,32 @@ const scoreTranslation = useCallback( () => {
                       />
                     Delete
                   </BorderedFullButton>
+                }
                   {
                     folder &&
                     folder.users &&
-                    folder.users.find(user => user._id === userId) &&
-                    folder.users.find(user => user._id === userId).level<= 1 &&
+                    folder.users.find(currentUser => currentUser._id === userId) &&
+                    folder.users.find(currentUser => currentUser._id === userId).level<= 1 &&
                     <BorderedFullButton
                       type="submit"
                       fit={true}
                       disabled={title.length === 0 || password1 !== password2}
-                      onClick={(e) => {e.preventDefault(); onSubmit(
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onSubmit(
                         title,
                         folder.value,
                         username,
                         password1,
                         password ? password.password : null,
-                        quality,
+                        passwordWasDecrypted,
                         url,
                         note,
                         expires,
                         expireDate,
                         password ? password.createdDate : parseInt(DateTime.now().toSeconds()),
                         parseInt(DateTime.now().toSeconds()),
-                        password ? (password.passwordId ? password.passwordId : password._id) : null
+                        password ? (password.originalPasswordId ? password.originalPasswordId : password._id) : null
                       );}}
                       >
                       <img

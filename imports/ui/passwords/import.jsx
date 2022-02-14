@@ -13,10 +13,6 @@ import {
 import { CSVLink } from "react-csv";
 
 import {
-  PasswordsCollection
-} from '/imports/api/passwordsCollection';
-
-import {
   Form,
   Input,
   BorderedFullButton,
@@ -93,22 +89,21 @@ export default function ImportPasswords( props ) {
     const encryptedPassword = await encryptPassword(actualPassword);
     const createdDate = parseInt(DateTime.now().toSeconds());
 
-    PasswordsCollection.insert( {
-      title: actualTitle,
-      username: actualUsername,
-      password: encryptedPassword,
-      url: actualUrl,
-      note: actualNote,
-      folder: folderID,
-      createdDate: createdDate,
-      version: 0,
-      updatedDate: createdDate,
-    }, ( error, _id ) => {
-      if ( error ) {
-        console.log( error );
-      } else {
-      }
-    } );
+    Meteor.call(
+      'passwords.create',
+      actualTitle,
+      folderID,
+      actualUsername,
+      encryptedPassword,
+      actualUrl,
+      actualNote,
+      false,
+      null,
+      createdDate,
+      createdDate,
+      null,
+    );
+
   }
 
   async function parsePasswords() {
@@ -219,7 +214,7 @@ export default function ImportPasswords( props ) {
        <CommandRow>
 
          <BorderedLinkButton
-           font={"red"}
+           font="red"
            onClick={(e) => {
              e.preventDefault();
              close();

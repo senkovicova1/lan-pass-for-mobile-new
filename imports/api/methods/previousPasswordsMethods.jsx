@@ -1,62 +1,53 @@
 import React from 'react';
 
-import { check } from 'meteor/check';
-/*
 import {
-  FiltersCollection
-} from '/imports/api/filtersCollection';
+  check
+} from 'meteor/check';
+
+import {
+  PreviousPasswordsCollection
+} from '/imports/api/previousPasswordsCollection';
 
 Meteor.methods({
-  'filters.addFilter'( name, user, title, folders, important, assigned, datetimeMin, datetimeMax, dateCreatedMin, dateCreatedMax, showClosed) {
+  'previousPasswords.create'(title, folder, username, password, url, note, expires, expireDate, createdDate, updatedDate, updatedBy, originalPasswordId, version) {
   //  check(text, String);
 
     if (!this.userId) {
       throw new Meteor.Error('Not authorized.');
     }
 
-    return FiltersCollection.insert( {
-      name,
-      user,
+    return PreviousPasswordsCollection.insert( {
       title,
-      folders,
-      important,
-      assigned,
-      datetimeMin,
-      datetimeMax,
-      dateCreatedMin,
-      dateCreatedMax,
-      showClosed
-    });
+      folder,
+      username,
+      password,
+      url,
+      note,
+      expires,
+      expireDate,
+      createdDate,
+      updatedDate,
+      updatedBy,
+      originalPasswordId,
+      version,
+    } );
   },
 
-  'filters.editFilter'( _id, name, user, title, folders, important, assigned, datetimeMin, datetimeMax, dateCreatedMin, dateCreatedMax, showClosed ) {
+  'previousPasswords.update'(passwordId, data) {
   //  check(taskId, String);
 
     if (!this.userId) {
       throw new Meteor.Error('Not authorized.');
     }
 
-    let data = {
-      name,
-      user,
-      title,
-      folders,
-      important,
-      assigned,
-      datetimeMin,
-      datetimeMax,
-      dateCreatedMin,
-      dateCreatedMax,
-      showClosed
-    };
-    return FiltersCollection.update( _id, {
+    PreviousPasswordsCollection.update( passwordId, {
       $set: {
         ...data
       }
-    });
+    } )
   },
 
-  'filters.removeFilter'( _id ) {
+  'previousPasswords.remove'(passwordId, originalPasswordId, passwordVersion) {
   //  check(taskId, String);
   //  check(isChecked, Boolean);
 
@@ -64,10 +55,19 @@ Meteor.methods({
       throw new Meteor.Error('Not authorized.');
     }
 
-    FiltersCollection.remove( {
-      _id
+    PreviousPasswordsCollection.remove( {
+      _id: passwordId
     } );
-  },
 
+    PreviousPasswordsCollection.update({
+      originalPasswordId,
+      version: {
+        $gt: passwordVersion
+      }
+    }, {
+      $inc: {
+        version: -1
+      }
+    });
+  }
 });
-*/

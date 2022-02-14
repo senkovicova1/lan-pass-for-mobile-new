@@ -12,12 +12,30 @@ import {
 } from 'meteor/react-meteor-data';
 
 import {
+  useDispatch,
   useSelector
 } from 'react-redux';
 
 import {
+  Modal,
+  ModalBody
+} from 'reactstrap';
+
+import SharePassword from './sharing/shareForm';
+
+import Loader from '/imports/ui/other/loadingScreen';
+
+import {
   PasswordsCollection
 } from '/imports/api/passwordsCollection';
+
+import {
+  PreviousPasswordsCollection
+} from '/imports/api/previousPasswordsCollection';
+
+import {
+  setCurrentUserData
+} from '/imports/redux/currentUserSlice';
 
 import {
   RestoreIcon,
@@ -26,7 +44,8 @@ import {
   PencilIcon,
   BackIcon,
   HourglassIcon,
-  DeleteIcon
+  DeleteIcon,
+  SendIcon
 } from "/imports/other/styles/icons";
 
 import {
@@ -40,6 +59,7 @@ import {
   Form,
   ItemContainer,
   ViewInput,
+  Input,
   ViewTextarea,
   ButtonCol,
   LinkButton,
@@ -59,18 +79,27 @@ import {
   listDeletedPasswordsInFolder
 } from "/imports/other/navigationLinks";
 
+import {
+  str2ab,
+} from '/imports/other/helperFunctions';
+
 const { DateTime } = require("luxon");
 
 export default function PasswordView( props ) {
+
+  const dispatch = useDispatch();
 
   const {
     match,
     history,
     location,
-    columns
+    columns,
+    passwords
   } = props;
 
   const userId = Meteor.userId();
+    const currentUser = useTracker( () => Meteor.user() );
+  const { secretKey } = useSelector( ( state ) => state.currentUserData.value );
   const {
     passwordID,
     folderID
@@ -78,9 +107,6 @@ export default function PasswordView( props ) {
   const layout = useSelector( ( state ) => state.metadata.value ).layout;
   const encryptionData = useSelector( ( state ) => state.encryptionData.value );
 
-  const dbUsers = useSelector( ( state ) => state.users.value );
-
-  const passwords = useSelector( ( state ) => state.passwords.value );
   const folders = useSelector( ( state ) => state.folders.value );
   let folder = useSelector( ( state ) => state.metadata.value ).selectedFolder;
 
@@ -90,13 +116,73 @@ export default function PasswordView( props ) {
 
   const usedPassword = useSelector( ( state ) => state.metadata.value ).usedPassword;
 
-  const password = useTracker( () => PasswordsCollection.findOne( {_id: passwordID} ) );
+  const { password, passwordLoading } = useTracker(() => {
+    const noDataAvailable = { password: {}, passwordLoading: true };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+    let handler = null;
+
+    if (location.pathname.includes("version")){
+      handler = Meteor.subscribe('previousPasswords');
+
+      if (!handler.ready()) {
+        return noDataAvailable;
+      }
+
+      const password = PreviousPasswordsCollection.findOne( {_id: passwordID} )
+
+      return { password, passwordLoading: false };
+    }
+      handler = Meteor.subscribe('passwords');
+
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const password = PasswordsCollection.findOne( {_id: passwordID} )
+
+    return { password, passwordLoading: false };
+  });
+
+  const { users, usersLoading } = useTracker(() => {
+    const noDataAvailable = { users: [], usersLoading: true };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+
+    const handler = Meteor.subscribe('users');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    let users = Meteor.users.find( {}, {
+    sort: {name: 1}
+  }).fetch();
+
+  users =  users.map( user =>  ({
+            _id: user._id,
+            ...user.profile,
+            email: user.emails[0].address,
+            label: `${user.profile.name} ${user.profile.surname}`,
+            value: user._id,
+          })
+         )
+
+    return {users, usersLoading: false};
+  });
 
   const [ revealPassword, setRevealPassword ] = useState( false );
   const [ decryptedPassword, setDecryptedPassword ] = useState( "" );
   const [ showCopyResponse, setShowCopyResponse ] = useState( [false, false, false, false, false] );
+  const [ showSharePasswordDialog, setShowSharePasswordDialog ] = useState( false );
 
   const [ copiedText, setCopiedText ] = useState( "" );
+
+  const [errorMessage, setErrorMessage] = useState("");
+  const [enteredSecretKey, setEnteredSecretKey] = useState("");
 
   let timeout = null;
 
@@ -108,24 +194,72 @@ export default function PasswordView( props ) {
     }
   }
 
-    async function decryptPassword(text){
-      if (!encryptionData){
-        return [];
+    const decryptStringWithXORtoHex = (text, key) => {
+      let c = "";
+      let usedKey = key;
+
+      while (usedKey.length < (text.length/2)) {
+           usedKey += usedKey;
       }
 
-      const symetricKey = await crypto.subtle.importKey(
+      for (var j = 0; j < text.length; j = j+2) {
+        let hexValueString = text.substring(j, j+2);
+
+        let value1 = parseInt(hexValueString, 16);
+        let value2 = usedKey.charCodeAt(j/2);
+
+        let xorValue = value1 ^ value2;
+        c += String.fromCharCode(xorValue) + "";
+      }
+
+      return c;
+    }
+
+    async function decryptPassword(text){
+      if (!folder.algorithm || !folder.key[userId]){
+        return "";
+      }
+
+      const privateKey = decryptStringWithXORtoHex(currentUser.profile.privateKey, secretKey.length > 0 ? secretKey : enteredSecretKey);
+
+      const importedPrivateKey = await window.crypto.subtle.importKey(
+        "pkcs8",
+        str2ab(window.atob(privateKey)),
+          {
+            name: "RSA-OAEP",
+            hash: "SHA-256"
+          },
+        true,
+        ["decrypt"]
+      );
+
+      const folderDecryptedKey = await window.crypto.subtle.decrypt(
+        {
+          name: "RSA-OAEP",
+          modulusLength: 4096,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: "SHA-256"
+        },
+          importedPrivateKey,
+          str2ab(window.atob(folder.key[userId])),
+        );
+
+        let dec = new TextDecoder();
+        const decodedFolderDecryptedKey = dec.decode(folderDecryptedKey);
+
+      const importedFolderKey = await crypto.subtle.importKey(
         "raw",
-          encryptionData.symetricKey,
-          encryptionData.algorithm,
+          new Uint8Array(atob(decodedFolderDecryptedKey).split(',')),
+          folder.algorithm,
         true,
         ["encrypt", "decrypt"]
       );
 
       let decryptedText = null;
       await window.crypto.subtle.decrypt(
-        encryptionData.algorithm,
-        symetricKey,
-        text
+        folder.algorithm,
+        importedFolderKey,
+        str2ab(window.atob(text)),
       )
       .then(function(decrypted){
         decryptedText = decrypted;
@@ -133,57 +267,26 @@ export default function PasswordView( props ) {
       .catch(function(err){
         console.error(err);
       });
-      let dec = new TextDecoder();
       const decryptedValue = dec.decode(decryptedText);
       return decryptedValue;
     }
 
+    const toggleMissingSecretKey = () => {
+      setErrorMessage("Please enter your secret key in order to decrypt the password. (Your key will be remembered until you close the window.)")
+    }
+
   const restorePasswordVersion = () => {
     if ( window.confirm( "Are you sure you want to restore this version?" ) ) {
-      const passwordId = password.passwordId ? password.passwordId : password._id;
 
-      PasswordsCollection.insert( {
-        title: password.title,
-        username: password.username,
-        password: password.password,
-        quality: password.quality,
-        url: password.url,
-        note: password.note,
-        expires: password.expires,
-        expireDate: password.expireDate,
-        folder: password.folder,
-        createdDate: password.createdDate,
-        version: 0,
-        updatedDate: parseInt(DateTime.now().toSeconds()),
-        passwordId,
-      } );
+          Meteor.call(
+            'passwords.handleRestore',
+            {
+              ...password,
+              updatedDate: parseInt(DateTime.now().toSeconds()),
+              updatedBy: userId,
+            },
+          );
 
-      const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordId ) );
-
-      passwordsToUpdate.forEach( ( pass, index ) => {
-        if ( pass.version >= 20 ) {
-          PasswordsCollection.remove( {
-            _id: pass._id
-          } );
-        } else {
-          if ( pass.version === 0 ) {
-            PasswordsCollection.update( pass._id, {
-              $inc: {
-                version: 1
-              },
-              $set: {
-                editedBy: userId
-              }
-            } );
-          } else {
-            PasswordsCollection.update( pass._id, {
-              $inc: {
-                version: 1
-              }
-            } );
-          }
-        }
-      } );
       history.push( `${listPasswordsInFolderStart}${folderID}` );
     }
   };
@@ -193,11 +296,13 @@ export default function PasswordView( props ) {
       let data = {
         deletedDate: null,
       };
-      PasswordsCollection.update( password._id, {
-        $set: {
-          ...data
-        }
-      } );
+
+      Meteor.call(
+        'passwords.update',
+        password._id,
+        data,
+      );
+
       history.goBack();
     }
   }
@@ -205,41 +310,40 @@ export default function PasswordView( props ) {
   const removePassword = () => {
     const passwordToRemove = password;
     let message = "Are you sure you want to remove this password? Note: Password will be moved to the \"Deleted passwords\" section.";
-    if ( passwordToRemove.version > 0 ) {
+    if ( passwordToRemove.version ) {
       message = "Are you sure you want to remove this version? ";
     }
+    if ( !passwordToRemove.version && passwordToRemove.deletedDate) {
+      message = "Are you sure you want to permanently remove this password? ";
+    }
     if ( window.confirm( message ) ) {
-      if ( passwordToRemove.version === 0 && !passwordToRemove.deletedDate ) {
+      if ( !passwordToRemove.version && !passwordToRemove.deletedDate ) {
         let data = {
           deletedDate: parseInt(DateTime.now().toSeconds()),
         };
-        PasswordsCollection.update( passwordToRemove._id, {
-          $set: {
-            ...data
-          }
-        } );
-      } else if ( passwordToRemove.version === 0 ) {
-        PasswordsCollection.remove( {
-          _id: passwordToRemove._id
-        } );
-        const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordToRemove.passwordId ) );
-        passwordsToUpdate.forEach( ( pass, index ) => {
-          PasswordsCollection.remove( {
-            _id: pass._id
-          } );
-        } );
+          Meteor.call(
+            'passwords.update',
+            passwordToRemove._id,
+            data,
+          );
+
+      } else if ( !passwordToRemove.version ) {
+
+          Meteor.call(
+            'passwords.remove',
+            passwordToRemove._id,
+            passwordToRemove.originalPasswordId ? passwordToRemove.originalPasswordId : passwordToRemove._id
+          );
+
       } else {
-        PasswordsCollection.remove( {
-          _id: passwordToRemove._id
-        } );
-        const passwordsToUpdate = passwords.filter( pass => [ pass.passwordId, pass._id ].includes( passwordToRemove.passwordId ) && pass.version > passwordToRemove.version );
-        passwordsToUpdate.forEach( ( pass, index ) => {
-          PasswordsCollection.update( pass._id, {
-            $inc: {
-              version: -1
-            }
-          } );
-        } );
+
+          Meteor.call(
+            'previousPasswords.remove',
+            passwordToRemove._id,
+            passwordToRemove.originalPasswordId ? passwordToRemove.originalPasswordId : passwordToRemove._id,
+            passwordToRemove.version
+          );
+
       }
       history.push( `${listPasswordsInFolderStart}${folderID}` );
     }
@@ -272,6 +376,10 @@ export default function PasswordView( props ) {
     return parseInt( score );
   }, [ password ] );
 
+  const getUser = (id) => {
+    const user = users.find(user => user._id === id);
+    return user ? user.label : "Unknown";
+  }
 
   const scoreTranslation = useCallback( () => {
     let result = {
@@ -301,11 +409,15 @@ export default function PasswordView( props ) {
     return <div></div>;
   }
 
-  const passwordCanBeEdited = folder.users.find( user => user._id === userId ).level <= 1 && password.version === 0 && !password.deletedDate;
-  const passwordCanBeRestored = folder.users.find( user => user._id === userId ).level <= 1 && password.version === 0 && password.deletedDate;
-  const passwordVersionCanBeRestored = folder.users.find( user => user._id === userId ).level <= 1 && password.version > 0;
+  const passwordCanBeEdited = folder.users.find( user => user._id === userId ).level <= 1 && !password.version && !password.deletedDate;
+  const passwordCanBeRestored = folder.users.find( user => user._id === userId ).level <= 1 && !password.version && password.deletedDate;
+  const passwordVersionCanBeRestored = folder.users.find( user => user._id === userId ).level <= 1 && password.version;
 
   const editedBy = password.editedBy ? dbUsers.find( user => user._id === password.editedBy ) : {};
+
+  if (passwordLoading){
+    return ( <Loader />)
+  }
 
   return (
     <Form columns={columns}>
@@ -326,20 +438,22 @@ export default function PasswordView( props ) {
             />
           <div>
             <label className="title">
-              {`Version from ${DateTime.fromSeconds(password.updatedDate).toFormat("dd.LL.y HH:mm")}`}
+              {`Version from ${DateTime.fromSeconds(password.updatedDate ? password.updatedDate : password.createdDate ).toFormat("dd.LL.y HH:mm")}`}
             </label>
             <label className="username">
-              {`Changed password ${editedBy ? editedBy.label : ""}`}
+              {`Changed password ${getUser(password.updatedBy ? password.updatedBy : password.editedBy)}`}
             </label>
           </div>
 
 
           {
+            usedPassword &&
             !usedPassword.deletedDate &&
             passwordVersionCanBeRestored &&
             <LinkButton
               onClick={(e) => {
-                e.preventDefault(); restorePasswordVersion();
+                e.preventDefault();
+                //restorePasswordVersion();
               }}
               >
               <img
@@ -354,7 +468,7 @@ export default function PasswordView( props ) {
 
 
         {
-          password.version === 0 &&
+          !password.version &&
           <span className="command-bar">
             <div className="command">
                 <BorderedFullButton
@@ -379,8 +493,6 @@ export default function PasswordView( props ) {
                 </BorderedFullButton>
               </div>
 
-            {
-              !password.deletedDate &&
                 <div className="command">
               <BorderedFullButton
                 fit={true}
@@ -392,10 +504,9 @@ export default function PasswordView( props ) {
                 }}
                 >
                 <img className="icon red" src={DeleteIcon} alt="delete" />
-                Delete
+                {`${password.deletedDate ? "Delete forever" : "Delete" }`}
               </BorderedFullButton>
             </div>
-            }
 
               {
                 !folder.deletedDate &&
@@ -434,6 +545,23 @@ export default function PasswordView( props ) {
                 </BorderedFullButton>
               </div>
               }
+
+              <div className="command">
+                  <BorderedFullButton
+                    fit={true}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowSharePasswordDialog(true);
+                    }}
+                    >
+                    <img
+                      src={SendIcon}
+                      alt=""
+                      className="icon"
+                      />
+                    Share
+                  </BorderedFullButton>
+                </div>
       </span>
     }
 
@@ -549,6 +677,38 @@ export default function PasswordView( props ) {
         </div>
       </section>
 
+      {
+        errorMessage.length > 0 &&
+      <section>
+        <label htmlFor="secretKey">Secret key</label>
+        <span>{errorMessage}</span>
+        <div>
+          <Input
+            type="text"
+            id="secretKey"
+            name="secretKey"
+            value={enteredSecretKey}
+            onChange={(e) => {
+              setEnteredSecretKey(e.target.value);
+            }}
+            />
+          <LinkButton
+            className="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              if (enteredSecretKey.length > 0) {
+                  setErrorMessage("");
+                  dispatch( setCurrentUserData( { secretKey: enteredSecretKey } ));
+                  toggleRevealPassword();
+              }
+            }}
+            >
+            <img className="icon" src={SendIcon} alt="Send" />
+          </LinkButton>
+        </div>
+      </section>
+    }
+
       <section>
         <label htmlFor="password">Password</label>
         <div>
@@ -563,7 +723,11 @@ export default function PasswordView( props ) {
             className="icon"
             onClick={(e) => {
               e.preventDefault();
-              toggleRevealPassword();
+              if (secretKey.length === 0){
+                toggleMissingSecretKey();
+              } else {
+                toggleRevealPassword();
+              }
             }}
             >
             <img className="icon" src={EyeIcon} alt="reveal pass" />
@@ -775,15 +939,26 @@ export default function PasswordView( props ) {
 
     {
       !password.deletedDate &&
+        !password.version &&
     <ItemContainer key={"history"}>
       <span
         style={{paddingLeft: "0px"}}
-        onClick={(e) => history.push(`/folders/${folderID}/${password.passwordId ? password.passwordId : password._id}/history`)}
+        onClick={(e) => history.push(`/folders/${folderID}/${password.originalPasswordId ? password.originalPasswordId : password._id}/history`)}
         >
           Password History
       </span>
     </ItemContainer>
     }
+
+    <Modal isOpen={showSharePasswordDialog} toggle={() => setShowSharePasswordDialog(false)}>
+      <ModalBody>
+        <SharePassword
+          {...props}
+          close={() => setShowSharePasswordDialog(false)}
+          />
+      </ModalBody>
+    </Modal>
+
     </Form>
   );
 };

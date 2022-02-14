@@ -5,7 +5,7 @@ import {
 export const encryptionSlice = createSlice( {
   name: 'encryptionData',
   initialState: {
-    value: "AAAAAAAAAAAAAAAAAAA",
+    value: "",
   },
   reducers: {
     setEncryptionData: ( state, action ) => {

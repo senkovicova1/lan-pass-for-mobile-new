@@ -12,11 +12,15 @@ import {
   ModalBody
 } from 'reactstrap';
 
-import { DeleteIcon, PencilIcon } from  "/imports/other/styles/icons";
+import { DeleteIcon, PencilIcon, UserIcon } from  "/imports/other/styles/icons";
 
 import AddUser from './addContainer';
 import EditUser from './editUserContainer';
+import Loader from '/imports/ui/other/loadingScreen';
 
+import {
+  uint8ArrayToImg
+} from '/imports/other/helperFunctions';
 
 import {
   List,
@@ -27,10 +31,38 @@ import {
 
 export default function UserList( props ) {
 
-  const users = useSelector((state) => state.users.value);
   const currentUser = useTracker( () => Meteor.user() );
 
   const [ chosenUser, setChosenUser ] = useState( null );
+
+  const { users, usersLoading } = useTracker(() => {
+    const noDataAvailable = { users: [], usersLoading: true };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+
+    const handler = Meteor.subscribe('users');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    let users = Meteor.users.find( {}, {
+    sort: {name: 1}
+  }).fetch();
+
+  users =  users.map( user =>  ({
+            _id: user._id,
+            ...user.profile,
+            email: user.emails[0].address,
+            label: `${user.profile.name} ${user.profile.surname}`,
+            value: user._id,
+            img: user.profile.avatar ? uint8ArrayToImg( user.profile.avatar ) : UserIcon
+          })
+         )
+
+    return {users, usersLoading: false};
+  });
 
   const deleteUser = (_id) => {
       if ( window.confirm( "Are you sure you want to remove this user?" ) ) {
@@ -44,6 +76,10 @@ export default function UserList( props ) {
 
   if (!userCanManageUsers){
     return <div></div>
+  }
+
+  if (usersLoading){
+    return ( <Loader />)
   }
 
   return (

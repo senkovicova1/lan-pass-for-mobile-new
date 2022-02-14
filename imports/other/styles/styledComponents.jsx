@@ -49,6 +49,13 @@ export const MainPage = styled.div `
     height: 32px;
     border-radius: 50px;
   }
+
+  .privateKey{
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    -ms-word-break: break-word;
+    word-break: break-word;
+  }
 `;
 
 export const MobilePageHeader = styled.header `
@@ -597,8 +604,14 @@ export const List = styled.section `
   margin: 0px auto !important;
 
   .command-bar{
-    display: flex;
-    align-items: center;
+    @media all and (max-width: 1299px), @media handheld {
+      display: block;
+    }
+    @media all and (min-width: 1300px) {
+      display: flex;
+      align-items: center;
+    }
+
     padding: 0px;
     margin-bottom: 1em;
   }
@@ -615,6 +628,12 @@ export const List = styled.section `
   .command>button{
     @media all and (max-width: 1299px), @media handheld {
     width: 100% !important;
+    justify-content: center;
+    }
+  }
+  .command>button>span{
+    @media all and (max-width: 1299px), @media handheld {
+    width: auto;
     }
   }
 
@@ -674,6 +693,10 @@ export const List = styled.section `
   button{
     margin: 0px;
     margin-right: 0.6em;
+  }
+
+  table tr{
+    border-bottom: 1px solid #d6d6d6;
   }
 `;
 
@@ -747,11 +770,10 @@ export const Form = styled.form `
     width: -webkit-fill-available;
   }
 
+
   .command-bar{
     @media all and (max-width: 1299px), @media handheld {
       display: block;
-      justify-content: space-between;
-      align-items: center;
     }
     @media all and (min-width: 1300px) {
       display: flex;
@@ -762,12 +784,24 @@ export const Form = styled.form `
   }
 
   .command{
-    button{
-      @media all and (max-width: 1299px), @media handheld {
-        margin: 0px;
-      }
-      @media all and (min-width: 1300px) {
-      }
+    @media all and (max-width: 1299px), @media handheld {
+      display: block;
+      margin-bottom: 1em;
+    }
+    @media all and (min-width: 1300px) {
+      display: inline-block;
+    }
+  }
+
+  .command>button{
+    @media all and (max-width: 1299px), @media handheld {
+      width: 100% !important;
+      justify-content: center;
+    }
+  }
+  .command>button>span{
+    @media all and (max-width: 1299px), @media handheld {
+      width: auto;
     }
   }
 
@@ -797,7 +831,7 @@ export const Form = styled.form `
       font-weight: 500;
     }
 
-    input[type=text], input[type=color], input[type=password], input[type=datetime-local], input[type=number], teaxtarea, &>div {
+    input[type=text], input[type=email], input[type=color], input[type=password], input[type=datetime-local], input[type=number], teaxtarea, &>div {
       width: -webkit-fill-available;
     }
 

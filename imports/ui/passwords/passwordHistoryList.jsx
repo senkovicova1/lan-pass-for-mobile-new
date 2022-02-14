@@ -20,12 +20,12 @@ import {
 } from '/imports/redux/metadataSlice';
 
 import {
-  selectStyle
-} from '/imports/other/styles/selectStyles';
+  PreviousPasswordsCollection
+} from '/imports/api/previousPasswordsCollection';
 
 import {
-  PasswordsCollection
-} from '/imports/api/passwordsCollection';
+  selectStyle
+} from '/imports/other/styles/selectStyles';
 
 import {
   BackIcon,
@@ -61,8 +61,6 @@ export default function PasswordHistoryList( props ) {
 
   const userId = Meteor.userId();
 
-  const dbUsers = useSelector( ( state ) => state.users.value );
-
   const {passwordID, folderID} = match.params;
 
   const folders = useSelector( ( state ) => state.folders.value );
@@ -73,70 +71,77 @@ export default function PasswordHistoryList( props ) {
     return {};
   }, [ folders, folderID ] );
 
-  const passwords = useTracker( () => PasswordsCollection.find( {
-    $or: [
-      {_id: passwordID},
-      {passwordId: passwordID}
-    ]
-  }, {
-    sort: {
-      version: -1
+  const { previousVersions } = useTracker(() => {
+    const noDataAvailable = { previousVersions: [] };
+    if (!Meteor.user()) {
+      return noDataAvailable;
     }
-  } ).fetch() );
-  const usedVersion = passwords.find( pass => pass.version === 0 );
-  const previousVersions = passwords.filter( pass => pass.version > 0 ).sort( ( p1, p2 ) => p1 > p2 ? 1 : -1 ).map( pass => ( {
-    ...pass,
-    editedBy: dbUsers.find( user => user._id === pass.editedBy )
-  } ) );
+    const handler = Meteor.subscribe('previousPasswords');
 
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    const previousVersions = PreviousPasswordsCollection.find(
+      {
+      originalPasswordId: passwordID
+        },{
+      sort: {
+        version: 1
+      }
+    } ).fetch()
+
+    return { previousVersions };
+  });
+
+  const { users, usersLoading } = useTracker(() => {
+    const noDataAvailable = { users: [], usersLoading: true };
+    if (!Meteor.user()) {
+      return noDataAvailable;
+    }
+
+    const handler = Meteor.subscribe('users');
+
+    if (!handler.ready()) {
+      return noDataAvailable;
+    }
+
+    let users = Meteor.users.find( {}, {
+    sort: {name: 1}
+  }).fetch();
+
+  users =  users.map( user =>  ({
+            _id: user._id,
+            ...user.profile,
+            email: user.emails[0].address,
+            label: `${user.profile.name} ${user.profile.surname}`,
+            value: user._id,
+          })
+         )
+
+    return {users, usersLoading: false};
+  });
 
   const restorePassword = ( password ) => {
     if ( window.confirm( "Are you sure you want to restore this version?" ) ) {
-      const passwordId = password.passwordId ? password.passwordId : password._id;
 
-      PasswordsCollection.insert( {
-        title: password.title,
-        username: password.username,
-        password: password.password,
-        quality: password.quality,
-        note: password.note,
-        expires: password.expires,
-        expireDate: password.expireDate,
-        folder: password.folder,
-        createdDate: password.createdDate,
-        version: 0,
-        updatedDate: parseInt(DateTime.now().toSeconds()),
-        passwordId,
-      } );
-
-      passwords.forEach( ( pass, index ) => {
-        if ( pass.version >= 20 ) {
-          PasswordsCollection.remove( {
-            _id: pass._id
-          } );
-        } else {
-          if ( pass.version === 0 ) {
-            PasswordsCollection.update( pass._id, {
-              $inc: {
-                version: 1
-              },
-              $set: {
-                editedBy: userId
-              }
-            } );
-          } else {
-            PasswordsCollection.update( pass._id, {
-              $inc: {
-                version: 1
-              }
-            } );
-          }
-        }
-      } );
+          Meteor.call(
+            'passwords.handleRestore',
+            {
+              ...password,
+              updatedDate: parseInt(DateTime.now().toSeconds()),
+              updatedBy: userId,
+            },
+          );
 
       history.push( `${listPasswordsInFolderStart}${folderID}` );
     }
   };
+
+  const getUser = (id) => {
+    const user = users.find(user => user._id === id);
+    return user ? user.label : "Unknown";
+  }
 
   const userCanRestorePassword = () => {
     return folder.users.find( user => user._id === userId )?.level <= 1;
@@ -188,14 +193,14 @@ export default function PasswordHistoryList( props ) {
                 history.push(`${viewPasswordStart}${folderID}/version/${password._id}`);
               }}>
               <label className="title">
+                {`${password.title}`}
                 {`Version from ${DateTime.fromSeconds(password.updatedDate).toFormat("dd.LL.y HH:mm")}`}
               </label>
               <label className="username">
-                {`Changed password ${password.editedBy ? password.editedBy.label : ""}`}
+                {`Changed password ${getUser(password.updatedBy ? password.updatedBy : password.editedBy)}`}
               </label>
             </div>
             {
-              !usedVersion.deletedDate &&
               userCanRestorePassword &&
               <LinkButton onClick={(e) => {e.preventDefault(); restorePassword(password);}}>
                 <img
