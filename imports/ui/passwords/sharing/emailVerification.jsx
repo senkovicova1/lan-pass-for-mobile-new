@@ -108,7 +108,7 @@ export default function EmailVerification( props ) {
   const sendMail = (code) => {
     const subject = `Verification code for lanPass password`;
     const object = `Greetings, your verification code is: ${code}`;
-
+    
       Meteor.call(
       'sendEmail',
       `<${sharingData.email}>`,
@@ -137,7 +137,7 @@ export default function EmailVerification( props ) {
   }
 
   if (verificationSuccessful){
-    return (<SharedPasswordView {...props} passwordId={sharingData.passwordId} />)
+    return (<SharedPasswordView {...props} sharingData={sharingData} />)
   }
 
   return (

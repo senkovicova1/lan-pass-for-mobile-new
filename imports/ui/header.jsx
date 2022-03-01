@@ -50,6 +50,7 @@ import {
   editCurrentUser,
   editFolderStart,
   login,
+  listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
 export default function Header( props ) {
@@ -68,24 +69,30 @@ export default function Header( props ) {
   const {
     layout,
   } = useSelector( ( state ) => state.metadata.value );
-    const {
-      folderID,
-    } = match.params;
-    const folders = useSelector( ( state ) => state.folders.value );
+  const {
+    folderID,
+  } = match.params;
+  const folders = useSelector( ( state ) => state.folders.value );
 
   const [ title, setTitle ] = useState( "LanPass" );
   const [ openSidebar, setOpenSidebar ] = useState( true );
   const [ openSort, setOpenSort ] = useState( false );
 
-  const { folder, folderLoading } = useTracker(() => {
-    const noDataAvailable = { folder: null, folderLoading: true };
-    if (!Meteor.user()) {
+  const {
+    folder,
+    folderLoading
+  } = useTracker( () => {
+    const noDataAvailable = {
+      folder: null,
+      folderLoading: true
+    };
+    if ( !Meteor.user() ) {
       return noDataAvailable;
     }
 
-    const handler = Meteor.subscribe('folders');
+    const handler = Meteor.subscribe( 'folders' );
 
-    if (!handler.ready()) {
+    if ( !handler.ready() ) {
       return noDataAvailable;
     }
 
@@ -93,18 +100,21 @@ export default function Header( props ) {
       _id: folderID
     } );
 
-    return {folder, folderLoading: false};
-  });
+    return {
+      folder,
+      folderLoading: false
+    };
+  } );
 
   useEffect( () => {
-    if ( window.innerWidth >= 800) {
+    if ( window.innerWidth >= 800 && currentUser && currentUser.profile.hasSecretKey && !props.location.pathname.includes( "sharing" ) ) {
       setParentOpenSidebar( true );
       setOpenSidebar( true );
     } else {
       setOpenSidebar( false );
       setParentOpenSidebar( false );
     }
-  }, [ window.innerWidth ] );
+  }, [currentUser?.profile.hasSecretKey] );
 
   useEffect( () => {
     if ( location.pathname === deletedFolders ) {
@@ -124,7 +134,7 @@ export default function Header( props ) {
     }
   }, [ folderID, location.pathname, folder ] );
 
-  useEffect(() => {
+  useEffect( () => {
     document.addEventListener( "click", ( evt ) => {
       let targetElement = evt.target; // clicked element
       const itemsInMenu = [
@@ -140,12 +150,12 @@ export default function Header( props ) {
         "columns-layout",
         "columns-layout-label",
       ];
-      if (!itemsInMenu.includes(targetElement.id) && !targetElement.id.includes("order") && !targetElement.id.includes("label")){
-        setOpenSort(false);
+      if ( !itemsInMenu.includes( targetElement.id ) && !targetElement.id.includes( "order" ) && !targetElement.id.includes( "label" ) ) {
+        setOpenSort( false );
         return;
       }
     } );
-  }, []);
+  }, [] );
 
   const logout = () => {
     dispatch( setFolders( [] ) );
@@ -159,17 +169,19 @@ export default function Header( props ) {
     return uint8ArrayToImg( currentUser.profile.avatar );
   }, [ currentUser ] );
 
-    const folderCanBeEdited = folder?.users.find( user => user._id === currentUser._id ).level === 0;
+  const folderCanBeEdited = folder?.users.find( user => user._id === currentUser._id ).level === 0;
 
   const menuBtnComponent = () => {
-    if (currentUser){
+    if ( currentUser ) {
       return (
         <LinkButton
           font="white"
           onClick={(e) => {
             e.preventDefault();
-            setOpenSidebar(!openSidebar);
-            setParentOpenSidebar(!openSidebar);
+            if ( currentUser.profile.hasSecretKey){
+              setOpenSidebar(!openSidebar);
+              setParentOpenSidebar(!openSidebar);
+            }
           }}
           >
           <img
@@ -190,7 +202,7 @@ export default function Header( props ) {
   }
 
   const sortAndLayoutBtnComponent = () => {
-    if (currentUser){
+    if ( currentUser ) {
       return (
         <LinkButton
           font="white"
@@ -216,18 +228,18 @@ export default function Header( props ) {
   return (
     <PageHeader openSidebar={openSidebar} columns={layout === COLUMNS}>
 
+      {
+        !location.pathname.includes("sharing") &&
         <section className="header-section-left">
-          {
-          !location.pathname.includes("sharing") &&
-            menuBtnComponent()
-          }
+          {menuBtnComponent()}
         </section>
+      }
 
       {
         window.innerWidth >= 800 &&
         <section
           className="header-section-center"
-          style={location.pathname.includes("sharing") ? {width: "1000px",  justifyContent: "space-between", paddingRight: "15px"} : {}}>
+          style={location.pathname.includes("sharing") ? {width: "1000px",  justifyContent: "space-between", paddingRight: "15px", marginRight: "auto", marginLeft: "auto"} : {}}>
           {
             titleComponent()
           }
@@ -256,82 +268,82 @@ export default function Header( props ) {
 
       {
         window.innerWidth < 800 &&
-          titleComponent()
+        titleComponent()
       }
 
       {
-      !location.pathname.includes("sharing") &&
+        !location.pathname.includes("sharing") &&
         window.innerWidth >= 800 &&
         <section className="header-section-right" style={{justifyContent: "flex-end"}}>
           {
             sortAndLayoutBtnComponent()
           }
 
-                  {
-                    currentUser &&
-                    !match.params.passwordID &&
-                    <LinkButton
-                      font="white"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        history.push(editCurrentUser);
-                      }}
-                      >
-                      {
-                        avatar &&
-                        <img className="avatar" src={avatar} alt="assignedAvatar" />
-                      }
-                      {
-                        !avatar &&
-                        <img className="icon" src={UserIcon} alt="assignedAvatar" />
-                      }
-                    </LinkButton>
-                  }
+          {
+            currentUser &&
+            !match.params.passwordID &&
+            <LinkButton
+              font="white"
+              onClick={(e) => {
+                e.preventDefault();
+                history.push(editCurrentUser);
+              }}
+              >
+              {
+                avatar &&
+                <img className="avatar" src={avatar} alt="assignedAvatar" />
+              }
+              {
+                !avatar &&
+                <img className="icon" src={UserIcon} alt="assignedAvatar" />
+              }
+            </LinkButton>
+          }
 
-                  {
-                    folderID &&
-                    currentUser &&
-                    folderCanBeEdited &&
-                    !location.pathname.includes("edit") &&
-                    !location.pathname.includes("password") &&
-                    !match.params.passwordID &&
-                    <LinkButton
-                      font="white"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        history.push(`${editFolderStart}${folderID}`);
-                      }}
-                      >
-                      <img
-                        className="icon"
-                        src={SettingsIcon}
-                        alt="Settings icon not found"
-                        />
-                    </LinkButton>
-                  }
+          {
+            folderID &&
+            currentUser &&
+            folderCanBeEdited &&
+            !location.pathname.includes("edit") &&
+            !location.pathname.includes("password") &&
+            !match.params.passwordID &&
+            <LinkButton
+              font="white"
+              onClick={(e) => {
+                e.preventDefault();
+                history.push(`${editFolderStart}${folderID}`);
+              }}
+              >
+              <img
+                className="icon"
+                src={SettingsIcon}
+                alt="Settings icon not found"
+                />
+            </LinkButton>
+          }
 
-                  {
-                    currentUser &&
-                    <LinkButton
-                      font="white"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        props.history.push(login);
-                        logout();
-                      }}
-                      >
-                      <img
-                        className="icon"
-                        src={LogoutIcon}
-                        alt="Logout icon not found"
-                        />
-                    </LinkButton>
-                  }
+          {
+            currentUser &&
+            <LinkButton
+              font="white"
+              onClick={(e) => {
+                e.preventDefault();
+                props.history.push(login);
+                logout();
+              }}
+              >
+              <img
+                className="icon"
+                src={LogoutIcon}
+                alt="Logout icon not found"
+                />
+            </LinkButton>
+          }
         </section>
       }
 
       {
-      !location.pathname.includes("sharing") &&
+        !location.pathname.includes("sharing") &&
         window.innerWidth < 800 &&
         <section className="header-section-right" style={{justifyContent: "flex-end"}}>
           {
@@ -340,18 +352,19 @@ export default function Header( props ) {
         </section>
       }
 
-        {
-          openSidebar &&
-          currentUser &&
-          !location.pathname.includes("sharing") &&
-          <Menu {...props} closeSelf={() => setOpenSidebar(false)}/>
-        }
-
-        {
+      {
+        openSidebar &&
+        currentUser &&
+        currentUser.profile.hasSecretKey &&
         !location.pathname.includes("sharing") &&
-          openSort &&
-          <SortAndLayout {...props} setOpenSort={setOpenSort} />
-        }
+        <Menu {...props} closeSelf={() => setOpenSidebar(false)}/>
+      }
+
+      {
+        !location.pathname.includes("sharing") &&
+        openSort &&
+        <SortAndLayout {...props} setOpenSort={setOpenSort} />
+      }
 
     </PageHeader>
   )

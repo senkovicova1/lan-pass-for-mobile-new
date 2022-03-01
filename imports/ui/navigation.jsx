@@ -18,10 +18,6 @@ import {
 } from 'meteor/react-meteor-data';
 
 import {
-  MetaCollection
-} from '/imports/api/metaCollection';
-
-import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
 
@@ -34,10 +30,6 @@ import {
 } from '/imports/redux/passwordsSlice';
 
 import {
-  setEncryptionData
-} from '/imports/redux/encryptionSlice';
-
-import {
   setUsers
 } from '/imports/redux/usersSlice';
 
@@ -45,6 +37,7 @@ import Reroute from '/imports/ui/reroute';
 import Header from '/imports/ui/header';
 import Login from '/imports/ui/login';
 import EmailVerification from '/imports/ui/passwords/sharing/emailVerification';
+import VerifySecretKey from '/imports/ui/users/verifySecretKey';
 import FolderList from '/imports/ui/folders/folderList';
 import FolderAdd from '/imports/ui/folders/addFolderContainer';
 import FolderEdit from '/imports/ui/folders/editFolderContainer';
@@ -54,6 +47,7 @@ import PasswordView from '/imports/ui/passwords/view';
 import PasswordHistoryList from '/imports/ui/passwords/passwordHistoryList';
 import EditUserContainer from '/imports/ui/users/editUserContainer';
 import UsersList from '/imports/ui/users/list';
+import CreateSecretKey from '/imports/ui/users/createSecretKey';
 
 import {
   Content
@@ -95,52 +89,50 @@ export default function MainPage( props ) {
 
   const currentUser = useTracker( () => Meteor.user() );
   const userId = currentUser ? currentUser._id : null;
-  const layout = useSelector( ( state ) => state.metadata.value ).layout;
+  const {
+    layout
+  } = useSelector( ( state ) => state.metadata.value );
+  const {
+    secretKey,
+    secretKeyVerified
+  } = useSelector( ( state ) => state.currentUserData.value );
 
-  // TODO: remove encryption data
-  const { encryptionData } = useTracker(() => {
-    const noDataAvailable = { encryptionData: {} };
-
-    const handler = Meteor.subscribe('metadata');
-
-    if (!handler.ready()) {
+  const {
+    folders,
+    foldersLoading
+  } = useTracker( () => {
+    const noDataAvailable = {
+      folders: [],
+      foldersLoading: true
+    };
+    if ( !Meteor.user() ) {
       return noDataAvailable;
     }
 
-    const encryptionData = MetaCollection.find({}).fetch();
+    const handler = Meteor.subscribe( 'folders' );
 
-    return { encryptionData };
-  });
-
-  const { folders, foldersLoading } = useTracker(() => {
-    const noDataAvailable = { folders: [], foldersLoading: true };
-    if (!Meteor.user()) {
-      return noDataAvailable;
-    }
-
-    const handler = Meteor.subscribe('folders');
-
-    if (!handler.ready()) {
+    if ( !handler.ready() ) {
       return noDataAvailable;
     }
 
     const folders = FoldersCollection.find( {
-    users: {
-      $elemMatch: {
-        _id: userId
+      users: {
+        $elemMatch: {
+          _id: userId
+        }
+      },
+      deletedDate: null
+    }, {
+      sort: {
+        name: 1
       }
-    },
-    deletedDate: null
-  }, {
-    sort: {name: 1}
-  }).fetch();
+    } ).fetch();
 
-    return {folders, foldersLoading: false};
-  });
-
-  useEffect( () => {
-      dispatch( setEncryptionData( encryptionData[0] ) );
-  }, [ encryptionData ] );
+    return {
+      folders,
+      foldersLoading: false
+    };
+  } );
 
   useEffect( () => {
     if ( folders.length > 0 ) {
@@ -148,11 +140,13 @@ export default function MainPage( props ) {
         ...folder,
         label: folder.name,
         value: folder._id
-      } ) )));
+      } ) ) ) );
     } else {
       dispatch( setFolders( [] ) );
     }
   }, [ folders ] );
+
+  const actualOpenSidebar = !currentUser ? false : openSidebar;
 
   return (
     <div style={{height: "100vh"}}>
@@ -214,8 +208,31 @@ export default function MainPage( props ) {
         }
         {
           currentUser &&
+          !currentUser.profile.hasSecretKey &&
+          <Content withSidebar={false} columns={layout === COLUMNS}>
+            <Route
+              path={"/"}
+              component={CreateSecretKey}
+              />
+          </Content>
+        }
+        {
+          currentUser &&
+          secretKey.length > 0 &&
+          !secretKeyVerified &&
+          <Content withSidebar={false} columns={layout === COLUMNS}>
+            <Route
+              path={"/"}
+              component={VerifySecretKey}
+              />
+          </Content>
+        }
+        {
+          currentUser &&
+          currentUser.profile.hasSecretKey &&
           <Content withSidebar={openSidebar} columns={layout === COLUMNS}>
             <div style={{height: "100%", position: "relative"}}>
+
 
               <Route exact path={sharingPassword} component={EmailVerification} />
 

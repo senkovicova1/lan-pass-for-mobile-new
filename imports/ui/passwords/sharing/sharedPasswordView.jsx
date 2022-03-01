@@ -34,7 +34,7 @@ export default function SharedPasswordView( props ) {
 
   const {
     match,
-    passwordId
+    sharingData
   } = props;
 
     const [ revealPassword, setRevealPassword ] = useState( false );
@@ -43,68 +43,48 @@ export default function SharedPasswordView( props ) {
 
     let timeout = null;
 
-  const encryptionData = useSelector( ( state ) => state.encryptionData.value );
+    const { password, passwordLoading } = useTracker(() => {
+      const noDataAvailable = { password: {}, passwordLoading: true };
 
-  const { password } = useTracker(() => {
-    const noDataAvailable = { password: null };
-    const handler = Meteor.subscribe('passwords');
+      const handler = Meteor.subscribe('passwords');
 
-    if (!handler.ready()) {
-      return noDataAvailable;
-    }
-
-    const password = PasswordsCollection.findOne(
-       {
-         _id: passwordId
-       },
-       {
-      fields: {
-        title: 1,
-        username: 1,
-        password: 1,
+      if (!handler.ready()) {
+        return noDataAvailable;
       }
+
+      const password = PasswordsCollection.findOne( {_id: sharingData.passwordId} )
+
+      return { password, passwordLoading: false };
+    });
+
+    const decryptStringWithXORtoHex = (text, key) => {
+      let c = "";
+      let usedKey = key;
+
+      while (usedKey.length < (text.length/2)) {
+           usedKey += usedKey;
+      }
+
+      for (var j = 0; j < text.length; j = j+2) {
+        let hexValueString = text.substring(j, j+2);
+
+        let value1 = parseInt(hexValueString, 16);
+        let value2 = usedKey.charCodeAt(j/2);
+
+        let xorValue = value1 ^ value2;
+        c += String.fromCharCode(xorValue) + "";
+      }
+
+      return c;
     }
-     );
 
-    return { password };
-  });
-
-    async function toggleRevealPassword(){
+    const toggleRevealPassword = () => {
       setRevealPassword( !revealPassword );
       if (decryptedPassword.length === 0){
-        const decrypted = await decryptPassword(password.password);
+        const decrypted = decryptStringWithXORtoHex(sharingData.password, sharingData._id);
         setDecryptedPassword(decrypted);
       }
     }
-
-  async function decryptPassword(text){
-    if (!encryptionData){
-      return [];
-    }
-    const symetricKey = await crypto.subtle.importKey(
-      "raw",
-        encryptionData.symetricKey,
-        encryptionData.algorithm,
-      true,
-      ["encrypt", "decrypt"]
-    );
-
-    let decryptedText = null;
-    await window.crypto.subtle.decrypt(
-      encryptionData.algorithm,
-      symetricKey,
-      text
-    )
-    .then(function(decrypted){
-      decryptedText = decrypted;
-    })
-    .catch(function(err){
-      console.error(err);
-    });
-    let dec = new TextDecoder();
-    const decryptedValue = dec.decode(decryptedText);
-    return decryptedValue;
-  }
 
   if (!password){
     return (

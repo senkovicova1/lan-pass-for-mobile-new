@@ -46,7 +46,9 @@ import {
   viewPasswordStart,
 } from "/imports/other/navigationLinks";
 
-const { DateTime } = require("luxon");
+const {
+  DateTime
+} = require( "luxon" );
 
 export default function PasswordHistoryList( props ) {
 
@@ -61,7 +63,10 @@ export default function PasswordHistoryList( props ) {
 
   const userId = Meteor.userId();
 
-  const {passwordID, folderID} = match.params;
+  const {
+    passwordID,
+    folderID
+  } = match.params;
 
   const folders = useSelector( ( state ) => state.folders.value );
   const folder = useMemo( () => {
@@ -71,76 +76,90 @@ export default function PasswordHistoryList( props ) {
     return {};
   }, [ folders, folderID ] );
 
-  const { previousVersions } = useTracker(() => {
-    const noDataAvailable = { previousVersions: [] };
-    if (!Meteor.user()) {
+  const {
+    previousVersions
+  } = useTracker( () => {
+    const noDataAvailable = {
+      previousVersions: []
+    };
+    if ( !Meteor.user() ) {
       return noDataAvailable;
     }
-    const handler = Meteor.subscribe('previousPasswords');
+    const handler = Meteor.subscribe( 'previousPasswords' );
 
-    if (!handler.ready()) {
+    if ( !handler.ready() ) {
       return noDataAvailable;
     }
 
-    const previousVersions = PreviousPasswordsCollection.find(
-      {
+    const previousVersions = PreviousPasswordsCollection.find( {
       originalPasswordId: passwordID
-        },{
+    }, {
       sort: {
         version: 1
       }
     } ).fetch()
 
-    return { previousVersions };
-  });
+    return {
+      previousVersions
+    };
+  } );
 
-  const { users, usersLoading } = useTracker(() => {
-    const noDataAvailable = { users: [], usersLoading: true };
-    if (!Meteor.user()) {
+  const {
+    users,
+    usersLoading
+  } = useTracker( () => {
+    const noDataAvailable = {
+      users: [],
+      usersLoading: true
+    };
+    if ( !Meteor.user() ) {
       return noDataAvailable;
     }
 
-    const handler = Meteor.subscribe('users');
+    const handler = Meteor.subscribe( 'users' );
 
-    if (!handler.ready()) {
+    if ( !handler.ready() ) {
       return noDataAvailable;
     }
 
     let users = Meteor.users.find( {}, {
-    sort: {name: 1}
-  }).fetch();
+      sort: {
+        name: 1
+      }
+    } ).fetch();
 
-  users =  users.map( user =>  ({
-            _id: user._id,
-            ...user.profile,
-            email: user.emails[0].address,
-            label: `${user.profile.name} ${user.profile.surname}`,
-            value: user._id,
-          })
-         )
+    users = users.map( user => ( {
+      _id: user._id,
+      ...user.profile,
+      email: user.emails[ 0 ].address,
+      label: `${user.profile.name} ${user.profile.surname}`,
+      value: user._id,
+    } ) )
 
-    return {users, usersLoading: false};
-  });
+    return {
+      users,
+      usersLoading: false
+    };
+  } );
 
   const restorePassword = ( password ) => {
     if ( window.confirm( "Are you sure you want to restore this version?" ) ) {
 
-          Meteor.call(
-            'passwords.handleRestore',
-            {
-              ...password,
-              updatedDate: parseInt(DateTime.now().toSeconds()),
-              updatedBy: userId,
-            },
-          );
+      Meteor.call(
+        'passwords.handleRestore', {
+          ...password,
+          updatedDate: parseInt( DateTime.now().toSeconds() ),
+          updatedBy: userId,
+        },
+      );
 
       history.push( `${listPasswordsInFolderStart}${folderID}` );
     }
   };
 
-  const getUser = (id) => {
-    const user = users.find(user => user._id === id);
-    return user ? user.label : "Unknown";
+  const getUser = ( id ) => {
+    const user = users.find( user => user._id === id );
+    return user?user.label : "Unknown";
   }
 
   const userCanRestorePassword = () => {
@@ -153,27 +172,27 @@ export default function PasswordHistoryList( props ) {
       <h2>Previous versions</h2>
 
       <div className="command-bar">
-          <BorderedLinkButton
-            left
-            onClick={(e) => {
-              e.preventDefault();
-              history.goBack();
-            }}
-            >
-            <img
-              src={BackIcon}
-              alt=""
-              className="icon"
-              />
-            Back
-          </BorderedLinkButton>
+        <BorderedLinkButton
+          left
+          onClick={(e) => {
+            e.preventDefault();
+            history.goBack();
+          }}
+          >
+          <img
+            src={BackIcon}
+            alt=""
+            className="icon"
+            />
+          Back
+        </BorderedLinkButton>
       </div>
 
       {
         previousVersions.length === 0 &&
         <Card>
-        <span className="message">There are no previous versions.</span>
-      </Card>
+          <span className="message">There are no previous versions.</span>
+        </Card>
       }
 
       {
@@ -213,7 +232,6 @@ export default function PasswordHistoryList( props ) {
           </PasswordContainer>
         ))
       }
-
 
     </List>
   );

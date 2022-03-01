@@ -14,7 +14,10 @@ import {
   ModalBody
 } from 'reactstrap';
 
-import { CSVLink, CSVDownload } from "react-csv";
+import {
+  CSVLink,
+  CSVDownload
+} from "react-csv";
 
 import Select from 'react-select';
 
@@ -64,7 +67,9 @@ import {
   listPasswordsInFolderStart,
 } from "/imports/other/navigationLinks";
 
-const { DateTime } = require("luxon");
+const {
+  DateTime
+} = require( "luxon" );
 
 export default function PasswordList( props ) {
 
@@ -79,76 +84,75 @@ export default function PasswordList( props ) {
     passwords
   } = props;
 
-const userId = Meteor.userId();
+  const userId = Meteor.userId();
 
-const {
-  folderID,
-  passwordID
-} = match.params;
+  const {
+    folderID,
+    passwordID
+  } = match.params;
 
   const isGlobalSearch = folderID === "search";
 
-const {
-  search,
-  sortBy,
-  sortDirection
-} = useSelector( ( state ) => state.metadata.value );
+  const {
+    search,
+    sortBy,
+    sortDirection
+  } = useSelector( ( state ) => state.metadata.value );
 
-const [ showImportDialog, setShowImportDialog ] = useState(false);
-const [ showExportDialog, setShowExportDialog ] = useState(false);
+  const [ showImportDialog, setShowImportDialog ] = useState( false );
+  const [ showExportDialog, setShowExportDialog ] = useState( false );
 
-const folders = useSelector( ( state ) => state.folders.value );
-let folder = useSelector( ( state ) => state.metadata.value ).selectedFolder;
+  const folders = useSelector( ( state ) => state.folders.value );
+  let folder = useSelector( ( state ) => state.metadata.value ).selectedFolder;
 
-if (!folder && folders.length > 0){
-  folder = folders.find(f => f._id === folderID);
-}
-
-const searchedPasswords = useMemo( () => {
-  if (isGlobalSearch){
-    return search.length ? passwords.filter( password =>
-      password.title?.toLowerCase().includes( search.toLowerCase() ) ||
-      password.username?.toLowerCase().includes( search.toLowerCase() ) ||
-      password.url?.toLowerCase().includes( search.toLowerCase() )
-    ) : [];
+  if ( !folder && folders.length > 0 ) {
+    folder = folders.find( f => f._id === folderID );
   }
-  return passwords.filter( password => password.title.toLowerCase().includes( search.toLowerCase() ) || password.username.toLowerCase().includes( search.toLowerCase() ) );
-}, [ passwords, search ] );
 
-const passwordsWithFolders = useMemo( () => {
-  if (isGlobalSearch){
-    return searchedPasswords.map(password => ({
-      ...password,
-      folder: folders.find(folder => folder._id === password.folder)
-    }));
-  }
-  return searchedPasswords;
-}, [ searchedPasswords, folders ] );
+  const searchedPasswords = useMemo( () => {
+    if ( isGlobalSearch ) {
+      return search.length?passwords.filter( password =>
+        password.title?.toLowerCase().includes( search.toLowerCase() ) ||
+        password.username?.toLowerCase().includes( search.toLowerCase() ) ||
+        password.url?.toLowerCase().includes( search.toLowerCase() )
+      ) : [];
+    }
+    return passwords.filter( password => password.title.toLowerCase().includes( search.toLowerCase() ) || password.username.toLowerCase().includes( search.toLowerCase() ) );
+  }, [ passwords, search ] );
 
-const sortedPasswords = useMemo( () => {
-  const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
-  return passwordsWithFolders
-    .sort( ( p1, p2 ) => {
-      if ( sortBy === "date" ) {
-        return p1.createdDate < p2.createdDate ? 1 * multiplier : ( -1 ) * multiplier;
-      }
-      return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1 * multiplier : ( -1 ) * multiplier;
-    } );
-}, [ passwordsWithFolders, sortBy, sortDirection ] );
+  const passwordsWithFolders = useMemo( () => {
+    if ( isGlobalSearch ) {
+      return searchedPasswords.map( password => ( {
+        ...password,
+        folder: folders.find( folder => folder._id === password.folder )
+      } ) );
+    }
+    return searchedPasswords;
+  }, [ searchedPasswords, folders ] );
+
+  const sortedPasswords = useMemo( () => {
+    const multiplier = !sortDirection || sortDirection === "asc" ? -1 : 1;
+    return passwordsWithFolders
+      .sort( ( p1, p2 ) => {
+        if ( sortBy === "date" ) {
+          return p1.createdDate < p2.createdDate ? 1 * multiplier : ( -1 ) * multiplier;
+        }
+        return p1.title.toLowerCase() < p2.title.toLowerCase() ? 1 * multiplier : ( -1 ) * multiplier;
+      } );
+  }, [ passwordsWithFolders, sortBy, sortDirection ] );
 
   const restoreFolder = () => {
     if ( window.confirm( "Are you sure you want to restore this folder?" ) ) {
 
-          Meteor.call(
-            'folders.restoreFolder',
-            folderID,
-            (err, response) => {
-            if (err) {
-            } else if (response) {
-              history.push( `${listPasswordsInFolderStart}${folderID}` );
-            }
+      Meteor.call(
+        'folders.restoreFolder',
+        folderID,
+        ( err, response ) => {
+          if ( err ) {} else if ( response ) {
+            history.push( `${listPasswordsInFolderStart}${folderID}` );
           }
-          );
+        }
+      );
 
     }
   };
@@ -156,10 +160,10 @@ const sortedPasswords = useMemo( () => {
   const permanentlyDeleteFolder = () => {
     if ( window.confirm( "Are you sure you want to permanently remove this folder and all passwords in it?" ) ) {
 
-        Meteor.call(
-          'folders.permanentlyDeleteFolder',
-          folderID
-        );
+      Meteor.call(
+        'folders.permanentlyDeleteFolder',
+        folderID
+      );
 
       const passwordsToRemove = passwords.filter( pass => pass.folder === folderID );
       passwordsToRemove.forEach( ( pass, index ) => {
@@ -178,17 +182,16 @@ const sortedPasswords = useMemo( () => {
   const leaveFolder = () => {
     if ( folder && window.confirm( "Are you sure you want to remove yourself from this folder?" ) ) {
 
-          Meteor.call(
-            'folders.changeUsers',
-            folderID,
-            folder.users.filter( u => u._id !== userId ),
-            (err, response) => {
-            if (err) {
-            } else if (response) {
-              history.push( `` );
-            }
+      Meteor.call(
+        'folders.changeUsers',
+        folderID,
+        folder.users.filter( u => u._id !== userId ),
+        ( err, response ) => {
+          if ( err ) {} else if ( response ) {
+            history.push( `` );
           }
-          );
+        }
+      );
 
     }
   };
@@ -214,7 +217,7 @@ const sortedPasswords = useMemo( () => {
   }
 
   const yellowMatch = ( string, title, emptyString ) => {
-    if (!string || string.length === 0){
+    if ( !string || string.length === 0 ) {
       return `${title}: ${emptyString}`;
     }
     if ( search.length === 0 || !string.toLowerCase().includes( search.toLowerCase() ) ) {
@@ -247,161 +250,161 @@ const sortedPasswords = useMemo( () => {
 
       <span className="command-bar" style={{marginBottom: "1em", marginTop: "1em"}}>
         <div className="command">
-            <SearchSection>
-              <LinkButton
-                font="#0078d4"
-                searchButton
-                onClick={(e) => {}}
-                >
-                <img
-                  className="search-icon"
-                  src={SearchIcon}
-                  alt="Search icon not found"
-                  />
-              </LinkButton>
-              <Input
-                placeholder="Search"
-                value={search}
-                onChange={(e) => dispatch(setSearch(e.target.value))}
+          <SearchSection>
+            <LinkButton
+              font="#0078d4"
+              searchButton
+              onClick={(e) => {}}
+              >
+              <img
+                className="search-icon"
+                src={SearchIcon}
+                alt="Search icon not found"
                 />
-              <LinkButton
-                font="#0078d4"
-                searchButton
-                onClick={(e) => {
-                  e.preventDefault();
-                  dispatch(setSearch(""));
-                }}
-                >
-                <img
-                  className="search-icon"
-                  src={CloseIcon}
-                  alt="Close icon not found"
-                  />
-              </LinkButton>
-            </SearchSection>
+            </LinkButton>
+            <Input
+              placeholder="Search"
+              value={search}
+              onChange={(e) => dispatch(setSearch(e.target.value))}
+              />
+            <LinkButton
+              font="#0078d4"
+              searchButton
+              onClick={(e) => {
+                e.preventDefault();
+                dispatch(setSearch(""));
+              }}
+              >
+              <img
+                className="search-icon"
+                src={CloseIcon}
+                alt="Close icon not found"
+                />
+            </LinkButton>
+          </SearchSection>
+        </div>
+
+        {
+          !isGlobalSearch &&
+          active &&
+          match.params.folderID &&
+          !folder.deletedDate &&
+          canAddPasswords &&
+          <div className="command">
+            <BorderedFullButton
+              fit={true}
+              onClick={() => history.push(`/folders/${match.params.folderID}/password-add`)}
+              >
+              <img
+                className="icon"
+                src={PlusIcon}
+                alt="Plus icon not found"
+                />
+              <span>
+                Password
+              </span>
+            </BorderedFullButton>
           </div>
+        }
 
-              {
-                !isGlobalSearch &&
-                active &&
-                match.params.folderID &&
-                !folder.deletedDate &&
-                canAddPasswords &&
-                <div className="command">
-                <BorderedFullButton
-                  fit={true}
-                  onClick={() => history.push(`/folders/${match.params.folderID}/password-add`)}
-                  >
-                  <img
-                    className="icon"
-                    src={PlusIcon}
-                    alt="Plus icon not found"
-                    />
-                    <span>
-                      Password
-                    </span>
-                </BorderedFullButton>
-              </div>
-              }
+        {
+          active &&
+          !isGlobalSearch &&
+          folder.deletedDate &&
+          folderCanBeDeleted &&
+          <div className="command">
+            <BorderedLinkButton
+              fit={true}
+              font="red"
+              onClick={(e) => {
+                e.preventDefault();
+                permanentlyDeleteFolder();
+              }}
+              >
+              <img
+                className="icon red"
+                src={DeleteIcon}
+                alt="Delete icon not found"
+                />
+              DELETE FOREVER
+            </BorderedLinkButton>
+          </div>
+        }
 
-              {
-                active &&
-                !isGlobalSearch &&
-                folder.deletedDate &&
-                folderCanBeDeleted &&
-                <div className="command">
-                <BorderedLinkButton
-                  fit={true}
-                  font="red"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    permanentlyDeleteFolder();
-                  }}
-                  >
-                  <img
-                    className="icon red"
-                    src={DeleteIcon}
-                    alt="Delete icon not found"
-                    />
-                  DELETE FOREVER
-                </BorderedLinkButton>
-              </div>
-              }
+        {
+          active &&
+          !isGlobalSearch &&
+          folder.deletedDate &&
+          folderCanBeDeleted &&
+          <div className="command">
+            <BorderedLinkButton
+              fit={true}
+              onClick={(e) => {
+                e.preventDefault();
+                restoreFolder();
+              }}
+              >
+              <img
+                className="icon"
+                src={RestoreIcon}
+                alt="RestoreIcon icon not found"
+                />
+              Restore folder
+            </BorderedLinkButton>
+          </div>
+        }
 
-              {
-                active &&
-                !isGlobalSearch &&
-                folder.deletedDate &&
-                folderCanBeDeleted &&
-                <div className="command">
-                <BorderedLinkButton
-                  fit={true}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    restoreFolder();
-                  }}
-                  >
-                  <img
-                    className="icon"
-                    src={RestoreIcon}
-                    alt="RestoreIcon icon not found"
-                    />
-                  Restore folder
-                </BorderedLinkButton>
-              </div>
-              }
+        {
+          !isGlobalSearch &&
+          active &&
+          userIsNotAdmin &&
+          <div className="command">
+            <BorderedLinkButton
+              fit={true}
+              onClick={(e) => {
+                e.preventDefault();
+                leaveFolder();
+              }}
+              >
+              <img
+                className="icon"
+                src={CloseIcon}
+                alt="CloseIcon icon not found"
+                />
+              LEAVE THIS FOLDER
+            </BorderedLinkButton>
+          </div>
+        }
 
-              {
-                !isGlobalSearch &&
-                active &&
-                userIsNotAdmin &&
-                <div className="command">
-                <BorderedLinkButton
-                  fit={true}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    leaveFolder();
-                  }}
-                  >
-                  <img
-                    className="icon"
-                    src={CloseIcon}
-                    alt="CloseIcon icon not found"
-                    />
-                  LEAVE THIS FOLDER
-                </BorderedLinkButton>
-              </div>
-              }
-
-{
-  active &&
-  !folderIsDeleted &&
-  <div className="command">
-              <BorderedLinkButton
-                fit={true}
-                onClick={() => {
-                  setShowImportDialog(true);
-                }}
-                >
-                  <span>
-                    Import
-                  </span>
-              </BorderedLinkButton>
-            </div>
-          }
-
-            <div className="command">
+        {
+          active &&
+          !folderIsDeleted &&
+          <div className="command">
             <BorderedLinkButton
               fit={true}
               onClick={() => {
-                setShowExportDialog(true);
+                setShowImportDialog(true);
               }}
               >
-                <span>
-                  Export
-                </span>
+              <span>
+                Import
+              </span>
             </BorderedLinkButton>
           </div>
+        }
+
+        <div className="command">
+          <BorderedLinkButton
+            fit={true}
+            onClick={() => {
+              setShowExportDialog(true);
+            }}
+            >
+            <span>
+              Export
+            </span>
+          </BorderedLinkButton>
+        </div>
       </span>
 
       {
@@ -415,7 +418,7 @@ const sortedPasswords = useMemo( () => {
             !isGlobalSearch &&
             <span className="message">You have no {active ? "" : "deleted"} passwords.</span>
           }
-      </Card>
+        </Card>
       }
 
       {
@@ -432,7 +435,7 @@ const sortedPasswords = useMemo( () => {
                 {yellowMatch(password.title, "", "Untitled")}
               </label>
               <label className="username">
-                  { yellowMatch(password.username, "Login", "No login") }
+                { yellowMatch(password.username, "Login", "No login") }
               </label>
               <label className="username">
                 {password.password ? `Password: ••••••••••••••••••••` : "Password: No password"}
@@ -442,10 +445,10 @@ const sortedPasswords = useMemo( () => {
               </label>
               {
                 isGlobalSearch &&
-              <label className="username">
-                { `Folder: ${password.folder.name}`}
-              </label>
-            }
+                <label className="username">
+                  { `Folder: ${password.folder.name}`}
+                </label>
+              }
             </div>
 
           </PasswordContainer>
@@ -470,24 +473,26 @@ const sortedPasswords = useMemo( () => {
         </ItemContainer>
       }
 
-         <Modal isOpen={showImportDialog} toggle={() => setShowImportDialog(false)}>
-           <ModalBody>
-             <ImportPasswords
-               {...props}
-               close={() => setShowImportDialog(false)}
-               />
-           </ModalBody>
-         </Modal>
+      <Modal isOpen={showImportDialog} toggle={() => setShowImportDialog(false)}>
+        <ModalBody>
+          <ImportPasswords
+            {...props}
+            folder={folder}
+            close={() => setShowImportDialog(false)}
+            />
+        </ModalBody>
+      </Modal>
 
-                <Modal isOpen={showExportDialog} toggle={() => setShowExportDialog(false)}>
-                  <ModalBody>
-                    <ExportPasswords
-                      {...props}
-                      passwords={sortedPasswords}
-                      close={() => setShowExportDialog(false)}
-                      />
-                  </ModalBody>
-                </Modal>
+      <Modal isOpen={showExportDialog} toggle={() => setShowExportDialog(false)}>
+        <ModalBody>
+          <ExportPasswords
+            {...props}
+            folder={folder}
+            passwords={sortedPasswords}
+            close={() => setShowExportDialog(false)}
+            />
+        </ModalBody>
+      </Modal>
 
     </List>
   );

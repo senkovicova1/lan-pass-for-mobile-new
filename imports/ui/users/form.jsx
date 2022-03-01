@@ -34,7 +34,6 @@ export default function UserForm( props ) {
   const {
     _id: userId,
     user,
-    privateKey,
     onSubmit,
     onRemove,
     onCancel,
@@ -53,7 +52,7 @@ export default function UserForm( props ) {
   } );
   const [ password1, setPassword1 ] = useState( '' );
   const [ password2, setPassword2 ] = useState( '' );
-  const [ rights, setRights ] = useState({});
+  const [ rights, setRights ] = useState( {} );
   const [ key, setKey ] = useState( "" );
 
   const [ errors, setErrors ] = useState( [] );
@@ -183,28 +182,6 @@ export default function UserForm( props ) {
       {
         !user &&
         <section>
-          <label htmlFor="key">Key (10-20 characters, A-Z, a-z, 0-9)</label>
-          <Input
-            error={errors.includes("key") && true}
-            id="key"
-            name="key"
-            placeholder="Enter key"
-            type="text"
-            value={key}
-            onChange={(e) => {
-              setKey(e.target.value);
-              if (e.target.value.length >= 10 || e.target.value.length <= 20){
-                setErrors(errors.filter(e => e !== "key"));
-              }
-            }}
-            />
-        </section>
-      }
-
-
-      {
-        !user &&
-        <section>
           <label htmlFor="password1">Password<span style={{color: "red"}}>*</span></label>
           <Input
             error={errors.includes("password") && true}
@@ -255,32 +232,27 @@ export default function UserForm( props ) {
           </tr>
         </thead>
         <tbody>
-          {allRights.map(right =>
-            <tr key={right.value}>
-              <td>{right.label}</td>
-              <td>
-                <Input
-                  type="checkbox"
-                  checked={rights[right.value]}
-                  onClick={() => {
-                    let newRights = {...rights};
-                    newRights[right.value] = !rights[right.value];
-                    setRights(newRights);
-                  }}
-                  />
-              </td>
-            </tr>
+          {
+            allRights.map(right =>
+              <tr key={right.value}>
+                <td>{right.label}</td>
+                <td>
+                  <Input
+                    type="checkbox"
+                    checked={rights[right.value]}
+                    onClick={() => {
+                      let newRights = {...rights};
+                      newRights[right.value] = !rights[right.value];
+                      setRights(newRights);
+                    }}
+                    />
+                </td>
+              </tr>
 
-          )}
+            )
+          }
         </tbody>
       </table>
-
-      {
-        privateKey &&
-        <section>
-          <label htmlFor="privateKey">Please make sure to remember the key you entered above, it will be used to decrpypt your passwords.</label>
-        </section>
-      }
 
       {
         errorMessage &&
@@ -296,11 +268,11 @@ export default function UserForm( props ) {
               onCancel()
             }}
             >
-              <img
-                src={BackIcon}
-                alt=""
-                className="icon"
-                />
+            <img
+              src={BackIcon}
+              alt=""
+              className="icon"
+              />
             Back
           </BorderedLinkButton>
         }
@@ -312,11 +284,11 @@ export default function UserForm( props ) {
               openLogIn()
             }}
             >
-              <img
-                src={BackIcon}
-                alt=""
-                className="icon"
-                />
+            <img
+              src={BackIcon}
+              alt=""
+              className="icon"
+              />
             Cancel
           </BorderedLinkButton>
         }
@@ -330,11 +302,11 @@ export default function UserForm( props ) {
               onCancel();
             }}
             >
-              <img
-                src={DeleteIcon}
-                alt=""
-                className="icon start"
-                />
+            <img
+              src={DeleteIcon}
+              alt=""
+              className="icon start"
+              />
             Delete
           </BorderedLinkButton>
         }
@@ -357,7 +329,7 @@ export default function UserForm( props ) {
             if  ((!user && password1 !== password2) || (!user && password1.length < 7)){
               errors.push("password");
             }
-            if (name.length > 0 &&surname.length > 0 && (user || isEmail(email)) && (user || (password1 === password2 && password1.length >= 7))  && (!user && key.length >= 10 && key.length <= 20)) {
+            if (name.length > 0 &&surname.length > 0 && (user || isEmail(email)) && (user || (password1 === password2 && password1.length >= 7))) {
               onSubmit(
                 name,
                 surname,
@@ -365,17 +337,16 @@ export default function UserForm( props ) {
                 rights,
                 email,
                 password1,
-                key
               );
             }
             setErrors(errors);
           }}
           >
-            <img
-              src={PencilIcon}
-              alt=""
-              className="icon start"
-              />
+          <img
+            src={PencilIcon}
+            alt=""
+            className="icon start"
+            />
           { isSignIn ? "Sign in" : "Save changes"}
         </BorderedFullButton>
       </ButtonRow>

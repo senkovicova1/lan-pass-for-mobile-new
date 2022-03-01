@@ -7,6 +7,7 @@ export const currentUserSlice = createSlice( {
   initialState: {
     value: {
       secretKey: "",
+      secretKeyVerified: false,
     },
   },
   reducers: {

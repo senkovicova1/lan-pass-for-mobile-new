@@ -4,7 +4,9 @@ import React, {
   useEffect
 } from 'react';
 
-import { NavLink } from 'react-router-dom';
+import {
+  NavLink
+} from 'react-router-dom';
 
 import {
   useSelector,
@@ -47,23 +49,25 @@ export default function Menu( props ) {
     closeSelf
   } = props;
 
-  const { folderID } = match.params;
+  const {
+    folderID
+  } = match.params;
   const userId = Meteor.userId();
   const user = useTracker( () => Meteor.user() );
-  const folders = useSelector((state) => state.folders.value);
+  const folders = useSelector( ( state ) => state.folders.value );
 
-  const getRights = (folder) => {
-    const userLevel = folder.users.find(u => u._id === userId).level;
-    switch (userLevel) {
+  const getRights = ( folder ) => {
+    const userLevel = folder.users.find( u => u._id === userId ).level;
+    switch ( userLevel ) {
       case 0:
         return "R W A";
         break;
       case 1:
         return "R W";
         break;
-    case 2:
-      return "R";
-      break;
+      case 2:
+        return "R";
+        break;
       default:
         return "R";
     }
@@ -84,39 +88,39 @@ export default function Menu( props ) {
           }
         }}
         >
-          <img
-            className="icon"
-            src={SearchIcon}
-            alt="SearchIcon icon not found"
-            />
-          <span>Global search</span>
+        <img
+          className="icon"
+          src={SearchIcon}
+          alt="SearchIcon icon not found"
+          />
+        <span>Global search</span>
 
       </NavLink>
 
       {
         folders.map(folder => (
-            <NavLink
-              key={folder.value}
-              className={folderID === folder.value ? "active" : ""}
-              to={`${listPasswordsInFolderStart}${folder.value}`}
-              onClick={() => {
-                dispatch(setFolder(folder));
-                if (/Mobi|Android/i.test(navigator.userAgent)) {
-                  closeSelf();
-                }
-              }}
-              >
-                <img
-                  className="icon"
-                  src={FolderIcon}
-                  alt="Folder icon not found"
-                  />
-              <span>{folder.label}</span>
+          <NavLink
+            key={folder.value}
+            className={folderID === folder.value ? "active" : ""}
+            to={`${listPasswordsInFolderStart}${folder.value}`}
+            onClick={() => {
+              dispatch(setFolder(folder));
+              if (/Mobi|Android/i.test(navigator.userAgent)) {
+                closeSelf();
+              }
+            }}
+            >
+            <img
+              className="icon"
+              src={FolderIcon}
+              alt="Folder icon not found"
+              />
+            <span>{folder.label}</span>
 
-              <span className="rights">{getRights(folder)}</span>
+            <span className="rights">{getRights(folder)}</span>
 
-            </NavLink>
-          ))
+          </NavLink>
+        ))
       }
 
       <NavLink
@@ -146,27 +150,27 @@ export default function Menu( props ) {
           }
         }}
         >
-          <img
-            className="icon"
-            src={DeleteIcon}
-            alt="DeleteIcon icon not found"
-            />
+        <img
+          className="icon"
+          src={DeleteIcon}
+          alt="DeleteIcon icon not found"
+          />
         <span>Deleted</span>
 
       </NavLink>
 
       {
         userCanManageUsers &&
-      <NavLink
-        key={"users"}
-        className={location.pathname.includes("users") ? "active" : ""}
-        to={`/users/list`}
-        onClick={() => {
-          if (/Mobi|Android/i.test(navigator.userAgent)) {
-            closeSelf();
-          }
-        }}
-        >
+        <NavLink
+          key={"users"}
+          className={location.pathname.includes("users") ? "active" : ""}
+          to={`/users/list`}
+          onClick={() => {
+            if (/Mobi|Android/i.test(navigator.userAgent)) {
+              closeSelf();
+            }
+          }}
+          >
           <img
             className="icon"
             src={UserIcon}
@@ -174,8 +178,8 @@ export default function Menu( props ) {
             />
           <span>Users</span>
 
-      </NavLink>
-    }
+        </NavLink>
+      }
 
     </Sidebar>
   );

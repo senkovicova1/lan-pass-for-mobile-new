@@ -79,9 +79,9 @@ export default function SortAndLayout( props ) {
     setOpenSort,
   } = props;
 
-    const {
-      folderID,
-    } = match.params;
+  const {
+    folderID,
+  } = match.params;
 
   const {
     layout,
@@ -104,7 +104,7 @@ export default function SortAndLayout( props ) {
     return uint8ArrayToImg( currentUser.profile.avatar );
   }, [ currentUser ] );
 
-    const folderCanBeEdited = folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level === 0;
+  const folderCanBeEdited = folders.find( folder => folder._id === folderID )?.users.find( user => user._id === currentUser._id ).level === 0;
 
   return (
     <Sort id="sort-menu" name="sort-menu">
@@ -112,8 +112,8 @@ export default function SortAndLayout( props ) {
         window.innerWidth > 820 &&
         <h3 id="sort-header-1" >Layout</h3>
       }
-        {
-          window.innerWidth > 820 &&
+      {
+        window.innerWidth > 820 &&
         <span id="sort-menu-plain-layout">
           <input
             id="plain-layout"
@@ -132,8 +132,8 @@ export default function SortAndLayout( props ) {
           </label>
         </span>
       }
-        {
-          window.innerWidth > 820 &&
+      {
+        window.innerWidth > 820 &&
         <span id="sort-menu-columns-layout">
           <input
             id="columns-layout"
@@ -185,7 +185,7 @@ export default function SortAndLayout( props ) {
       {
         window.innerWidth < 800 &&
         <h3 style={{marginTop: "0.6em"}}>Settings</h3>
-        }
+      }
 
       {
         window.innerWidth < 800 &&
@@ -230,9 +230,9 @@ export default function SortAndLayout( props ) {
             src={SettingsIcon}
             alt="Settings icon not found"
             />
-            <span>
-              Folder settings
-            </span>
+          <span>
+            Folder settings
+          </span>
         </LinkButton>
       }
 
@@ -251,9 +251,9 @@ export default function SortAndLayout( props ) {
             src={LogoutIcon}
             alt="Logout icon not found"
             />
-            <span>
-              Log out
-            </span>
+          <span>
+            Log out
+          </span>
         </LinkButton>
       }
     </Sort>

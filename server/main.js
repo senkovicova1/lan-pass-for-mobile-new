@@ -11,9 +11,6 @@ import {
   PreviousPasswordsCollection
 } from '/imports/api/previousPasswordsCollection';
 import {
-  MetaCollection
-} from '/imports/api/metaCollection';
-import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
 import {
@@ -28,13 +25,11 @@ import { check } from 'meteor/check';
 import '/imports/api/methods/passwordsMethods';
 import '/imports/api/methods/previousPasswordsMethods';
 import '/imports/api/methods/folderMethods';
-import '/imports/api/methods/metadataMethods';
 import '/imports/api/methods/sharingMethods';
 
 import '/imports/api/publications/passwordsPublications';
 import '/imports/api/publications/previousPasswordsPublications';
 import '/imports/api/publications/folderPublications';
-import '/imports/api/publications/metadataPublications';
 import '/imports/api/publications/userPublications';
 import '/imports/api/publications/sharingPublications';
 

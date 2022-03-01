@@ -25,7 +25,88 @@ export function str2ab(str) {
 }
 
 
-  async function generateKeyPairForUser(){
+
+  const decryptStringWithXORtoHex = (text, key) => {
+    let c = "";
+    let usedKey = key;
+
+    while (usedKey.length < (text.length/2)) {
+         usedKey += usedKey;
+    }
+
+    for (var j = 0; j < text.length; j = j+2) {
+      let hexValueString = text.substring(j, j+2);
+
+      let value1 = parseInt(hexValueString, 16);
+      let value2 = usedKey.charCodeAt(j/2);
+
+      let xorValue = value1 ^ value2;
+      c += String.fromCharCode(xorValue) + "";
+    }
+
+    return c;
+  }
+
+export  async function checkSecretKey(exportedPublicKey, exportedPrivateKey, secretKey){
+    const controlText = "The secret key is correct.";
+
+    // encrypt controlText with PuK
+    const importedPublicKey = await window.crypto.subtle.importKey(
+          "spki",
+          str2ab(window.atob(exportedPublicKey)),
+            {
+              name: "RSA-OAEP",
+              hash: "SHA-256"
+            },
+          true,
+          ["encrypt"]
+        );
+
+    let enc = new TextEncoder();
+    const encryptedControlText = await window.crypto.subtle.encrypt(
+      {
+        name: "RSA-OAEP"
+      },
+      importedPublicKey,
+      enc.encode( controlText )
+    );
+
+    //decrypt control text with PrK
+    const privateKey =   decryptStringWithXORtoHex(exportedPrivateKey, secretKey);
+
+    try {
+      const importedPrivateKey = await window.crypto.subtle.importKey(
+        "pkcs8",
+        str2ab(window.atob(privateKey)),
+          {
+            name: "RSA-OAEP",
+            hash: "SHA-256"
+          },
+        true,
+        ["decrypt"]
+      );
+
+      const decryptedControlText = await window.crypto.subtle.decrypt(
+        {
+          name: "RSA-OAEP",
+          modulusLength: 4096,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: "SHA-256"
+        },
+          importedPrivateKey,
+          encryptedControlText,
+        );
+
+        let dec = new TextDecoder();
+        const decodedControlText = dec.decode(decryptedControlText);
+
+      return controlText === decodedControlText;
+    } catch (e){
+      return false;
+    }
+  }
+
+  export async function generateKeyPairForUser(){
       let keyPair = null;
       await window.crypto.subtle.generateKey(
         {
@@ -46,7 +127,7 @@ export function str2ab(str) {
       return keyPair;
     }
 
-  async function generateKey(){
+  export async function generateKey(){
         return window.crypto.subtle.generateKey(
           {
           name: "AES-GCM",
@@ -63,11 +144,11 @@ export function str2ab(str) {
       algorithm - object
       textToEncrypt - string
       */
-      async function importKeyAndEncrypt(key, encrypttionType, algorithm, textToEncrypt){
+export async function importKeyAndEncrypt(key, encrypttionType, textToEncrypt, algorithm = null){
         let exportedKey = key;
         if (encrypttionType === "sync"){
           if (typeof key === "string"){
-            exportKey = new Uint8Array(atob(key).split(','))
+            exportedKey = new Uint8Array(atob(key).split(','));
           }
         } else {
           if (typeof key === "string"){
@@ -75,17 +156,34 @@ export function str2ab(str) {
           }
         }
 
+        let importAlgorithm = algorithm ? {...algorithm} : {};
+        let ecryptAlgorithm = algorithm ? {...algorithm} : {};
+        let usedEncryptionType = "raw";
+        let usages = ["encrypt", "decrypt"];
+
+        if (encrypttionType === "async"){
+          importAlgorithm = {
+            name: "RSA-OAEP",
+            hash: "SHA-256"
+          };
+          ecryptAlgorithm = {
+            name: "RSA-OAEP",
+          };
+          usedEncryptionType = "spki";
+          usages = ["encrypt"];
+        }
+
         const importedKey = await window.crypto.subtle.importKey(
-              (encrypttionType === "sync" ? "raw" : "spki"),
+              usedEncryptionType,
               exportedKey,
-              algorithm,
+              importAlgorithm,
               true,
-              (encrypttionType === "sync" ? ["encrypt", "decrypt"] : ["encrypt"])
+              usages
             );
 
         let enc = new TextEncoder();
         const encryptedText = await window.crypto.subtle.encrypt(
-          algorithm,
+          ecryptAlgorithm,
           importedKey,
           enc.encode( textToEncrypt )
         );
@@ -99,34 +197,52 @@ export function str2ab(str) {
       algorithm - object
       textToEncrypt - string
       */
-      async function importKeyAndDecrypt(key, decrypttionType, algorithm, textToDecrypt){
-        let exportedKey = key;
-        if (encrypttionType === "sync"){
-          if (typeof key === "string"){
-            exportKey = new Uint8Array(atob(key).split(','))
-          }
-        } else {
-          if (typeof key === "string"){
-            exportedKey = str2ab(window.atob(key));
-          }
-        }
+  export async function importKeyAndDecrypt(key, encrypttionType, textToDecrypt, algorithm = null){
+    let exportedKey = key;
+    if (encrypttionType === "sync"){
+      if (typeof key === "string"){
+        exportedKey = new Uint8Array(atob(key).split(','))
+      }
+    } else {
+      if (typeof key === "string"){
+        exportedKey = str2ab(window.atob(key));
+      }
+    }
+
+    let importAlgorithm = algorithm ? {...algorithm} : {};
+    let decryptAlgorithm = algorithm ? {...algorithm} : {};
+    let usedEncryptionType = "raw";
+    let usages = ["encrypt", "decrypt"];
+
+    if (encrypttionType === "async"){
+      importAlgorithm = {
+        name: "RSA-OAEP",
+        hash: "SHA-256"
+      };
+      decryptAlgorithm = {
+        name: "RSA-OAEP",
+        modulusLength: 4096,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: "SHA-256"
+      };
+      usedEncryptionType = "pkcs8";
+      usages = ["decrypt"];
+    }
 
         const importedKey = await window.crypto.subtle.importKey(
-              (encrypttionType === "sync" ? "raw" : "pkcs8"),
+              usedEncryptionType,
               exportedKey,
-              algorithm,
+              importAlgorithm,
               true,
-              (encrypttionType === "sync" ? ["encrypt", "decrypt"] : ["decrypt"])
+              usages
             );
 
         const decryptedText = await window.crypto.subtle.decrypt(
-          algorithm,
+          decryptAlgorithm,
           importedKey,
           str2ab(window.atob(textToDecrypt)),
         );
 
         let dec = new TextDecoder();
-        const decodedDecryptedText = dec.decode(decryptedText);
-
-        return decodedDecryptedText;
+        return dec.decode(decryptedText);
       }

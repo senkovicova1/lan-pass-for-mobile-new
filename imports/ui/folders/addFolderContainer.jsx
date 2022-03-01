@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { useTracker } from 'meteor/react-meteor-data';
+import {
+  useTracker
+} from 'meteor/react-meteor-data';
 
 import FolderForm from '/imports/ui/folders/folderForm';
 
@@ -12,6 +14,7 @@ import {
   str2ab,
   ab2str,
   generateKey,
+  importKeyAndEncrypt
 } from '/imports/other/helperFunctions';
 
 export default function AddFolderContainer( props ) {
@@ -20,10 +23,10 @@ export default function AddFolderContainer( props ) {
     history
   } = props;
 
-    const currentUser = useTracker( () => Meteor.user() );
+  const currentUser = useTracker( () => Meteor.user() );
 
 
-  async function addNewFolder( name, users, dbUsers ){
+  async function addNewFolder( name, users, dbUsers ) {
 
     const iv = window.crypto.getRandomValues( new Uint8Array( 12 ) );
     const algorithm = {
@@ -35,35 +38,18 @@ export default function AddFolderContainer( props ) {
       "raw",
       symetricKey
     );
-    const exportedSKBuffer = new Uint8Array(exportedSymetricKey);
-    const string = btoa(exportedSKBuffer);
+    const exportedSKBuffer = new Uint8Array( exportedSymetricKey );
+    const string = btoa( exportedSKBuffer );
 
     let key = {};
 
-    for (var i = 0; i < users.length; i++) {
-      const user = dbUsers.find(u => u._id === users[i]._id);
-    const userPublicKey = await window.crypto.subtle.importKey(
-          "spki",
-          str2ab(window.atob(user.publicKey)),
-            {
-              name: "RSA-OAEP",
-              hash: "SHA-256"
-            },
-          true,
-          ["encrypt"]
-        );
+    for ( var i = 0; i < users.length; i++ ) {
+      const user = dbUsers.find( u => u._id === users[ i ]._id );
 
-    let enc = new TextEncoder();
-    const encryptedSymetricKey = await window.crypto.subtle.encrypt(
-      {
-        name: "RSA-OAEP"
-      },
-      userPublicKey,
-      enc.encode( string )
-    );
+      const encryptedSymetricKey = await importKeyAndEncrypt( user.publicKey, "async", string );
 
-    key[user._id] = window.btoa(ab2str(encryptedSymetricKey));
-  }
+      key[ user._id ] = encryptedSymetricKey;
+    }
 
     Meteor.call(
       'folders.addFolder',
@@ -71,12 +57,11 @@ export default function AddFolderContainer( props ) {
       users,
       key,
       algorithm,
-      (err, response) => {
-      if (err) {
-      } else if (response) {
-        props.history.push( `/folders/list/${response}` );
+      ( err, response ) => {
+        if ( err ) {} else if ( response ) {
+          props.history.push( `/folders/list/${response}` );
+        }
       }
-    }
     );
 
   }

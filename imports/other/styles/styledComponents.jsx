@@ -308,6 +308,7 @@ export const Content = styled.main `
 export const Sidebar = styled.section `
   background-color: #f6f6f6;
   position: absolute;
+  overflow-y: auto;
   left: 0;
   @media all and (max-width: 799px), @media handheld  {
     box-shadow: 5px 0px 13px 0px slategrey;
@@ -878,6 +879,11 @@ export const Form = styled.form `
       border: 1px solid ${basicBlueColour} !important;
       border-left: none !important;
     }
+  }
+
+  .error-message{
+    color: red;
+    font-weight: 500;
   }
 `;
 

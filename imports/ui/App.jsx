@@ -10,7 +10,7 @@ import {
 } from '/imports/other/styles/styledComponents';
 
 export const App = () => (
-  <MainPage>
+  <MainPage style={{overflowY: "hidden"}}>
     <Navigation />
   </MainPage>
 );

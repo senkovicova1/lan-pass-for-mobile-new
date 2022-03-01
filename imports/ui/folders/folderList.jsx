@@ -18,10 +18,6 @@ import {
 } from '/imports/redux/metadataSlice';
 
 import {
-  MetaCollection
-} from '/imports/api/metaCollection';
-
-import {
   FoldersCollection
 } from '/imports/api/foldersCollection';
 
@@ -63,69 +59,77 @@ export default function FolderList( props ) {
 
   const [ showClosed, setShowClosed ] = useState( false );
 
-    const { myFolders } = useTracker(() => {
-      const noDataAvailable = { myFolders: [] };
-      if (!Meteor.user()) {
-        return noDataAvailable;
-      }
-      const handler = Meteor.subscribe('folders');
+  const {
+    myFolders
+  } = useTracker( () => {
+    const noDataAvailable = {
+      myFolders: []
+    };
+    if ( !Meteor.user() ) {
+      return noDataAvailable;
+    }
+    const handler = Meteor.subscribe( 'folders' );
 
-      if (!handler.ready()) {
-        return noDataAvailable;
-      }
+    if ( !handler.ready() ) {
+      return noDataAvailable;
+    }
 
-      const myFolders = FoldersCollection.find({
-        users: {
-          $elemMatch: {
-            _id: userId
-          }
-        },
-        deletedDate: {
+    const myFolders = FoldersCollection.find( {
+      users: {
+        $elemMatch: {
+          _id: userId
+        }
+      },
+      deletedDate: {
         $gte: 0
       }
-      }, {
-        sort: {name: 1}
-      }).fetch();
+    }, {
+      sort: {
+        name: 1
+      }
+    } ).fetch();
 
-      return { myFolders };
-    });
+    return {
+      myFolders
+    };
+  } );
 
   const permanentlyDelete = useCallback( () => {
     if ( window.confirm( "Are you sure you want to permanently remove these folders? Note: Only folders you have authorization to remove will be removed." ) ) {
       const foldersToDelete = myFolders.filter( ( folder ) => folder.users.find( ( u ) => u._id === user._id ).level === 0 );
       foldersToDelete.forEach( ( folder ) => {
 
-              Meteor.call(
-                'folders.permanentlyDeleteFolder',
-                folderID
-              );
+        Meteor.call(
+          'folders.permanentlyDeleteFolder',
+          folderID
+        );
 
       } );
       const fodlersIds = foldersToDelete.map( folder => folder._id );
       const passWordsToDelete = passwords.filter( pass => fodlersIds.includes( pass.folder ) );
       passWordsToDelete.forEach( ( pass ) => {
 
-              Meteor.call(
-                'passwords.remove',
-                pass._id
-              );
+        Meteor.call(
+          'passwords.remove',
+          pass._id
+        );
 
       } );
     }
   }, [ myFolders, user._id ] );
 
-  const getRights = (folder) => {
-    const userLevel = folder.users.find(u => u._id === userId).level;
-    switch (userLevel) {
+  const getRights = ( folder ) => {
+    const userLevel = folder.users.find( u => u._id === userId ).level;
+    switch ( userLevel ) {
       case 0:
         return "R W A";
         break;
       case 1:
         return "R W";
         break;
-    case 2:
-      return "R";
-      break;
+      case 2:
+        return "R";
+        break;
       default:
         return "R";
     }
@@ -137,7 +141,7 @@ export default function FolderList( props ) {
       <span className="command-bar" style={{marginBottom: "1em"}}>
 
 
-          </span>
+      </span>
 
       {
         myFolders.length === 0 &&

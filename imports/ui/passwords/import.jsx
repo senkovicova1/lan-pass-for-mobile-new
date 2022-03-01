@@ -10,7 +10,15 @@ import {
   useSelector
 } from 'react-redux';
 
-import { CSVLink } from "react-csv";
+import {
+  useTracker
+} from 'meteor/react-meteor-data';
+
+import {
+  CSVLink
+} from "react-csv";
+
+import EnterSecretKey from '/imports/ui/other/enterSecretKey';
 
 import {
   Form,
@@ -25,45 +33,75 @@ import {
   CloseIcon,
 } from "/imports/other/styles/icons";
 
-const { DateTime } = require("luxon");
+import {
+  importKeyAndEncrypt,
+  importKeyAndDecrypt
+} from '/imports/other/helperFunctions';
+
+const {
+  DateTime
+} = require( "luxon" );
 
 export default function ImportPasswords( props ) {
 
   const {
     close,
     match,
+    folder
   } = props;
 
-  const {folderID} = match.params;
-  const encryptionData = useSelector( ( state ) => state.encryptionData.value );
+  const {
+    folderID
+  } = match.params;
 
-  const [ valueSeparator, setValueSeparator ] = useState(`,`);
-  const [ enclosingCharacters, setEnclosingCharacters ] = useState(`"`);
-  const [ emptyEntry, setEmptyEntry ] = useState("-");
-  const [ importing, setImporting ] = useState(false);
-  const [ data, setData ] = useState("");
+  const currentUser = useTracker( () => Meteor.user() );
+  const {
+    secretKey
+  } = useSelector( ( state ) => state.currentUserData.value );
 
-  async function encryptPassword(text){
+  const [ valueSeparator, setValueSeparator ] = useState( `,` );
+  const [ enclosingCharacters, setEnclosingCharacters ] = useState( `"` );
+  const [ emptyEntry, setEmptyEntry ] = useState( "-" );
+  const [ importing, setImporting ] = useState( false );
+  const [ data, setData ] = useState( "" );
 
-    const symetricKey = await crypto.subtle.importKey(
-      "raw",
-        encryptionData.symetricKey,
-        encryptionData.algorithm,
-      true,
-      ["encrypt", "decrypt"]
-    );
+  const decryptStringWithXORtoHex = ( text, key ) => {
+    let c = "";
+    let usedKey = key;
 
-    let encoder = new TextEncoder();
-    let encryptedPassword = await crypto.subtle.encrypt(
-        encryptionData.algorithm,
-        symetricKey,
-        encoder.encode( text )
-    );
+    while ( usedKey.length < ( text.length / 2 ) ) {
+      usedKey += usedKey;
+    }
 
-    return new Uint8Array(encryptedPassword);
+    for ( var j = 0; j < text.length; j = j + 2 ) {
+      let hexValueString = text.substring( j, j + 2 );
+
+      let value1 = parseInt( hexValueString, 16 );
+      let value2 = usedKey.charCodeAt( j / 2 );
+
+      let xorValue = value1 ^ value2;
+      c += String.fromCharCode( xorValue ) + "";
+    }
+
+    return c;
   }
 
-  async function addNewPassword ( title, username, password, url, note ){
+
+  async function encryptPassword( text ) {
+    if ( !folder.algorithm || !folder.key[ currentUser._id ] ) {
+      return "";
+    }
+
+    const privateKey = decryptStringWithXORtoHex( currentUser.profile.privateKey, secretKey );
+
+    const decodedFolderDecryptedKey = await importKeyAndDecrypt( privateKey, "async", folder.key[ currentUser._id ] );
+
+    const encryptedValue = await importKeyAndEncrypt( decodedFolderDecryptedKey, "sync", text, folder.algorithm );
+
+    return encryptedValue;
+  }
+
+  async function addNewPassword( title, username, password, url, note ) {
 
     let actualTitle = title;
     if ( actualTitle === emptyEntry ) {
@@ -86,8 +124,8 @@ export default function ImportPasswords( props ) {
       actualNote = "";
     }
 
-    const encryptedPassword = await encryptPassword(actualPassword);
-    const createdDate = parseInt(DateTime.now().toSeconds());
+    const encryptedPassword = await encryptPassword( actualPassword );
+    const createdDate = parseInt( DateTime.now().toSeconds() );
 
     Meteor.call(
       'passwords.create',
@@ -107,40 +145,45 @@ export default function ImportPasswords( props ) {
   }
 
   async function parsePasswords() {
-    const lines = data.split("\r\n");
+    const lines = data.split( /\r\n|\n\r|\n|\r/ );
     const attributeIndices = {};
-    let headers = lines[0].split(valueSeparator ? valueSeparator : ",");
-    headers.forEach((item, i) => {
-      const attribute = item.replaceAll(enclosingCharacters ? enclosingCharacters : '"', "");
-      headers[i] = attribute;
-      attributeIndices[attribute] = i;
-    });
+    let headers = lines[ 0 ].split( valueSeparator ? valueSeparator : "," );
+    headers.forEach( ( item, i ) => {
+      const attribute = item.replaceAll( enclosingCharacters ? enclosingCharacters : '"', "" );
+      headers[ i ] = attribute;
+      attributeIndices[ attribute ] = i;
+    } );
+    const passwords = lines.slice( 1 );
 
-    const passwords = lines.slice(1);
-
-    for (var i = 0; i < passwords.length; i++) {
-      let passwordData = passwords[i].split(valueSeparator ? valueSeparator : ",");
-      passwordData.forEach((item, i) => {
-        passwordData[i] = item.replaceAll(enclosingCharacters ? enclosingCharacters : '"', "");
-      });
-      if (passwordData.length !== headers.length){
+    for ( var i = 0; i < passwords.length; i++ ) {
+      let passwordData = passwords[ i ].split( valueSeparator ? valueSeparator : "," );
+      passwordData.forEach( ( item, i ) => {
+        passwordData[ i ] = item.replaceAll( enclosingCharacters ? enclosingCharacters : '"', "" );
+      } );
+      if ( passwordData.length !== headers.length ) {
         continue;
       }
       await addNewPassword(
-        passwordData[attributeIndices["title"]],
-        passwordData[attributeIndices["login"]],
-        passwordData[attributeIndices["password"]],
-        passwordData[attributeIndices["url"]],
-        passwordData[attributeIndices["note"]],
+        passwordData[ attributeIndices[ "title" ] ],
+        passwordData[ attributeIndices[ "login" ] ],
+        passwordData[ attributeIndices[ "password" ] ],
+        passwordData[ attributeIndices[ "url" ] ],
+        passwordData[ attributeIndices[ "note" ] ],
       )
     };
 
-    setImporting(false);
+    setImporting( false );
     close();
   }
 
+  if ( secretKey.length === 0 ) {
+    return (
+      <EnterSecretKey columns={true}/>
+    )
+  }
+
   return (
-         <Form columns={true}>
+    <Form columns={true}>
            <section>
          <h1>Import passwords from csv</h1>
            <CircledButton

@@ -10,6 +10,6 @@ Meteor.publish('folders', function publishFolders() {
       $elemMatch: {
         _id: this.userId
       }
-    }    
-  } );
-});
+    }
+  });
+} );

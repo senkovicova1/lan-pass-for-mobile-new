@@ -7,8 +7,16 @@ import {
 } from 'meteor/meteor';
 
 import {
+  useTracker
+} from 'meteor/react-meteor-data';
+
+import {
   Accounts
 } from 'meteor/accounts-base';
+
+import {
+  Spinner
+} from 'reactstrap';
 
 import {
   useDispatch,
@@ -31,6 +39,10 @@ import {
   listPasswordsInFolderStart
 } from "/imports/other/navigationLinks";
 
+import {
+  checkSecretKey,
+} from '/imports/other/helperFunctions';
+
 export default function LoginForm( props ) {
 
   const dispatch = useDispatch();
@@ -38,6 +50,8 @@ export default function LoginForm( props ) {
   const {
     history,
   } = props;
+
+  const currentUser = useTracker( () => Meteor.user() );
 
   const [ email, setEmail ] = useState( '' );
   const [ password, setPassword ] = useState( '' );
@@ -49,10 +63,12 @@ export default function LoginForm( props ) {
     setShowLoading( true );
     setErrorMessage( "" );
     event.preventDefault();
-    if (secretKey.length > 0) {
-        dispatch( setCurrentUserData( {secretKey} ) );
+    if ( secretKey.length > 0 ) {
+      dispatch( setCurrentUserData( {
+        secretKey
+      } ) );
     }
-    Meteor.loginWithPassword( email, password, ( error ) => {
+    Meteor.loginWithPassword( email.trim(), password, ( error, other ) => {
       setShowLoading( false );
       if ( error ) {
         if ( error.reason === "Incorrect password." || error.reason === "User not found." ) {
@@ -61,9 +77,10 @@ export default function LoginForm( props ) {
           setErrorMessage( error.reason );
         }
         setShowLoading( false );
+      } else {
+        history.push( "" );
       }
     } );
-    history.push( "" );
   };
 
   const handleForgotPassword = () => {
@@ -117,7 +134,7 @@ export default function LoginForm( props ) {
 
       {
         errorMessage &&
-        <p>{errorMessage}</p>
+        <p className="error-message">{errorMessage}</p>
       }
 
       <FullButton type="submit" style={{marginTop: "1.5em"}}>Log In</FullButton>
@@ -134,7 +151,6 @@ export default function LoginForm( props ) {
           Forgot password
         </LinkButton>
       }
-
 
     </Form>
   );

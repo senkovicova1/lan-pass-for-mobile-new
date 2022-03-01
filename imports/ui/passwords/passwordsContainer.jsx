@@ -2,7 +2,7 @@ import React, {
   useEffect,
   useState,
   useMemo,
-}  from 'react';
+} from 'react';
 
 import {
   useDispatch,
@@ -75,7 +75,7 @@ export default function PasswordsContainer( props ) {
   const getFilter = () => {
 
     let result = {};
-    if (isGlobalSearch){
+    if ( isGlobalSearch ) {
       result.folder = {
         $in: folders.map( folder => folder._id )
       }
@@ -83,51 +83,59 @@ export default function PasswordsContainer( props ) {
       result.folder = folderID;
     }
 
-    if (match.path === listDeletedPasswordsInFolder) {
+    if ( match.path === listDeletedPasswordsInFolder ) {
       result.deletedDate = {
         $gte: 0,
       }
-    } else if (match.path === listPasswordsInFolder){
+    } else if ( match.path === listPasswordsInFolder ) {
       result.deletedDate = null;
     }
 
     return result;
   }
 
-  const { passwords, passwordsLoading } = useTracker(() => {
-    const noDataAvailable = { passwords: [], passwordsLoading: true};
-    if (!Meteor.user()) {
+  const {
+    passwords,
+    passwordsLoading
+  } = useTracker( () => {
+    const noDataAvailable = {
+      passwords: [],
+      passwordsLoading: true
+    };
+    if ( !Meteor.user() ) {
       return noDataAvailable;
     }
-    const handler = Meteor.subscribe('passwords');
+    const handler = Meteor.subscribe( 'passwords' );
 
-    if (!handler.ready()) {
+    if ( !handler.ready() ) {
       return noDataAvailable;
     }
 
     const passwords = PasswordsCollection.find(
-       getFilter(),
-      {
-      fields: {
-        title: 1,
-        username: 1,
-        password: 1,
-        url: 1,
-        folder: 1,
-        passwordId: 1,
-        note: 1
-      },
-      sort: {
-        title: 1,
-        username: 1
-      }
-    } ).fetch();
+      getFilter(), {
+        fields: {
+          title: 1,
+          username: 1,
+          password: 1,
+          url: 1,
+          folder: 1,
+          passwordId: 1,
+          note: 1
+        },
+        sort: {
+          title: 1,
+          username: 1
+        }
+      } ).fetch();
 
-    return { passwords, passwordsLoading: false };
-  });
+    return {
+      passwords,
+      passwordsLoading: false
+    };
+  } );
 
-  if (passwordsLoading){
-    return ( <Loader />)
+  if ( passwordsLoading ) {
+    return ( <Loader /> )
   }
 
   if ( window.innerWidth <= 820 || layout === PLAIN ) {
@@ -188,8 +196,8 @@ export default function PasswordsContainer( props ) {
         {
           !passwordID &&
           <Card style={{marginTop: "63.5px"}}>
-          <div style={{paddingLeft: "20px"}}><h2>No chosen note</h2> </div>
-        </Card>
+            <div style={{paddingLeft: "20px"}}><h2>No chosen note</h2> </div>
+          </Card>
         }
       </div>
     </div>

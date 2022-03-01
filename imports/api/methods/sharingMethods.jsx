@@ -26,10 +26,6 @@ Meteor.methods({
   //  check(taskId, String);
   //  check(isChecked, Boolean);
 
-    if (!this.userId) {
-      throw new Meteor.Error('Not authorized.');
-    }
-
     return SharingCollection.update( sharingId, {
       $set: {
         ...data
